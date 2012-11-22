@@ -42,28 +42,22 @@ var
 
 begin
 
-  s := ' ["MSTE0101",59,"CRC2CFCF8AC",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",20,3,50,4,0,5,'
-    + '"Durand",1,5,"Yves",2,6,-1222131600,3,50,4,0,9,2,1,5,"Claire",2,6,-1185667200,3,9,1,9,5,50,5,0,9,2,1,5,'
-    + '"Lou",2,6,-426214800,4,9,1,5,9,5]';
-
   s := ' ["MSTE0101",59,"CRCC41DBEF3",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",'
     + '20,3,50,4,0,5,"Durand",1,5,"Yves",2,6,-1222131600,3,51,4, 0,9,2,1,5,"Claire",2,6,-1185667200,'
     + '3,27,1,9,5,50,5,0,9,2,1,5,"Lou",2,6,-426214800,4,9,1,5,9,5]';
 
-  s := '["MSTE0101",60,"CRC81B787F3",2,"MSParent","MSSon",6,"firstName","sex","name","son","father","mother",20,3,50,4,0,5,'
-    + '"Jean",1,3,0,2,5,"DUPOND",3,53,5,0,5,"Marc",1,9,3,2,9,4,4,9,1,5,50,4,0,5,"Ginette",1,3,1,2,5,"DURAND",3,27,5,9,7,9,5]';
+//  s := '["MSTE0101",60,"CRC81B787F3",2,"MSParent","MSSon",6,"firstName","sex","name","son","father","mother",20,3,50,4,0,5,'
+//    + '"Jean",1,3,0,2,5,"DUPOND",3,53,5,0,5,"Marc",1,9,3,2,9,4,4,9,1,5,50,4,0,5,"Ginette",1,3,1,2,5,"DURAND",3,27,5,9,7,9,5]';
 
   Memo1.Text := s;
 
-  StrToFloat('136,10');
-
-  bCrc := True; // false;
+  bCrc := false;
 
   s := StringReplace(s, #13#10, '', [rfReplaceAll]);
   xDecoder := TMSTEDecoder.Create;
   ms := TMemoryStream.Create;
-  ms.LoadFromFile('MSTE.TXT');
-//  ms.Write(s[1], Length(s));
+//  ms.LoadFromFile('MSTE.TXT');
+  ms.Write(s[1], Length(s));
   ms.Seek(0, soFromBeginning);
   root := xDecoder.Decode(ms, bCrc);
 
@@ -108,8 +102,8 @@ end;
 
 procedure TForm9.FormCreate(Sender: TObject);
 begin
-  Button1.Click;
-//  Button2.Click;
+//  Button1.Click;
+  Button2.Click;
 
 end;
 
@@ -124,9 +118,9 @@ begin
   xt.DateVal := now;
   xt.StrVal := 'TTest1';
 
-  xt.TestVal.IntVal := 456;
-  xt.TestVal.DateVal := Now;
-  xt.TestVal.StrVal := 'TTest2';
+  xt.TestVal.IntVal2 := 456;
+  xt.TestVal.DateVal2 := Now;
+  xt.TestVal.StrVal2 := 'TTest2';
 
   xEnc := TMSTEEncoder.Create;
   s := xEnc.EncodeRootObject(xt);

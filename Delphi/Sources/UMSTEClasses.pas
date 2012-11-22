@@ -8,7 +8,7 @@ uses
   ;
 
 const
-  RecursiveToString = True;
+  RecursiveToString = False;
 
 type
 
@@ -286,7 +286,7 @@ type
 //  function GetEnumerator: TComponentEnumerator;
 //end;
 
-//function DeQuote(Input: string): string;
+
 
 var
   __MSNull: TMSNull;
@@ -297,53 +297,9 @@ var
   __theDistantFuture: TMSDate;
 
 implementation
-uses StrUtils, DateUtils, UMSTEEncoder;
-
-const
-  Codes64 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/';
+uses StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
 
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-
-//function DeQuote(Input: string): string;
-//begin
-//  Result := Input;
-//  if StartsText('"', Result) then Delete(Result, 1, 1);
-//  if EndsText('"', Result) then Delete(Result, Length(Result), 1);
-//end;
-//------------------------------------------------------------------------------
-
-procedure Decode64(S: string; AStream: TStream);
-var
-  i: Integer;
-  a: Integer;
-  x: Integer;
-  b: Integer;
-begin
-  a := 0;
-  b := 0;
-  if (Length(S) mod 4) <> 0 then
-    raise Exception.Create('Base64: Incorrect string format');
-
-  for i := 1 to Length(s) do begin
-    x := Pos(s[i], codes64) - 1;
-    if x >= 0 then begin
-      b := b * 64 + x;
-      a := a + 6;
-      if a >= 8 then begin
-        a := a - 8;
-        x := b shr a;
-        b := b mod (1 shl a);
-        x := x mod 256;
-        AStream.WriteBuffer(byte(x), 1);
-      end;
-    end
-    else
-      Break;
-  end;
-end;
 //------------------------------------------------------------------------------
 { TNull }
 //------------------------------------------------------------------------------
@@ -724,7 +680,6 @@ end;
 
 procedure TMSColor.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-
   TMSTEEncoder(Encoder).EncodeUnsignedInt(TRGBValue, False);
 end;
 //------------------------------------------------------------------------------
@@ -781,8 +736,8 @@ end;
 
 procedure TMSCouple.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//todo
-
+  TMSTEEncoder(Encoder).EncodeObject(FFirstMember);
+  TMSTEEncoder(Encoder).EncodeObject(FSecondMember);
 end;
 //------------------------------------------------------------------------------
 
@@ -823,16 +778,21 @@ end;
 
 procedure TMSData.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//todo
-
+  FValue.Position := 0;
+  TMSTEEncoder(Encoder).EncodeStream64(FValue, False);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TMSData.SetBase64Data(AData: string);
+var
+  AStream: TStringStream;
 begin
   FValue.Clear;
-  Decode64(AData, FValue);
+
+  AStream := TStringStream.Create(AData);
+  DecodeStream(AStream, FValue);
+  AStream.Free;
 end;
 //------------------------------------------------------------------------------
 
@@ -882,8 +842,21 @@ end;
 
 procedure TMSNumber.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//TODO
-//coinc ....
+
+  case FValue.NType of
+    0: TMSTEEncoder(Encoder).EncodeChar(FValue.v0, False);
+    1: TMSTEEncoder(Encoder).EncodeUnsignedChar(FValue.v1, False);
+    2: TMSTEEncoder(Encoder).EncodeShort(FValue.v2, False);
+    3: TMSTEEncoder(Encoder).EncodeUnsignedShort(FValue.v3, False);
+    4: TMSTEEncoder(Encoder).EncodeInt(FValue.v4, False);
+    5: TMSTEEncoder(Encoder).EncodeUnsignedInt(FValue.v5, False);
+    6: TMSTEEncoder(Encoder).EncodeLongLong(FValue.v6, False);
+    7: TMSTEEncoder(Encoder).EncodeUnsignedLongLong(FValue.v7, False);
+    8: TMSTEEncoder(Encoder).EncodeFloat(FValue.v8, False);
+    9: TMSTEEncoder(Encoder).EncodeDouble(FValue.v9, False);
+  else
+    MSRaise(Exception, 'Unknow Number Type');
+  end;
 
 end;
 //------------------------------------------------------------------------------
@@ -1009,7 +982,7 @@ var
 begin
   TMSTEEncoder(Encoder).EncodeUnsignedLongLong(Count, False);
   for i := 0 to Count - 1 do
-    TMSTEEncoder(Encoder).encodeUnsignedInt(FValue[i], False);
+    TMSTEEncoder(Encoder).EncodeUnsignedInt(FValue[i], False);
 end;
 
 //------------------------------------------------------------------------------

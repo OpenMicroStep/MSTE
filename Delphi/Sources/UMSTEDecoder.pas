@@ -258,7 +258,7 @@ begin
   count := _DecodeUnsignedLong(@s, endPointer, operation);
 
   if count > 0 then begin
-    xDic := TMSDictionary.Create;//(True);
+    xDic := TMSDictionary.Create;
     _AddObject(xDic);
 
     for i := 0 to count - 1 do begin

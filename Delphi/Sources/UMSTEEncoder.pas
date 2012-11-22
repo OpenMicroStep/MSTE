@@ -20,7 +20,6 @@ type
 
     FTokenCount: Integer;
 
-    procedure _encodeObject(AObject: TMSTEObject);
     procedure _encodeTokenSeparator;
     procedure _encodeTokenType(tokenType: TMSTETokenType); overload;
     procedure _encodeTokenType(tokenType: Byte); overload;
@@ -32,6 +31,8 @@ type
     function EncodeRootObject(AObject: TMSTEObject): string;
 
     function getSnapshotDictionary: TMSDictionary;
+
+    procedure EncodeObject(AObject: TMSTEObject);
 
     procedure EncodeBool(b: Boolean; withTokenType: Boolean);
 //    -(void)encodeBytes: (void * )bytes length: (NSUInteger)length withTokenType: (BOOL)token;
@@ -52,10 +53,12 @@ type
     procedure EncodeArray(AnArray: TMSArray);
     procedure EncodeDictionary(ADictionary: TMSDictionary);
 
+    procedure EncodeStream64(AStream: TStream; withTokenType: boolean);
+
   end;
 
 implementation
-uses Dialogs;
+uses Dialogs, EncdDecd;
 
 { TMSTEEncoder }
 //------------------------------------------------------------------------------
@@ -120,7 +123,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TMSTEEncoder._encodeObject(AObject: TMSTEObject);
+procedure TMSTEEncoder.EncodeObject(AObject: TMSTEObject);
 var
   singleToken, tokenType: TMSTETokenType;
   objectReference, classIndex: Integer;
@@ -157,6 +160,8 @@ begin
         _encodeTokenType((classIndex + ord(tt_USER_CLASS) - 1));
         EncodeDictionary(snapshot);
 
+        FreeAndNil(snapshot);
+
       end else if tokenType < tt_USER_CLASS then begin
 
         FEncodedObjects.Add(AObject);
@@ -182,6 +187,25 @@ begin
     if (b) then _encodeTokenType(tt_TRUE) else _encodeTokenType(tt_FALSE);
   end;
 end;
+//------------------------------------------------------------------------------
+
+procedure TMSTEEncoder.EncodeStream64(AStream: TStream; withTokenType: boolean);
+begin
+//Atester
+
+  if withTokenType then begin
+    _encodeTokenSeparator;
+    _encodeTokenType(tt_BASE64_DATA);
+  end;
+  _encodeTokenSeparator;
+
+  FBuffer.WriteString('"');
+  EncodeStream();
+
+  FBuffer.WriteString('"');
+
+end;
+
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeChar(c: MSChar; withTokenType: boolean);
@@ -413,7 +437,7 @@ begin
     keyReference := FKeys.IndexOf(sKey);
     if keyReference = -1 then keyReference := FKeys.Add(sKey);
     EncodeUnsignedLongLong(keyReference, False);
-    _encodeObject(TMSTEObject(xList[i]));
+    EncodeObject(TMSTEObject(xList[i]));
   end;
 
   xKeys.Free;
@@ -430,15 +454,16 @@ begin
   FEncodedObjects.Clear;
   FClasses.Clear;
   FKeys.Clear;
+  FBuffer.Size := 0;
 
-  _encodeObject(AObject);
+  EncodeObject(AObject);
 
   xBuf := TStringStream.Create('');
 
   //Header
-  xBuf.WriteString('["MSTE0101","CRC00000000",');
+  xBuf.WriteString('["MSTE0101",');
   _encodeUnsignedLongLong(xBuf, 5 + FTokenCount + FKeys.Count + FClasses.Count);
-  xBuf.WriteString(',');
+  xBuf.WriteString(',"CRC00000000",');
 
   //Classes list
   _encodeUnsignedLongLong(xBuf, FClasses.Count);
@@ -447,7 +472,7 @@ begin
     _EncodeString(xBuf, FClasses[i]);
   end;
 
-    //Keys list
+  //Keys list
   xBuf.WriteString(',');
   _encodeUnsignedLongLong(xBuf, FKeys.Count);
   for i := 0 to FKeys.Count - 1 do begin

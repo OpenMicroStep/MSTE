@@ -25,9 +25,9 @@ type
   TTest2 = class(TMSTEObject)
   public
 
-    IntVal: Integer;
-    DateVal: TDate;
-    StrVal: string;
+    IntVal2: Integer;
+    DateVal2: TDate;
+    StrVal2: string;
 
     constructor Create;
     destructor Destroy; override;
@@ -98,7 +98,7 @@ var
   d: TMSDate;
   s: TMSString;
 begin
-  Snapshot := TMSDictionary.Create();
+  Snapshot := TMSDictionary.Create(True);
 
   n := TMSNumber.Create;
   n.Int := IntVal;
@@ -110,7 +110,7 @@ begin
   Snapshot.AddValue('Date', d);
   Snapshot.AddValue('Str', s);
 
-  Snapshot.AddValue('test', TestVal.MSTESnapshot(AEncoder));
+//  Snapshot.AddValue('test', TestVal.MSTESnapshot(AEncoder));
 
   Result := Snapshot;
 
@@ -123,9 +123,9 @@ end;
 
 constructor TTest2.Create;
 begin
-  IntVal := 100;
-  DateVal := Now;
-  StrVal := 'Test2';
+  IntVal2 := 100;
+  DateVal2 := Now;
+  StrVal2 := 'Test2';
 
 end;
 
