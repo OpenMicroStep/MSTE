@@ -8,7 +8,7 @@ uses
 type
   TTest2 = class;
 
-  TTest = class(TMSTEObject)
+  TTest = class(TObject)
   public
     IntVal: Integer;
     DateVal: TDate;
@@ -18,22 +18,22 @@ type
     destructor Destroy; override;
 
     function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-    function MSTESnapshot(AEncoder: TObject): TMSDictionary; override;
+    function MSTESnapshot: TMSDictionary; override;
 
   end;
 
-  TTest2 = class(TMSTEObject)
+  TTest2 = class(TObject)
   public
 
-    IntVal2: Integer;
-    DateVal2: TDate;
-    StrVal2: string;
+    IntVal: Integer;
+    DateVal: TDate;
+    StrVal: string;
 
     constructor Create;
     destructor Destroy; override;
 
     function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-    function MSTESnapshot(AEncoder: TObject): TMSDictionary; override;
+    function MSTESnapshot: TMSDictionary; override;
   end;
 
 implementation
@@ -91,7 +91,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TTest.MSTESnapshot(AEncoder: TObject): TMSDictionary;
+function TTest.MSTESnapshot: TMSDictionary;
 var
   Snapshot: TMSDictionary;
   n: TMSNumber;
@@ -110,7 +110,7 @@ begin
   Snapshot.AddValue('Date', d);
   Snapshot.AddValue('Str', s);
 
-//  Snapshot.AddValue('test', TestVal.MSTESnapshot(AEncoder));
+  //Snapshot.AddValue('test', TestVal.Assign);
 
   Result := Snapshot;
 
@@ -123,9 +123,9 @@ end;
 
 constructor TTest2.Create;
 begin
-  IntVal2 := 100;
-  DateVal2 := Now;
-  StrVal2 := 'Test2';
+  IntVal := 100;
+  DateVal := Now;
+  StrVal := 'Test2';
 
 end;
 
@@ -152,7 +152,7 @@ begin
 end;
 //------------------------------------------------------------------------------
 
-function TTest2.MSTESnapshot(AEncoder: TObject): TMSDictionary;
+function TTest2.MSTESnapshot: TMSDictionary;
 //var
 //  Snapshot: TMSDictionary;
 begin

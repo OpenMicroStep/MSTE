@@ -1,4 +1,4 @@
-unit UMSDictionary;
+unit UDictionary;
 
 interface
 
@@ -221,6 +221,8 @@ begin
   end;
   Result := Result mod FCapacity;
 end;
+//------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------
 
 function TDictionary.SetValue(Key: string; Value: TObject): Boolean;

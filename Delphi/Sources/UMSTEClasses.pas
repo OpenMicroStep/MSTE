@@ -8,6 +8,7 @@ uses
   ;
 
 const
+//  RecursiveToString = True;
   RecursiveToString = False;
 
 type
@@ -48,147 +49,143 @@ type
 
     );
 
-  TMSTEObject = class;
-  TMSArray = class;
   TMSDictionary = class;
 
-  TMSTEElement = class(TObject)
-  private
-    FTokenType: TMSTETokenType;
-    FObject: TMSTEObject;
+  TObject = class(System.TObject)
   public
-    constructor Create(AObject: TMSTEObject);
-    destructor Destroy; override;
-    property TokenType: TMSTETokenType read FTokenType write FTokenType;
-    property MSTEObject: TMSTEObject read FObject write FObject;
+    procedure Assign(AObject: TObject); dynamic;
+    function IsCollection: Boolean; dynamic;
+    function TokenType: TMSTETokenType; dynamic; //must be overriden by subclasse to be encoded
+    function ToString: string; dynamic;
+    function MSTESnapshot: TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
+    function MSTEncodedString: string; dynamic; //returns a buffer containing the object encoded with MSTE protocol
+    function SingleEncodingCode: TMSTETokenType; dynamic; // defaults returns MSTE_TOKEN_MUST_ENCODE
+    procedure EncodeWithMSTEncoder(Encoder: TObject); dynamic;
   end;
 
-  TMSTEObjectList = class(TObjectList)
-  protected
-    function GetItem(Index: Integer): TMSTEObject;
-    procedure SetItem(Index: Integer; AObject: TMSTEObject);
+  TObjectList = class(Contnrs.TObjectList)
   public
-    function Add(AObject: TMSTEObject): Integer; reintroduce;
-    destructor Destroy; override;
-    property Items[Index: Integer]: TMSTEObject read GetItem write SetItem; default;
+    procedure Assign(AObject: TObject); dynamic;
+    function IsCollection: Boolean; dynamic;
+    function TokenType: TMSTETokenType; dynamic; //dynamic;
+    function ToString: string; dynamic;
+    function MSTESnapshot: TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
+    function MSTEncodedString: string; dynamic; //returns a buffer containing the object encoded with MSTE protocol
+    function SingleEncodingCode: TMSTETokenType; dynamic; // defaults returns MSTE_TOKEN_MUST_ENCODE
+    procedure EncodeWithMSTEncoder(Encoder: TObject); dynamic;
+
   end;
 
-  TMSTEObject = class(TObject)
-  public
-    constructor Create;
-    function ToString: string; virtual;
-    procedure Assign(AObject: TMSTEObject); virtual;
-    function TokenType: TMSTETokenType; virtual;
-    function SingleEncodingCode: TMSTETokenType; virtual;
-    procedure EncodeWithMSTEncoder(Encoder: TObject); virtual;
-    function MSTESnapshot(AEncoder: TObject): TMSDictionary; virtual;
-  end;
-
-  TMSNull = class(TMSTEObject)
+  TMSNull = class(TObject)
   private
     function GetValue: TObject;
   public
-    procedure Assign(AObject: TMSTEObject); override;
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     function ToString: string; override;
+
     property Value: TObject read GetValue;
   end;
 
-  TMSBool = class(TMSTEObject)
+  TMSBool = class(TObject)
   private
     FValue: Boolean;
   public
     constructor Create(AValue: Boolean);
-    procedure Assign(AObject: TMSTEObject); override;
+
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     function ToString: string; override;
+
     property Value: Boolean read FValue write FValue;
   end;
 
-  TMSString = class(TMSTEObject)
+  TMSString = class(TObject)
   private
     FValue: string;
   public
     constructor Create(AString: string = '');
-    procedure Assign(AObject: TMSTEObject); override;
+
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
+
     property Value: string read FValue write FValue;
   end;
 
-  TMSDate = class(TMSTEObject)
+  TMSDate = class(TObject)
   private
     FValue: TDateTime;
   public
-    constructor Create(AValue: TDateTime = 0); overload;
-    procedure Assign(AObject: TMSTEObject); override;
+    constructor Create(AValue: TDateTime = 0);
+
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
+
     property Value: TDateTime read FValue write FValue;
   end;
 
-  TMSDictionary = class(TMSTEObject)
+  TMSDictionary = class(TObject)
   private
     FValue: TDictionary;
     function GetCount: Integer;
   public
-    constructor Create(OwnObject: Boolean = False); reintroduce;
+    constructor Create(OwnObject: Boolean = False);
     destructor Destroy; override;
-    procedure Assign(AObject: TMSTEObject); override;
-    function ToString: string; override;
 
-    function TokenType: TMSTETokenType; override;
-    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-
-    procedure AddValue(Key: string; Value: TMSTEObject);
-    function GetValue(Key: string): TMSTEObject;
+    function IsCollection: Boolean; override;
+    procedure AddValue(Key: string; Value: TObject);
+    function GetValue(Key: string): TObject;
 
     property Count: Integer read GetCount;
     property Value: TDictionary read FValue;
-  end;
 
-  TMSArray = class(TMSTEObject)
-  private
-    FValue: TObjectList; // array of TMSTEObject; //A Remplacer par un TObjectList ...
-    function GetItem(Index: Integer): TMSTEObject;
-//    procedure SetItem(Index: Integer; const Value: TMSTEObject);
-    function GetCount: Integer;
-  public
-    constructor Create;
-    destructor Destroy; override;
-
-    procedure Assign(AObject: TMSTEObject); override;
-
+//    procedure Assign(AObject: TObject); override;
+    function ToString: string; override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-    function ToString: string; override;
-
-    function Add(AObject: TMSTEObject): Integer;
-
-    property Value[Index: Integer]: TMSTEObject read GetItem; default;
-    property Count: Integer read GetCount;
   end;
 
-  TMSNaturalArray = class(TMSTEObject)
+//  TMSArray = class(TObject)
+//  private
+//    FValue: TObjectList;
+//    function GetCount: Integer;
+//    function GetItem(Index: Integer): TObject;
+//  public
+//    constructor Create;
+//    destructor Destroy; override;
+//
+//    function Add(AObject: TObject): Integer;
+//
+//    function ToString: string; override;
+//    function TokenType: TMSTETokenType; override;
+//    property Value[Index: Integer]: TObject read GetItem; default;
+//    property Count: Integer read GetCount;
+//
+//  end;
+
+  TMSNaturalArray = class(TObject)
   private
     FValue: array of MSULong;
     function GetCount: Integer;
   public
     constructor Create(ALen: Integer);
-    function TokenType: TMSTETokenType; override;
-    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-    procedure Assign(AObject: TMSTEObject); override;
 
     procedure SetValue(AIndex: Integer; AValue: MSULong);
     function ValueAtIndex(AIndex: Integer): MSULong;
     property Count: Integer read GetCount;
 
+//    procedure Assign(AObject: TObject); override;
+    function ToString: string; override;
+    function TokenType: TMSTETokenType; override;
+    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
   end;
 
   TMSNumberInstance = packed record
@@ -205,7 +202,7 @@ type
       9: (v9: Double); //Valeur double
   end;
 
-  TMSNumber = class(TMSTEObject)
+  TMSNumber = class(TObject)
   private
     FValue: TMSNumberInstance;
     procedure SetAsChar(const Value: MSChar);
@@ -220,11 +217,11 @@ type
     procedure SetAsULong(const Value: MSULong);
   public
 
-    procedure Assign(AObject: TMSTEObject); override;
+//    procedure Assign(AObject: TObject); override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-
     function TokenType: TMSTETokenType; override;
     function ToString: string; override;
+
     property Char: MSChar read FValue.v0 write SetAsChar;
     property Byte: MSByte read FValue.v1 write SetAsByte;
     property Short: MSShort read FValue.v2 write SetAsShort;
@@ -237,56 +234,72 @@ type
     property Double: Double read FValue.v9 write SetAsDouble;
   end;
 
-  TMSColor = class(TMSTEObject)
+  TMSColor = class(TObject)
   private
     FValue: TColor;
     FTransparent: Byte;
     function GetTRGBValue: MSUInt;
     procedure SetTRGBValue(const Value: MSUInt);
   public
-    procedure Assign(AObject: TMSTEObject); override;
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
+
     property ColorValue: TColor read FValue write FValue;
     property TransparentValue: Byte read FTransparent write FTransparent;
     property TRGBValue: MSUInt read GetTRGBValue write SetTRGBValue;
   end;
 
-  TMSCouple = class(TMSTEObject)
+  TMSCouple = class(TObject)
   private
-    FFirstMember: TMSTEObject;
-    FSecondMember: TMSTEObject;
+    FFirstMember: TObject;
+    FSecondMember: TObject;
   public
-    procedure Assign(AObject: TMSTEObject); override;
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
-    property FirstMember: TMSTEObject read FFirstMember write FFirstMember;
-    property SecondMember: TMSTEObject read FSecondMember write FSecondMember;
+
+    property FirstMember: TObject read FFirstMember write FFirstMember;
+    property SecondMember: TObject read FSecondMember write FSecondMember;
   end;
 
-  TMSData = class(TMSTEObject)
+  TMSData = class(TObject)
   private
     FValue: TMemoryStream;
   public
-    procedure Assign(AObject: TMSTEObject); override;
     constructor Create;
     destructor Destroy; override;
+
+//    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
+
     procedure SetBase64Data(AData: string);
     procedure SetHexData(AData: string);
     property Value: TMemoryStream read FValue;
   end;
 
-//  TComponentHelper = class helper for TComponent
+//  TObjectMSTEHelper = class helper for TObject
 //    public
-//  function GetEnumerator: TComponentEnumerator;
+//  procedure Assign(AObject: TObject);
+//function TokenType: TMSTETokenType; //must be overriden by subclasse to be encoded
+//function ToString: string;
+//function MSTESnapshot: TMSDictionary; //must be overriden by subclasse to be encoded as a dictionary
+//function MSTEncodedString: string; //returns a buffer containing the object encoded with MSTE protocol
+//function singleEncodingCode: TMSTETokenType; // defaults returns MSTE_TOKEN_MUST_ENCODE
+//procedure EncodeWithMSTEncoder(Encoder: TObject);
 //end;
 
-
+//TObjectListMSTEHelper = class helper for TObjectList
+//  public
+//  procedure Assign(AObject: TObject);
+//function TokenType: TMSTETokenType;
+//procedure EncodeWithMSTEncoder(Encoder: TObject);
+//function ToString: string;
+//end;
 
 var
   __MSNull: TMSNull;
@@ -297,17 +310,159 @@ var
   __theDistantFuture: TMSDate;
 
 implementation
-uses StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
+uses Dialogs, StrUtils, DateUtils, UMSTEEncoder;
+
+const
+  Codes64 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/';
 
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-{ TNull }
-//------------------------------------------------------------------------------
 
-procedure TMSNull.Assign(AObject: TMSTEObject);
+procedure Decode64(S: string; AStream: TStream);
+var
+  i: Integer;
+  a: Integer;
+  x: Integer;
+  b: Integer;
 begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+  a := 0;
+  b := 0;
+  if (Length(S) mod 4) <> 0 then
+    raise Exception.Create('Base64: Incorrect string format');
+
+  for i := 1 to Length(s) do begin
+    x := Pos(s[i], codes64) - 1;
+    if x >= 0 then begin
+      b := b * 64 + x;
+      a := a + 6;
+      if a >= 8 then begin
+        a := a - 8;
+        x := b shr a;
+        b := b mod (1 shl a);
+        x := x mod 256;
+        AStream.WriteBuffer(byte(x), 1);
+      end;
+    end
+    else
+      Break;
+  end;
 end;
+
+//------------------------------------------------------------------------------
+{ TObjectMSTEHelper }
+//------------------------------------------------------------------------------
+
+//procedure TObjectMSTEHelper.Assign(AObject: TObject);
+//begin
+//  MSRaise(Exception, '%s : Assign procedure undefined', [AObject.ClassName]);
+//end;
+
+//------------------------------------------------------------------------------
+
+//function TObjectMSTEHelper.TokenType: TMSTETokenType;
+//begin
+//  //WARNING
+//  //FOR USE WHEN CALLED WITH A TObject CAST ON VCL BASE OBJECT
+//  if (Self is TObjectList) then Result := tt_ARRAY
+//  else Result := tt_USER_CLASS;
+//end;
+
+//------------------------------------------------------------------------------
+
+//function TObjectMSTEHelper.ToString: string;
+//begin
+//
+//  if (Self is TObjectList) then
+//    Result := (Self as TObjectList).ToString
+//  else
+//    Result := Self.ClassName;
+//end;
+
+//------------------------------------------------------------------------------
+
+//function TObjectMSTEHelper.MSTESnapshot: TMSDictionary; //must be overriden by subclasse to be encoded as a dictionary
+//begin
+//  MSRaise(Exception, '%s : MSTESnapshot not implemented', [Self.ClassName]);
+//  Result := nil;
+//end;
+
+//------------------------------------------------------------------------------
+//
+//function TObjectMSTEHelper.MSTEncodedString: string; //returns a buffer containing the object encoded with MSTE protocol
+//var
+//  encoder: TMSTEEncoder;
+//  ret: string;
+//begin
+//  encoder := TMSTEEncoder.Create;
+//  ret := encoder.EncodeRootObject(Self);
+//  FreeAndNil(encoder);
+//  Result := ret;
+//end;
+//
+////------------------------------------------------------------------------------
+//
+//function TObjectMSTEHelper.singleEncodingCode: TMSTETokenType; // defaults returns MSTE_TOKEN_MUST_ENCODE
+//begin
+//  Result := tt_MUST_ENCODE;
+//end;
+
+//------------------------------------------------------------------------------
+
+//procedure TObjectMSTEHelper.EncodeWithMSTEncoder(Encoder: TObject);
+//begin
+//  MSRaise(Exception, '%s : EncodeWithMSTEncoder not implemented', [Self.ClassName]);
+//end;
+//------------------------------------------------------------------------------
+{ TObjectListMSTEHelper }
+//------------------------------------------------------------------------------
+
+//procedure TObjectListMSTEHelper.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+////TODO ...
+//end;
+//
+////------------------------------------------------------------------------------
+//
+//function TObjectListMSTEHelper.TokenType: TMSTETokenType;
+//begin
+//  Result := tt_ARRAY;
+//end;
+//
+////------------------------------------------------------------------------------
+//
+//procedure TObjectListMSTEHelper.EncodeWithMSTEncoder(Encoder: TObject);
+//begin
+//  TMSTEEncoder(Encoder).EncodeArray(Self);
+//end;
+
+//------------------------------------------------------------------------------
+
+//function TObjectListMSTEHelper.ToString: string;
+//var
+//  i: Integer;
+//  xObj: TObject;
+//  s, sobj: string;
+//begin
+//
+//  s := #13#10'['#13#10;
+//  for I := 0 to Count - 1 do begin
+//    xObj := Items[i];
+//    sObj := xObj.ToString;
+//    s := s + sObj + #13#10;
+//  end;
+//  s := s + ']';
+//
+//  result := s;
+//end;
+
+//------------------------------------------------------------------------------
+{ TMSNull }
+//------------------------------------------------------------------------------
+
+//procedure TMSNull.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//end;
 //------------------------------------------------------------------------------
 
 function TMSNull.GetValue: TObject;
@@ -336,15 +491,16 @@ end;
 { TMSBool }
 //------------------------------------------------------------------------------
 
-procedure TMSBool.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  FValue := TMSBool(AObject).Value;
-end;
+//procedure TMSBool.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  FValue := TMSBool(AObject).Value;
+//end;
 //------------------------------------------------------------------------------
 
 constructor TMSBool.Create(AValue: Boolean);
 begin
+  inherited Create;
   FValue := AValue
 end;
 //------------------------------------------------------------------------------
@@ -369,25 +525,16 @@ end;
 //------------------------------------------------------------------------------
 { TMSDictionary }
 
-procedure TMSDictionary.AddValue(Key: string; Value: TMSTEObject);
+procedure TMSDictionary.AddValue(Key: string; Value: TObject);
 begin
   FValue.AddValue(Key, Value);
 end;
 
 //------------------------------------------------------------------------------
 
-procedure TMSDictionary.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  //Todo ....
-//  FValue := TMSDate(AObject).Value;
-
-end;
-//------------------------------------------------------------------------------
-
 constructor TMSDictionary.Create(OwnObject: Boolean = False);
 begin
-  inherited create;
+  inherited Create;
   FValue := TDictionary.Create(OwnObject);
 end;
 //------------------------------------------------------------------------------
@@ -396,12 +543,6 @@ destructor TMSDictionary.Destroy;
 begin
   FreeAndNil(FValue);
   inherited;
-end;
-//------------------------------------------------------------------------------
-
-procedure TMSDictionary.EncodeWithMSTEncoder(Encoder: TObject);
-begin
-  TMSTEEncoder(Encoder).EncodeDictionary(Self);
 end;
 
 //------------------------------------------------------------------------------
@@ -412,17 +553,25 @@ begin
 end;
 //------------------------------------------------------------------------------
 
-function TMSDictionary.GetValue(Key: string): TMSTEObject;
+function TMSDictionary.GetValue(Key: string): TObject;
 begin
-  Result := FValue.GetValue(Key) as TMSTEObject;
+  Result := TObject(FValue.GetValue(Key));
+end;
+//------------------------------------------------------------------------------
+
+function TMSDictionary.IsCollection: Boolean;
+begin
+  Result := True;
 end;
 
 //------------------------------------------------------------------------------
 
-function TMSDictionary.TokenType: TMSTETokenType;
-begin
-  Result := tt_DICTIONARY;
-end;
+//procedure TMSDictionary.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  //Todo ....
+////  FValue := TMSDate(AObject).Value;
+//end;
 //------------------------------------------------------------------------------
 
 function TMSDictionary.ToString: string;
@@ -430,11 +579,8 @@ var
   sl: TStringList;
   i: integer;
   s, sKey, sObj: string;
-  xObj: TMSTEObject;
+  xObj: TObject;
 begin
-
-  //erreur sur les références cycliques
-//  Exit;
 
   sl := FValue.GetElementsKeys;
 
@@ -443,7 +589,8 @@ begin
   for I := 0 to sl.Count - 1 do begin
     sKey := sl[i];
     xObj := GetValue(sKey);
-    if (not RecursiveToString) and ((xObj is TMSDictionary) or (xObj is TMSArray)) then begin
+    if xObj.IsCollection then begin
+//    if (not RecursiveToString) and ((xObj is TMSDictionary)) then begin
       s := s + sKey + '=' + xObj.ClassName + #13#10;
     end else begin
       sObj := xObj.ToString;
@@ -458,138 +605,32 @@ end;
 
 //------------------------------------------------------------------------------
 
-{ TMSArray }
-
-function TMSArray.Add(AObject: TMSTEObject): Integer;
+function TMSDictionary.TokenType: TMSTETokenType;
 begin
-  Result := FValue.Add(AObject);
-end;
-//------------------------------------------------------------------------------
-
-procedure TMSArray.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  //Todo ....
-end;
-//------------------------------------------------------------------------------
-
-constructor TMSArray.Create;
-begin
-  inherited;
-  FValue := TObjectList.Create(False);
-end;
-//------------------------------------------------------------------------------
-
-destructor TMSArray.Destroy;
-begin
-  FValue.Free;
-  inherited;
-end;
-//------------------------------------------------------------------------------
-
-procedure TMSArray.EncodeWithMSTEncoder(Encoder: TObject);
-begin
-  TMSTEEncoder(Encoder).EncodeArray(Self);
+  Result := tt_DICTIONARY;
 end;
 
 //------------------------------------------------------------------------------
 
-function TMSArray.GetCount: Integer;
+procedure TMSDictionary.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-  Result := FValue.Count;
-end;
-//------------------------------------------------------------------------------
-
-function TMSArray.GetItem(Index: Integer): TMSTEObject;
-begin
-  Result := FValue[Index] as TMSTEObject;
-end;
-
-//------------------------------------------------------------------------------
-
-function TMSArray.TokenType: TMSTETokenType;
-begin
-  Result := tt_ARRAY;
-end;
-//------------------------------------------------------------------------------
-
-function TMSArray.ToString: string;
-var
-  i: Integer;
-  xObj: TMSTEObject;
-  s, sobj: string;
-begin
-
-  s := #13#10'['#13#10;
-  for I := 0 to FValue.Count - 1 do begin
-    xObj := Value[i];
-    sObj := xObj.ToString;
-    s := s + sObj + #13#10;
-  end;
-  s := s + ']';
-
-  result := s;
-end;
-
-//------------------------------------------------------------------------------
-{ TMSTEObject }
-//------------------------------------------------------------------------------
-
-procedure TMSTEObject.Assign(AObject: TMSTEObject);
-begin
-
-end;
-//------------------------------------------------------------------------------
-
-constructor TMSTEObject.Create;
-begin
-  inherited;
-end;
-//------------------------------------------------------------------------------
-
-procedure TMSTEObject.EncodeWithMSTEncoder(Encoder: TObject);
-begin
-  MSRaise(Exception, 'EncodeWithMSTEncoder method not implemented %s', [ClassName]);
-end;
-//------------------------------------------------------------------------------
-
-function TMSTEObject.MSTESnapshot(AEncoder: TObject): TMSDictionary;
-begin
-  Result := nil;
-  MSRaise(Exception, 'MSTESnapshot must be overrided for user class');
-end;
-//------------------------------------------------------------------------------
-
-function TMSTEObject.SingleEncodingCode: TMSTETokenType;
-begin
-  Result := tt_MUST_ENCODE;
-end;
-//------------------------------------------------------------------------------
-
-function TMSTEObject.TokenType: TMSTETokenType;
-begin
-  result := tt_USER_CLASS;
-end;
-//------------------------------------------------------------------------------
-
-function TMSTEObject.ToString: string;
-begin
-  Result := ClassName;
+  TMSTEEncoder(Encoder).EncodeDictionary(Self);
 end;
 
 //------------------------------------------------------------------------------
 { TMSString }
 //------------------------------------------------------------------------------
 
-procedure TMSString.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  FValue := TMSString(AObject).Value;
-end;
+//procedure TMSString.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  FValue := TMSString(AObject).Value;
+//end;
 //------------------------------------------------------------------------------
 
 constructor TMSString.Create(AString: string = '');
 begin
+  inherited Create;
   FValue := AString;
 end;
 //------------------------------------------------------------------------------
@@ -621,15 +662,16 @@ end;
 //------------------------------------------------------------------------------
 { TMSDate }
 
-procedure TMSDate.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  FValue := TMSDate(AObject).Value;
-end;
+//procedure TMSDate.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  FValue := TMSDate(AObject).Value;
+//end;
 //------------------------------------------------------------------------------
 
 constructor TMSDate.Create(AValue: TDateTime);
 begin
+  inherited Create;
   FValue := AValue;
 end;
 //------------------------------------------------------------------------------
@@ -670,12 +712,12 @@ end;
 
 { TMSColor }
 
-procedure TMSColor.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  FValue := TMSColor(AObject).ColorValue;
-  FTransparent := TMSColor(AObject).TransparentValue;
-end;
+//procedure TMSColor.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  FValue := TMSColor(AObject).ColorValue;
+//  FTransparent := TMSColor(AObject).TransparentValue;
+//end;
 //------------------------------------------------------------------------------
 
 procedure TMSColor.EncodeWithMSTEncoder(Encoder: TObject);
@@ -726,18 +768,18 @@ end;
 
 { TMSCouple }
 
-procedure TMSCouple.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-  FFirstMember := TMSCouple(AObject).FirstMember;
-  FSecondMember := TMSCouple(AObject).SecondMember;
-end;
+//procedure TMSCouple.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//  FFirstMember := TMSCouple(AObject).FirstMember;
+//  FSecondMember := TMSCouple(AObject).SecondMember;
+//end;
 //------------------------------------------------------------------------------
 
 procedure TMSCouple.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-  TMSTEEncoder(Encoder).EncodeObject(FFirstMember);
-  TMSTEEncoder(Encoder).EncodeObject(FSecondMember);
+//todo
+
 end;
 //------------------------------------------------------------------------------
 
@@ -756,15 +798,16 @@ end;
 //------------------------------------------------------------------------------
 { TMSData }
 
-procedure TMSData.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//TODO ...
-end;
+//procedure TMSData.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+////TODO ...
+//end;
 //------------------------------------------------------------------------------
 
 constructor TMSData.Create;
 begin
+  inherited Create;
   FValue := TMemoryStream.Create;
 end;
 //------------------------------------------------------------------------------
@@ -778,21 +821,16 @@ end;
 
 procedure TMSData.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-  FValue.Position := 0;
-  TMSTEEncoder(Encoder).EncodeStream64(FValue, False);
+//todo
+
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TMSData.SetBase64Data(AData: string);
-var
-  AStream: TStringStream;
 begin
   FValue.Clear;
-
-  AStream := TStringStream.Create(AData);
-  DecodeStream(AStream, FValue);
-  AStream.Free;
+  Decode64(AData, FValue);
 end;
 //------------------------------------------------------------------------------
 
@@ -831,32 +869,19 @@ end;
 
 { TMSNumber }
 
-procedure TMSNumber.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-
-  CopyMemory(@FValue, @TMSNumber(AObject).FValue, SizeOf(TMSNumberInstance));
-
-end;
+//procedure TMSNumber.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+//
+//  CopyMemory(@FValue, @TMSNumber(AObject).FValue, SizeOf(TMSNumberInstance));
+//
+//end;
 //------------------------------------------------------------------------------
 
 procedure TMSNumber.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-
-  case FValue.NType of
-    0: TMSTEEncoder(Encoder).EncodeChar(FValue.v0, False);
-    1: TMSTEEncoder(Encoder).EncodeUnsignedChar(FValue.v1, False);
-    2: TMSTEEncoder(Encoder).EncodeShort(FValue.v2, False);
-    3: TMSTEEncoder(Encoder).EncodeUnsignedShort(FValue.v3, False);
-    4: TMSTEEncoder(Encoder).EncodeInt(FValue.v4, False);
-    5: TMSTEEncoder(Encoder).EncodeUnsignedInt(FValue.v5, False);
-    6: TMSTEEncoder(Encoder).EncodeLongLong(FValue.v6, False);
-    7: TMSTEEncoder(Encoder).EncodeUnsignedLongLong(FValue.v7, False);
-    8: TMSTEEncoder(Encoder).EncodeFloat(FValue.v8, False);
-    9: TMSTEEncoder(Encoder).EncodeDouble(FValue.v9, False);
-  else
-    MSRaise(Exception, 'Unknow Number Type');
-  end;
+//TODO
+//coinc ....
 
 end;
 //------------------------------------------------------------------------------
@@ -963,15 +988,16 @@ end;
 { TMSNaturalArray }
 //------------------------------------------------------------------------------
 
-procedure TMSNaturalArray.Assign(AObject: TMSTEObject);
-begin
-  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//todo
-end;
+//procedure TMSNaturalArray.Assign(AObject: TObject);
+//begin
+//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+////todo
+//end;
 //------------------------------------------------------------------------------
 
 constructor TMSNaturalArray.Create(ALen: Integer);
 begin
+  inherited Create;
   SetLength(FValue, ALen);
 end;
 //------------------------------------------------------------------------------
@@ -982,7 +1008,7 @@ var
 begin
   TMSTEEncoder(Encoder).EncodeUnsignedLongLong(Count, False);
   for i := 0 to Count - 1 do
-    TMSTEEncoder(Encoder).EncodeUnsignedInt(FValue[i], False);
+    TMSTEEncoder(Encoder).encodeUnsignedInt(FValue[i], False);
 end;
 
 //------------------------------------------------------------------------------
@@ -1017,64 +1043,151 @@ begin
   end;
 
 end;
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-{ TMSTEObjectList }
+
 //------------------------------------------------------------------------------
 
-function TMSTEObjectList.Add(AObject: TMSTEObject): Integer;
+function TMSNaturalArray.ToString: string;
+begin
+//TODO
+  Result := 'TMSNaturalArray.ToString : A IMPEMENTER';
+end;
+
+//------------------------------------------------------------------------------
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+{ TObject }
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+
+//procedure TObject.Assign(AObject: TObject);
+//begin
+//
+//end;
+
+procedure TObject.Assign(AObject: TObject);
+begin
+
+end;
+
+procedure TObject.EncodeWithMSTEncoder(Encoder: TObject);
+begin
+  TMSTEEncoder(Encoder).EncodeObject(Self);
+end;
+
+function TObject.IsCollection: Boolean;
+begin
+  Result := False;
+end;
+
+function TObject.MSTEncodedString: string;
+begin
+  result := '';
+end;
+
+function TObject.MSTESnapshot: TMSDictionary;
+begin
+  Result := nil;
+end;
+
+function TObject.singleEncodingCode: TMSTETokenType;
+begin
+  Result := tt_MUST_ENCODE;
+end;
+
+function TObject.TokenType: TMSTETokenType;
+begin
+  Result := tt_USER_CLASS;
+end;
+
+function TObject.ToString: string;
+begin
+
+end;
+
+//------------------------------------------------------------------------------
+
+//function TMSArray.ToString: string;
+//var
+//  i: Integer;
+//  xObj: TObject;
+//  s, sobj: string;
+//begin
+//
+//  s := #13#10'['#13#10;
+//  for I := 0 to FValue.Count - 1 do begin
+//    xObj := Value[i];
+//    sObj := xObj.ToString;
+//    s := s + sObj + #13#10;
+//  end;
+//  s := s + ']';
+//
+//  result := s;
+//end;
+
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
+{ TObjectList }
+
+procedure TObjectList.Assign(AObject: TObject);
+begin
+
+end;
+
+procedure TObjectList.EncodeWithMSTEncoder(Encoder: TObject);
+begin
+
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.IsCollection: Boolean;
+begin
+  Result := True;
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.MSTEncodedString: string;
+begin
+
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.MSTESnapshot: TMSDictionary;
+begin
+  Result := nil;
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.SingleEncodingCode: TMSTETokenType;
+begin
+  Result := tt_MUST_ENCODE;
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.TokenType: TMSTETokenType;
+begin
+  Result := tt_ARRAY;
+end;
+//------------------------------------------------------------------------------
+
+function TObjectList.ToString: string;
 var
-  xElm: TMSTEElement;
-begin
-  xElm := TMSTEElement.Create(AObject);
-  Result := inherited Add(xElm);
-end;
-//------------------------------------------------------------------------------
-
-destructor TMSTEObjectList.Destroy;
+  i: Integer;
+  xObj: TObject;
+  s, sobj: string;
 begin
 
-  inherited;
-end;
-//------------------------------------------------------------------------------
+  s := #13#10'['#13#10;
+  for I := 0 to Count - 1 do begin
+    xObj := TObject(Items[i]);
+    sObj := xObj.ToString;
+    s := s + sObj + #13#10;
+  end;
+  s := s + ']';
 
-function TMSTEObjectList.GetItem(Index: Integer): TMSTEObject;
-var
-  xElm: TMSTEElement;
-begin
-  xElm := inherited GetItem(Index) as TMSTEElement;
-  Result := xElm.MSTEObject;
-end;
-//------------------------------------------------------------------------------
-
-procedure TMSTEObjectList.SetItem(Index: Integer; AObject: TMSTEObject);
-begin
-  inherited SetItem(Index, AObject);
+  result := s;
 end;
 
-//------------------------------------------------------------------------------
-
-//------------------------------------------------------------------------------
-{ TMSTEElement }
-//------------------------------------------------------------------------------
-
-constructor TMSTEElement.Create(AObject: TMSTEObject);
-begin
-  inherited create;
-  FObject := AObject;
-  if assigned(AObject) then
-    FTokenType := AObject.TokenType //useless
-  else
-    beep;
-end;
-//------------------------------------------------------------------------------
-
-destructor TMSTEElement.Destroy;
-begin
-  if Assigned(FObject) then
-    FreeAndNil(FObject);
-  inherited;
-end;
 //------------------------------------------------------------------------------
 
 initialization

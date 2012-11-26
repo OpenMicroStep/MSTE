@@ -8,70 +8,64 @@
   compilateur n'est liée à l'exécutable produit.
 */
 
-#define Consts_SmkcRight 65328
-#define Consts_SmkcDown 65329
-#define Consts_SmkcIns 65330
-#define Consts_SmkcDel 65331
-#define Consts_SmkcShift 65332
-#define Consts_SmkcCtrl 65333
-#define Consts_SmkcAlt 65334
-#define Consts_SIconToClipboard 65335
-#define Consts_SCannotOpenClipboard 65336
-#define Consts_SInvalidMemoSize 65337
-#define Consts_SDuplicateMenus 65338
-#define Consts_SDockedCtlNeedsName 65339
-#define Consts_SDockTreeRemoveError 65340
-#define Consts_SDockZoneNotFound 65341
-#define Consts_SDockZoneHasNoCtl 65342
-#define Consts_SDockZoneVersionConflict 65343
-#define Consts_SMsgDlgRetry 65344
-#define Consts_SMsgDlgIgnore 65345
-#define Consts_SMsgDlgAll 65346
-#define Consts_SMsgDlgNoToAll 65347
-#define Consts_SMsgDlgYesToAll 65348
-#define Consts_SmkcBkSp 65349
-#define Consts_SmkcTab 65350
-#define Consts_SmkcEsc 65351
-#define Consts_SmkcEnter 65352
-#define Consts_SmkcSpace 65353
-#define Consts_SmkcPgUp 65354
-#define Consts_SmkcPgDn 65355
-#define Consts_SmkcEnd 65356
-#define Consts_SmkcHome 65357
-#define Consts_SmkcLeft 65358
-#define Consts_SmkcUp 65359
-#define Consts_SControlParentSetToSelf 65360
-#define Consts_SCannotDragForm 65361
-#define Consts_SVMetafiles 65362
-#define Consts_SVEnhMetafiles 65363
-#define Consts_SVIcons 65364
-#define Consts_SVBitmaps 65365
-#define Consts_SMsgDlgWarning 65366
-#define Consts_SMsgDlgError 65367
-#define Consts_SMsgDlgInformation 65368
-#define Consts_SMsgDlgConfirm 65369
-#define Consts_SMsgDlgYes 65370
-#define Consts_SMsgDlgNo 65371
-#define Consts_SMsgDlgOK 65372
-#define Consts_SMsgDlgCancel 65373
-#define Consts_SMsgDlgHelp 65374
-#define Consts_SMsgDlgAbort 65375
-#define Consts_SImageReadFail 65376
-#define Consts_SImageWriteFail 65377
-#define Consts_SWindowDCError 65378
-#define Consts_SWindowClass 65379
-#define Consts_SCannotFocus 65380
-#define Consts_SParentRequired 65381
-#define Consts_SParentGivenNotAParent 65382
-#define Consts_SMDIChildNotVisible 65383
-#define Consts_SVisibleChanged 65384
-#define Consts_SCannotShowModal 65385
-#define Consts_SMenuIndexError 65386
-#define Consts_SMenuReinserted 65387
-#define Consts_SMenuNotFound 65388
-#define Consts_SNoTimers 65389
-#define Consts_SGroupIndexTooLow 65390
-#define Consts_SNoMDIForm 65391
+#define Consts_SmkcCtrl 65328
+#define Consts_SmkcAlt 65329
+#define Consts_SIconToClipboard 65330
+#define Consts_SInvalidMemoSize 65331
+#define Consts_SDuplicateMenus 65332
+#define Consts_SDockedCtlNeedsName 65333
+#define Consts_SDockTreeRemoveError 65334
+#define Consts_SDockZoneNotFound 65335
+#define Consts_SDockZoneHasNoCtl 65336
+#define Consts_SDockZoneVersionConflict 65337
+#define Consts_SmkcBkSp 65344
+#define Consts_SmkcTab 65345
+#define Consts_SmkcEsc 65346
+#define Consts_SmkcEnter 65347
+#define Consts_SmkcSpace 65348
+#define Consts_SmkcPgUp 65349
+#define Consts_SmkcPgDn 65350
+#define Consts_SmkcEnd 65351
+#define Consts_SmkcHome 65352
+#define Consts_SmkcLeft 65353
+#define Consts_SmkcUp 65354
+#define Consts_SmkcRight 65355
+#define Consts_SmkcDown 65356
+#define Consts_SmkcIns 65357
+#define Consts_SmkcDel 65358
+#define Consts_SmkcShift 65359
+#define Consts_SCannotDragForm 65360
+#define Consts_SMsgDlgWarning 65361
+#define Consts_SMsgDlgError 65362
+#define Consts_SMsgDlgInformation 65363
+#define Consts_SMsgDlgConfirm 65364
+#define Consts_SMsgDlgYes 65365
+#define Consts_SMsgDlgNo 65366
+#define Consts_SMsgDlgOK 65367
+#define Consts_SMsgDlgCancel 65368
+#define Consts_SMsgDlgHelp 65369
+#define Consts_SMsgDlgAbort 65370
+#define Consts_SMsgDlgRetry 65371
+#define Consts_SMsgDlgIgnore 65372
+#define Consts_SMsgDlgAll 65373
+#define Consts_SMsgDlgNoToAll 65374
+#define Consts_SMsgDlgYesToAll 65375
+#define Consts_SImageWriteFail 65376
+#define Consts_SWindowDCError 65377
+#define Consts_SWindowClass 65378
+#define Consts_SCannotFocus 65379
+#define Consts_SParentRequired 65380
+#define Consts_SParentGivenNotAParent 65381
+#define Consts_SMDIChildNotVisible 65382
+#define Consts_SVisibleChanged 65383
+#define Consts_SCannotShowModal 65384
+#define Consts_SMenuIndexError 65385
+#define Consts_SMenuReinserted 65386
+#define Consts_SMenuNotFound 65387
+#define Consts_SNoTimers 65388
+#define Consts_SGroupIndexTooLow 65389
+#define Consts_SNoMDIForm 65390
+#define Consts_SControlParentSetToSelf 65391
 #define RTLConsts_SThreadError 65392
 #define HelpIntfs_hNoTableOfContents 65393
 #define HelpIntfs_hNothingFound 65394
@@ -80,14 +74,14 @@
 #define HelpIntfs_hNoTopics 65397
 #define Consts_SInvalidBitmap 65398
 #define Consts_SInvalidIcon 65399
-#define Consts_SInvalidMetafile 65400
-#define Consts_SChangeIconSize 65401
-#define Consts_SUnknownClipboardFormat 65402
-#define Consts_SOutOfResources 65403
-#define Consts_SNoCanvasHandle 65404
-#define Consts_SInvalidImageSize 65405
-#define Consts_SInvalidImageList 65406
-#define Consts_SImageIndexError 65407
+#define Consts_SChangeIconSize 65400
+#define Consts_SUnknownClipboardFormat 65401
+#define Consts_SOutOfResources 65402
+#define Consts_SNoCanvasHandle 65403
+#define Consts_SInvalidImageSize 65404
+#define Consts_SInvalidImageList 65405
+#define Consts_SImageIndexError 65406
+#define Consts_SImageReadFail 65407
 #define RTLConsts_SInvalidRegType 65408
 #define RTLConsts_SListCapacityError 65409
 #define RTLConsts_SListCountError 65410
@@ -218,15 +212,9 @@
 #define SysConst_SIntOverflow 65535
 STRINGTABLE
 BEGIN
-	Consts_SmkcRight,	"Droite"
-	Consts_SmkcDown,	"Bas"
-	Consts_SmkcIns,	"Ins"
-	Consts_SmkcDel,	"Suppr"
-	Consts_SmkcShift,	"Maj+"
 	Consts_SmkcCtrl,	"Ctrl+"
 	Consts_SmkcAlt,	"Alt+"
 	Consts_SIconToClipboard,	"Le Presse-papiers ne supporte pas les icônes"
-	Consts_SCannotOpenClipboard,	"Impossible d'ouvrir le Presse-papiers"
 	Consts_SInvalidMemoSize,	"Le texte dépasse la capacité du mémo"
 	Consts_SDuplicateMenus,	"Le menu '%s' est déjà utilisé par une autre fiche"
 	Consts_SDockedCtlNeedsName,	"Le composant ancré doit avoir un nom"
@@ -234,11 +222,6 @@ BEGIN
 	Consts_SDockZoneNotFound,	" - Zone d'ancrage non trouvée"
 	Consts_SDockZoneHasNoCtl,	" - La zone d'ancrage n'a pas de contrôle"
 	Consts_SDockZoneVersionConflict,	"Erreur de chargement de la zone d'ancrage à partir du flux. Version %d attendue, mais %d trouvée."
-	Consts_SMsgDlgRetry,	"&Retenter"
-	Consts_SMsgDlgIgnore,	"&Ignorer"
-	Consts_SMsgDlgAll,	"&Tous"
-	Consts_SMsgDlgNoToAll,	"Non &pour tout"
-	Consts_SMsgDlgYesToAll,	"O&ui pour tout"
 	Consts_SmkcBkSp,	"RetArr"
 	Consts_SmkcTab,	"Tab"
 	Consts_SmkcEsc,	"Echap"
@@ -250,12 +233,12 @@ BEGIN
 	Consts_SmkcHome,	"Origine"
 	Consts_SmkcLeft,	"Gauche"
 	Consts_SmkcUp,	"Haut"
-	Consts_SControlParentSetToSelf,	"Un contrôle ne peut être son propre parent"
+	Consts_SmkcRight,	"Droite"
+	Consts_SmkcDown,	"Bas"
+	Consts_SmkcIns,	"Ins"
+	Consts_SmkcDel,	"Suppr"
+	Consts_SmkcShift,	"Maj+"
 	Consts_SCannotDragForm,	"Impossible de glisser une fiche"
-	Consts_SVMetafiles,	"Métafichiers"
-	Consts_SVEnhMetafiles,	"Métafichiers évolués"
-	Consts_SVIcons,	"Icônes"
-	Consts_SVBitmaps,	"Bitmaps"
 	Consts_SMsgDlgWarning,	"Avertissement"
 	Consts_SMsgDlgError,	"Erreur"
 	Consts_SMsgDlgInformation,	"Information"
@@ -266,7 +249,11 @@ BEGIN
 	Consts_SMsgDlgCancel,	"Annuler"
 	Consts_SMsgDlgHelp,	"&Aide"
 	Consts_SMsgDlgAbort,	"&Abandonner"
-	Consts_SImageReadFail,	"Erreur à la lecture des données ImageList dans le flux"
+	Consts_SMsgDlgRetry,	"&Retenter"
+	Consts_SMsgDlgIgnore,	"&Ignorer"
+	Consts_SMsgDlgAll,	"&Tous"
+	Consts_SMsgDlgNoToAll,	"Non &pour tout"
+	Consts_SMsgDlgYesToAll,	"O&ui pour tout"
 	Consts_SImageWriteFail,	"Erreur à l'écriture des données ImageList dans le flux"
 	Consts_SWindowDCError,	"Erreur à la création du contexte périphérique fenêtre"
 	Consts_SWindowClass,	"Erreur à la création de la classe fenêtre"
@@ -282,6 +269,7 @@ BEGIN
 	Consts_SNoTimers,	"Pas assez de timers disponibles"
 	Consts_SGroupIndexTooLow,	"GroupIndex ne peut être inférieur à celui de l'élément de menu précédent"
 	Consts_SNoMDIForm,	"Impossible de créer la fiche. Aucune fiche Non MDI active"
+	Consts_SControlParentSetToSelf,	"Un contrôle ne peut être son propre parent"
 	RTLConsts_SThreadError,	"Erreur de thread : %s (%d)"
 	HelpIntfs_hNoTableOfContents,	"Impossible de trouver une table des matières"
 	HelpIntfs_hNothingFound,	"Aide introuvable pour %s"
@@ -290,7 +278,6 @@ BEGIN
 	HelpIntfs_hNoTopics,	"Aucun système d'aide basé sur des rubriques n'est installé"
 	Consts_SInvalidBitmap,	"Image bitmap incorrecte"
 	Consts_SInvalidIcon,	"Image icône incorrecte"
-	Consts_SInvalidMetafile,	"MetaFichier incorrect"
 	Consts_SChangeIconSize,	"Impossible de modifier la taille d'une icône"
 	Consts_SUnknownClipboardFormat,	"Format de Presse-papiers non supporté"
 	Consts_SOutOfResources,	"Ressources système insuffisantes"
@@ -298,6 +285,7 @@ BEGIN
 	Consts_SInvalidImageSize,	"Taille d'image incorrecte"
 	Consts_SInvalidImageList,	"ImageList incorrecte"
 	Consts_SImageIndexError,	"Indice ImageList incorrect"
+	Consts_SImageReadFail,	"Erreur à la lecture des données ImageList dans le flux"
 	RTLConsts_SInvalidRegType,	"Type de données incorrect pour '%s'"
 	RTLConsts_SListCapacityError,	"Capacité de liste hors limites (%d)"
 	RTLConsts_SListCountError,	"Compte de liste hors limites (%d)"

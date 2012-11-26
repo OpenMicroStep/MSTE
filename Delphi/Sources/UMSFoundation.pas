@@ -30,6 +30,7 @@ type
   MSULong = UInt64;
   MSLong = Int64;
   float = single;
+
 procedure MSRaise(AExceptClass: ExceptClass; AText: string); overload;
 procedure MSRaise(AExceptClass: ExceptClass; AText: string; AParam: array of const); overload;
 function CharIsDigit(C: Char): Boolean;
@@ -42,6 +43,8 @@ function WideStringToString(const ws: WideString; codePage: Word = CP_UTF8): Ans
 function StringToWideString(const s: AnsiString; codePage: Word): WideString;
 
 function CompareCharAsWide(C1, C2: Char): Boolean;
+
+
 implementation
 
 {$R-}

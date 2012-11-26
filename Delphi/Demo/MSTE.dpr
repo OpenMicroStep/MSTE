@@ -5,12 +5,12 @@ uses
   Forms,
   UMain in 'UMain.pas' {Form9},
   UTest in 'UTest.pas',
-  UMSDictionary in '..\Sources\UMSDictionary.pas',
   crc32 in '..\Sources\crc32.pas',
   UMSFoundation in '..\Sources\UMSFoundation.pas',
   UMSTEClasses in '..\Sources\UMSTEClasses.pas',
   UMSTEDecoder in '..\Sources\UMSTEDecoder.pas',
-  UMSTEEncoder in '..\Sources\UMSTEEncoder.pas';
+  UMSTEEncoder in '..\Sources\UMSTEEncoder.pas',
+  UDictionary in '..\Sources\UDictionary.pas';
 
 {$R *.res}
 

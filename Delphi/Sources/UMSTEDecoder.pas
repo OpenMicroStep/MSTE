@@ -69,24 +69,24 @@ type
     FClasses: TStringList;
     FKeys: TStringList;
 
-    FObjects: TMSTEObjectList;
+    FObjects: TObjectList;
 
     FVersion: string;
     FTokensCount, FClassesCount, FKeysCount: Integer;
     FCRC: DWORD;
 
-    FRootObject: TMSTEObject;
+    FRootObject: Tobject;
 
-    procedure _AddObject(AObject: TMSTEObject);
+    procedure _AddObject(AObject: TObject);
 
     function _CalculateCrc(AStream: TMemoryStream): Cardinal;
 
     procedure JumpToNextToken(ptr: PPChar; endPointer: PChar; var tokenCount: integer);
 
-    function DecodeObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSTEObject;
+    function DecodeObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TObject;
     function DecodeString(ptr: PPChar; endPointer: PChar; operation: string): WideString;
 
-    function DecodeArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSArray;
+    function DecodeArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TObject;
     function DecodeNaturalArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSNaturalArray;
 
     function DecodeDictionary(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDictionary;
@@ -120,8 +120,8 @@ type
     constructor Create;
     destructor Destroy; override;
     procedure Debug;
-    function Decode(AStream: TMemoryStream; VerifyCRC: Boolean): TMSTEObject;
-    property Root: TMSTEObject read FRootObject;
+    function Decode(AStream: TMemoryStream; VerifyCRC: Boolean): TObject;
+    property Root: Tobject read FRootObject;
 
     property Version: string read FVersion;
     property TokensCount: Integer read FTokensCount;
@@ -131,7 +131,7 @@ type
 
   end;
 
-  TExecFn = function: TMSTEObject of object;
+  TExecFn = function: TObject of object;
 
 const
   sLOGFILE = 'MSTE.Log';
@@ -169,8 +169,7 @@ end;
 constructor TMSTEDecoder.Create;
 begin
   inherited;
-//  FObjects := TObjectList.Create;
-  FObjects := TMSTEObjectList.Create;
+  FObjects := TObjectList.Create(True);
 
   FClasses := TStringList.Create;
   FKeys := TStringList.Create;
@@ -246,7 +245,7 @@ var
   i, count: Integer;
   xDic: TMSDictionary;
 
-  xObj: TMSTEObject;
+  xObj: TObject;
 
   xKeyRef: Integer;
   sKey: string;
@@ -258,7 +257,7 @@ begin
   count := _DecodeUnsignedLong(@s, endPointer, operation);
 
   if count > 0 then begin
-    xDic := TMSDictionary.Create;
+    xDic := TMSDictionary.Create(False);
     _AddObject(xDic);
 
     for i := 0 to count - 1 do begin
@@ -289,12 +288,12 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TMSTEDecoder.DecodeArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSArray;
+function TMSTEDecoder.DecodeArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TObject;
 var
   s: PChar;
   i, count: Integer;
-  xArray: TMSArray;
-  xObj: TMSTEObject;
+  xArray: TObjectList;
+  xObj: TObject;
 begin
   s := Ptr^;
   xArray := nil;
@@ -302,8 +301,8 @@ begin
   count := _DecodeUnsignedLong(@s, endPointer, operation);
 
   if count > 0 then begin
-    xArray := TMSArray.Create;
-    _AddObject(xArray);
+    xArray := TObjectList.Create(False);
+    _AddObject(TObject(xArray));
     for i := 0 to count - 1 do begin
       JumpToNextToken(@s, endPointer, tokenCount);
       xObj := DecodeObject(@s, endPointer, operation, tokenCount);
@@ -315,7 +314,7 @@ begin
     end;
   end;
 
-  Result := xArray;
+  Result := TObject(xArray);
   ptr^ := s;
 
 end;
@@ -375,7 +374,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TMSTEDecoder._AddObject(AObject: TMSTEObject);
+procedure TMSTEDecoder._AddObject(AObject: TObject);
 begin
   FObjects.Add(AObject);
 end;
@@ -389,7 +388,7 @@ begin
   s := '';
 
   showmessage(
-    FRootObject.ToString
+    Tobject(FRootObject).ToString
     );
 
 end;
@@ -500,7 +499,7 @@ end;
 
 //-----------------------------------------------------------------------------------
 
-function TMSTEDecoder.Decode(AStream: TMemoryStream; VerifyCRC: Boolean): TMSTEObject;
+function TMSTEDecoder.Decode(AStream: TMemoryStream; VerifyCRC: Boolean): TObject;
 var
   ps: PChar;
   pend: PChar;
@@ -916,7 +915,7 @@ begin
 end;
 //-----------------------------------------------------------------------------------
 
-function TMSTEDecoder.DecodeObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSTEObject;
+function TMSTEDecoder.DecodeObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TObject;
 var
   s: PChar;
   tokenType: Byte;
@@ -993,7 +992,7 @@ begin
         if Ref >= FObjects.Count then
           MSRaise(Exception, 'DecodeArray - invalid object reference!');
 
-        Result := FObjects.Items[Ref];
+        Result := TObject(FObjects.Items[Ref]);
       end;
 
 //20

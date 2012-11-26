@@ -28,11 +28,10 @@ type
   public
     constructor Create;
     destructor Destroy; override;
-    function EncodeRootObject(AObject: TMSTEObject): string;
+    function EncodeRootObject(AObject: TObject): string;
+    procedure EncodeObject(AObject: TObject);
 
     function getSnapshotDictionary: TMSDictionary;
-
-    procedure EncodeObject(AObject: TMSTEObject);
 
     procedure EncodeBool(b: Boolean; withTokenType: Boolean);
 //    -(void)encodeBytes: (void * )bytes length: (NSUInteger)length withTokenType: (BOOL)token;
@@ -50,15 +49,13 @@ type
     procedure EncodeFloat(f: Float; withTokenType: boolean);
     procedure EncodeDouble(d: Double; withTokenType: boolean);
 
-    procedure EncodeArray(AnArray: TMSArray);
+    procedure EncodeArray(AnArray: TObjectList);
     procedure EncodeDictionary(ADictionary: TMSDictionary);
-
-    procedure EncodeStream64(AStream: TStream; withTokenType: boolean);
 
   end;
 
 implementation
-uses Dialogs, EncdDecd;
+uses Dialogs;
 
 { TMSTEEncoder }
 //------------------------------------------------------------------------------
@@ -123,7 +120,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-procedure TMSTEEncoder.EncodeObject(AObject: TMSTEObject);
+procedure TMSTEEncoder.EncodeObject(AObject: TObject);
 var
   singleToken, tokenType: TMSTETokenType;
   objectReference, classIndex: Integer;
@@ -147,7 +144,7 @@ begin
       tokenType := aObject.TokenType;
       if tokenType = tt_USER_CLASS then begin
 
-        Snapshot := aObject.MSTESnapshot(self);
+        snapshot := aObject.MSTESnapshot;
 
         if (not Assigned(snapshot)) then MSRaise(Exception, 'encodeObject: Specific user classes must implement MSTESnapshot to be encoded as a dictionary!');
 
@@ -187,25 +184,6 @@ begin
     if (b) then _encodeTokenType(tt_TRUE) else _encodeTokenType(tt_FALSE);
   end;
 end;
-//------------------------------------------------------------------------------
-
-procedure TMSTEEncoder.EncodeStream64(AStream: TStream; withTokenType: boolean);
-begin
-//Atester
-
-  if withTokenType then begin
-    _encodeTokenSeparator;
-    _encodeTokenType(tt_BASE64_DATA);
-  end;
-  _encodeTokenSeparator;
-
-  FBuffer.WriteString('"');
-  EncodeStream();
-
-  FBuffer.WriteString('"');
-
-end;
-
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeChar(c: MSChar; withTokenType: boolean);
@@ -399,7 +377,7 @@ end;
 //------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
-procedure TMSTEEncoder.EncodeArray(AnArray: TMSArray);
+procedure TMSTEEncoder.EncodeArray(AnArray: TObjectList);
 begin
   ShowMessage('EncodeArray Todo');
 end;
@@ -410,7 +388,7 @@ var
   xKeys: TStringList;
   xTmpKeys: TStringList;
   i, keyReference: Integer;
-  xObj: TMSTEObject;
+  xObj: TObject;
   xList: TObjectList;
   sKey: string;
 begin
@@ -437,7 +415,7 @@ begin
     keyReference := FKeys.IndexOf(sKey);
     if keyReference = -1 then keyReference := FKeys.Add(sKey);
     EncodeUnsignedLongLong(keyReference, False);
-    EncodeObject(TMSTEObject(xList[i]));
+    EncodeObject(TObject(xList[i]));
   end;
 
   xKeys.Free;
@@ -446,7 +424,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TMSTEEncoder.EncodeRootObject(AObject: TMSTEObject): string;
+function TMSTEEncoder.EncodeRootObject(AObject: TObject): string;
 var
   xBuf: TStringStream;
   i: Integer;
@@ -454,16 +432,15 @@ begin
   FEncodedObjects.Clear;
   FClasses.Clear;
   FKeys.Clear;
-  FBuffer.Size := 0;
 
   EncodeObject(AObject);
 
   xBuf := TStringStream.Create('');
 
   //Header
-  xBuf.WriteString('["MSTE0101",');
+  xBuf.WriteString('["MSTE0101","CRC00000000",');
   _encodeUnsignedLongLong(xBuf, 5 + FTokenCount + FKeys.Count + FClasses.Count);
-  xBuf.WriteString(',"CRC00000000",');
+  xBuf.WriteString(',');
 
   //Classes list
   _encodeUnsignedLongLong(xBuf, FClasses.Count);
@@ -472,7 +449,7 @@ begin
     _EncodeString(xBuf, FClasses[i]);
   end;
 
-  //Keys list
+    //Keys list
   xBuf.WriteString(',');
   _encodeUnsignedLongLong(xBuf, FKeys.Count);
   for i := 0 to FKeys.Count - 1 do begin
