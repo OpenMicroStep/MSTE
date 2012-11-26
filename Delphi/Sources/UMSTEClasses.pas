@@ -57,7 +57,7 @@ type
     function IsCollection: Boolean; dynamic;
     function TokenType: TMSTETokenType; dynamic; //must be overriden by subclasse to be encoded
     function ToString: string; dynamic;
-    function MSTESnapshot: TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
+    function MSTESnapshot(Encoder: TObject): TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
     function MSTEncodedString: string; dynamic; //returns a buffer containing the object encoded with MSTE protocol
     function SingleEncodingCode: TMSTETokenType; dynamic; // defaults returns MSTE_TOKEN_MUST_ENCODE
     procedure EncodeWithMSTEncoder(Encoder: TObject); dynamic;
@@ -69,7 +69,7 @@ type
     function IsCollection: Boolean; dynamic;
     function TokenType: TMSTETokenType; dynamic; //dynamic;
     function ToString: string; dynamic;
-    function MSTESnapshot: TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
+    function MSTESnapshot(Encoder: TObject): TMSDictionary; dynamic; //must be overriden by subclasse to be encoded as a dictionary
     function MSTEncodedString: string; dynamic; //returns a buffer containing the object encoded with MSTE protocol
     function SingleEncodingCode: TMSTETokenType; dynamic; // defaults returns MSTE_TOKEN_MUST_ENCODE
     procedure EncodeWithMSTEncoder(Encoder: TObject); dynamic;
@@ -152,24 +152,6 @@ type
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
   end;
-
-//  TMSArray = class(TObject)
-//  private
-//    FValue: TObjectList;
-//    function GetCount: Integer;
-//    function GetItem(Index: Integer): TObject;
-//  public
-//    constructor Create;
-//    destructor Destroy; override;
-//
-//    function Add(AObject: TObject): Integer;
-//
-//    function ToString: string; override;
-//    function TokenType: TMSTETokenType; override;
-//    property Value[Index: Integer]: TObject read GetItem; default;
-//    property Count: Integer read GetCount;
-//
-//  end;
 
   TMSNaturalArray = class(TObject)
   private
@@ -282,25 +264,6 @@ type
     property Value: TMemoryStream read FValue;
   end;
 
-//  TObjectMSTEHelper = class helper for TObject
-//    public
-//  procedure Assign(AObject: TObject);
-//function TokenType: TMSTETokenType; //must be overriden by subclasse to be encoded
-//function ToString: string;
-//function MSTESnapshot: TMSDictionary; //must be overriden by subclasse to be encoded as a dictionary
-//function MSTEncodedString: string; //returns a buffer containing the object encoded with MSTE protocol
-//function singleEncodingCode: TMSTETokenType; // defaults returns MSTE_TOKEN_MUST_ENCODE
-//procedure EncodeWithMSTEncoder(Encoder: TObject);
-//end;
-
-//TObjectListMSTEHelper = class helper for TObjectList
-//  public
-//  procedure Assign(AObject: TObject);
-//function TokenType: TMSTETokenType;
-//procedure EncodeWithMSTEncoder(Encoder: TObject);
-//function ToString: string;
-//end;
-
 var
   __MSNull: TMSNull;
   __MSTrue: TMSBool;
@@ -310,150 +273,7 @@ var
   __theDistantFuture: TMSDate;
 
 implementation
-uses Dialogs, StrUtils, DateUtils, UMSTEEncoder;
-
-const
-  Codes64 = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz+/';
-
-//------------------------------------------------------------------------------
-
-procedure Decode64(S: string; AStream: TStream);
-var
-  i: Integer;
-  a: Integer;
-  x: Integer;
-  b: Integer;
-begin
-  a := 0;
-  b := 0;
-  if (Length(S) mod 4) <> 0 then
-    raise Exception.Create('Base64: Incorrect string format');
-
-  for i := 1 to Length(s) do begin
-    x := Pos(s[i], codes64) - 1;
-    if x >= 0 then begin
-      b := b * 64 + x;
-      a := a + 6;
-      if a >= 8 then begin
-        a := a - 8;
-        x := b shr a;
-        b := b mod (1 shl a);
-        x := x mod 256;
-        AStream.WriteBuffer(byte(x), 1);
-      end;
-    end
-    else
-      Break;
-  end;
-end;
-
-//------------------------------------------------------------------------------
-{ TObjectMSTEHelper }
-//------------------------------------------------------------------------------
-
-//procedure TObjectMSTEHelper.Assign(AObject: TObject);
-//begin
-//  MSRaise(Exception, '%s : Assign procedure undefined', [AObject.ClassName]);
-//end;
-
-//------------------------------------------------------------------------------
-
-//function TObjectMSTEHelper.TokenType: TMSTETokenType;
-//begin
-//  //WARNING
-//  //FOR USE WHEN CALLED WITH A TObject CAST ON VCL BASE OBJECT
-//  if (Self is TObjectList) then Result := tt_ARRAY
-//  else Result := tt_USER_CLASS;
-//end;
-
-//------------------------------------------------------------------------------
-
-//function TObjectMSTEHelper.ToString: string;
-//begin
-//
-//  if (Self is TObjectList) then
-//    Result := (Self as TObjectList).ToString
-//  else
-//    Result := Self.ClassName;
-//end;
-
-//------------------------------------------------------------------------------
-
-//function TObjectMSTEHelper.MSTESnapshot: TMSDictionary; //must be overriden by subclasse to be encoded as a dictionary
-//begin
-//  MSRaise(Exception, '%s : MSTESnapshot not implemented', [Self.ClassName]);
-//  Result := nil;
-//end;
-
-//------------------------------------------------------------------------------
-//
-//function TObjectMSTEHelper.MSTEncodedString: string; //returns a buffer containing the object encoded with MSTE protocol
-//var
-//  encoder: TMSTEEncoder;
-//  ret: string;
-//begin
-//  encoder := TMSTEEncoder.Create;
-//  ret := encoder.EncodeRootObject(Self);
-//  FreeAndNil(encoder);
-//  Result := ret;
-//end;
-//
-////------------------------------------------------------------------------------
-//
-//function TObjectMSTEHelper.singleEncodingCode: TMSTETokenType; // defaults returns MSTE_TOKEN_MUST_ENCODE
-//begin
-//  Result := tt_MUST_ENCODE;
-//end;
-
-//------------------------------------------------------------------------------
-
-//procedure TObjectMSTEHelper.EncodeWithMSTEncoder(Encoder: TObject);
-//begin
-//  MSRaise(Exception, '%s : EncodeWithMSTEncoder not implemented', [Self.ClassName]);
-//end;
-//------------------------------------------------------------------------------
-{ TObjectListMSTEHelper }
-//------------------------------------------------------------------------------
-
-//procedure TObjectListMSTEHelper.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-////TODO ...
-//end;
-//
-////------------------------------------------------------------------------------
-//
-//function TObjectListMSTEHelper.TokenType: TMSTETokenType;
-//begin
-//  Result := tt_ARRAY;
-//end;
-//
-////------------------------------------------------------------------------------
-//
-//procedure TObjectListMSTEHelper.EncodeWithMSTEncoder(Encoder: TObject);
-//begin
-//  TMSTEEncoder(Encoder).EncodeArray(Self);
-//end;
-
-//------------------------------------------------------------------------------
-
-//function TObjectListMSTEHelper.ToString: string;
-//var
-//  i: Integer;
-//  xObj: TObject;
-//  s, sobj: string;
-//begin
-//
-//  s := #13#10'['#13#10;
-//  for I := 0 to Count - 1 do begin
-//    xObj := Items[i];
-//    sObj := xObj.ToString;
-//    s := s + sObj + #13#10;
-//  end;
-//  s := s + ']';
-//
-//  result := s;
-//end;
+uses Dialogs, StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
 
 //------------------------------------------------------------------------------
 { TMSNull }
@@ -778,8 +598,8 @@ end;
 
 procedure TMSCouple.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//todo
-
+  TMSTEEncoder(Encoder).EncodeObject(FFirstMember);
+  TMSTEEncoder(Encoder).EncodeObject(FSecondMember);
 end;
 //------------------------------------------------------------------------------
 
@@ -821,16 +641,20 @@ end;
 
 procedure TMSData.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//todo
-
+  FValue.Position := 0;
+  TMSTEEncoder(Encoder).EncodeStream64(FValue, False);
 end;
 
 //------------------------------------------------------------------------------
 
 procedure TMSData.SetBase64Data(AData: string);
+var
+  AStream: TStringStream;
 begin
   FValue.Clear;
-  Decode64(AData, FValue);
+  AStream := TStringStream.Create(AData);
+  DecodeStream(AStream, FValue);
+  AStream.Free;
 end;
 //------------------------------------------------------------------------------
 
@@ -880,9 +704,20 @@ end;
 
 procedure TMSNumber.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-//TODO
-//coinc ....
-
+  case FValue.NType of
+    0: TMSTEEncoder(Encoder).EncodeChar(FValue.v0, False);
+    1: TMSTEEncoder(Encoder).EncodeUnsignedChar(FValue.v1, False);
+    2: TMSTEEncoder(Encoder).EncodeShort(FValue.v2, False);
+    3: TMSTEEncoder(Encoder).EncodeUnsignedShort(FValue.v3, False);
+    4: TMSTEEncoder(Encoder).EncodeInt(FValue.v4, False);
+    5: TMSTEEncoder(Encoder).EncodeUnsignedInt(FValue.v5, False);
+    6: TMSTEEncoder(Encoder).EncodeLongLong(FValue.v6, False);
+    7: TMSTEEncoder(Encoder).EncodeUnsignedLongLong(FValue.v7, False);
+    8: TMSTEEncoder(Encoder).EncodeFloat(FValue.v8, False);
+    9: TMSTEEncoder(Encoder).EncodeDouble(FValue.v9, False);
+  else
+    MSRaise(Exception, 'Unknow Number Type');
+  end;
 end;
 //------------------------------------------------------------------------------
 
@@ -1085,7 +920,7 @@ begin
   result := '';
 end;
 
-function TObject.MSTESnapshot: TMSDictionary;
+function TObject.MSTESnapshot(Encoder: TObject): TMSDictionary;
 begin
   Result := nil;
 end;
@@ -1152,7 +987,7 @@ begin
 end;
 //------------------------------------------------------------------------------
 
-function TObjectList.MSTESnapshot: TMSDictionary;
+function TObjectList.MSTESnapshot(Encoder: TObject): TMSDictionary;
 begin
   Result := nil;
 end;

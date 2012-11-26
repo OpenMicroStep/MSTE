@@ -31,8 +31,6 @@ type
     function EncodeRootObject(AObject: TObject): string;
     procedure EncodeObject(AObject: TObject);
 
-    function getSnapshotDictionary: TMSDictionary;
-
     procedure EncodeBool(b: Boolean; withTokenType: Boolean);
 //    -(void)encodeBytes: (void * )bytes length: (NSUInteger)length withTokenType: (BOOL)token;
 //    -(void)encodeUnicodeString: (const char * )str withTokenType: (BOOL)token; // encodes an UTF8 string
@@ -52,10 +50,12 @@ type
     procedure EncodeArray(AnArray: TObjectList);
     procedure EncodeDictionary(ADictionary: TMSDictionary);
 
+    procedure EncodeStream64(AStream: TStream; withTokenType: boolean);
+
   end;
 
 implementation
-uses Dialogs;
+uses Dialogs, EncdDecd;
 
 { TMSTEEncoder }
 //------------------------------------------------------------------------------
@@ -110,13 +110,6 @@ procedure TMSTEEncoder._EncodeUnsignedLongLong(AStream: TStringStream; l: MSULon
 begin
   AStream.WriteString(Format('%u', [l]));
 end;
-//------------------------------------------------------------------------------
-
-function TMSTEEncoder.getSnapshotDictionary: TMSDictionary;
-begin
-  Result := TMSDictionary.Create;
-  FSnapshots.Add(Result);
-end;
 
 //------------------------------------------------------------------------------
 
@@ -144,7 +137,7 @@ begin
       tokenType := aObject.TokenType;
       if tokenType = tt_USER_CLASS then begin
 
-        snapshot := aObject.MSTESnapshot;
+        snapshot := aObject.MSTESnapshot(Self);
 
         if (not Assigned(snapshot)) then MSRaise(Exception, 'encodeObject: Specific user classes must implement MSTESnapshot to be encoded as a dictionary!');
 
@@ -184,6 +177,27 @@ begin
     if (b) then _encodeTokenType(tt_TRUE) else _encodeTokenType(tt_FALSE);
   end;
 end;
+//------------------------------------------------------------------------------
+
+procedure TMSTEEncoder.EncodeStream64(AStream: TStream; withTokenType: boolean);
+begin
+//Atester
+
+  if withTokenType then begin
+    _encodeTokenSeparator;
+    _encodeTokenType(tt_BASE64_DATA);
+  end;
+  _encodeTokenSeparator;
+
+  FBuffer.WriteString('"');
+  EncodeStream(AStream, FBuffer);
+
+  FBuffer.WriteString('"');
+
+end;
+
+//------------------------------------------------------------------------------
+
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeChar(c: MSChar; withTokenType: boolean);
@@ -438,8 +452,9 @@ begin
   xBuf := TStringStream.Create('');
 
   //Header
-  xBuf.WriteString('["MSTE0101","CRC00000000",');
+  xBuf.WriteString('["MSTE0101",');
   _encodeUnsignedLongLong(xBuf, 5 + FTokenCount + FKeys.Count + FClasses.Count);
+  xBuf.WriteString(',"CRC00000000",');
   xBuf.WriteString(',');
 
   //Classes list

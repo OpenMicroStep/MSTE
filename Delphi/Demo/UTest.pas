@@ -18,7 +18,7 @@ type
     destructor Destroy; override;
 
     function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-    function MSTESnapshot: TMSDictionary; override;
+    function MSTESnapshot(Encoder: TObject): TMSDictionary; override;
 
   end;
 
@@ -33,7 +33,7 @@ type
     destructor Destroy; override;
 
     function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-    function MSTESnapshot: TMSDictionary; override;
+    function MSTESnapshot(Encoder: TObject): TMSDictionary; override;
   end;
 
 implementation
@@ -91,7 +91,7 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TTest.MSTESnapshot: TMSDictionary;
+function TTest.MSTESnapshot(Encoder: TObject): TMSDictionary;
 var
   Snapshot: TMSDictionary;
   n: TMSNumber;
@@ -152,7 +152,7 @@ begin
 end;
 //------------------------------------------------------------------------------
 
-function TTest2.MSTESnapshot: TMSDictionary;
+function TTest2.MSTESnapshot(Encoder: TObject): TMSDictionary;
 //var
 //  Snapshot: TMSDictionary;
 begin
