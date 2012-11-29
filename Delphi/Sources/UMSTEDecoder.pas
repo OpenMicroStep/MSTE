@@ -16,13 +16,6 @@ type
 
 const
 
-  Errors: array[TMSTError] of string = (
-    'mrInvalidStartChar',
-    'mrInvalidTokenCount',
-    'mrInvalidCRC',
-    'mrError',
-    'mrOk');
-
   Separator: set of char = ['[', ']', ','];
 
 type
@@ -94,6 +87,8 @@ type
     function DecodeColor(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSColor;
     function DecodeCouple(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSCouple;
     function DecodeBufferBase64String(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSData;
+
+    function _DecodeUserDefinedObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer; tokenType: Integer): TObject;
 
     function _DecodeUnsignedChar(ptr: PPChar; endPointer: PChar; operation: string): MSByte;
     function _DecodeChar(ptr: PPChar; endPointer: PChar; operation: string): MSChar;
@@ -233,7 +228,6 @@ begin
   seconds := _DecodeLong(@s, endPointer, 'DecodeObject');
   xDate := UnixToDateTime(seconds);
   Result := TMSDate.Create(xDate);
-//  TMSDate(Result).Value := xDate;
   ptr^ := s;
 end;
 //------------------------------------------------------------------------------
@@ -915,6 +909,26 @@ begin
 end;
 //-----------------------------------------------------------------------------------
 
+function TMSTEDecoder._DecodeUserDefinedObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer; tokenType: Integer): TObject;
+var
+  s: PChar;
+  classIndex: Integer;
+begin
+  Result := nil;
+  s := Ptr^;
+
+  classIndex := round((tokenType - ord(tt_USER_CLASS)) / 2);
+
+  if (classIndex >= 0) and (classIndex < FClasses.Count) then begin
+    Result := DecodeDictionary(@s, endPointer, 'DecodeObject', tokenCount);
+  end else
+    MSRaise(Exception, '_DecodeUserDefinedObject - unable to find user class at index %u', [classIndex]);
+
+  ptr^ := s;
+end;
+
+//-----------------------------------------------------------------------------------
+
 function TMSTEDecoder.DecodeObject(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TObject;
 var
   s: PChar;
@@ -1037,7 +1051,8 @@ begin
   else begin
       if tokenType >= 50 then begin //ord(tt_USER_CLASS)
         JumpToNextToken(@s, endPointer, tokenCount);
-        Result := DecodeDictionary(@s, endPointer, 'DecodeObject', tokenCount);
+        Result := _DecodeUserDefinedObject(@s, endPointer, 'DecodeObject', tokenCount, tokenType);
+
       end else
         MSRaise(Exception, 'Unknow TokenType :%d', [ord(tokenType)]);
     end;

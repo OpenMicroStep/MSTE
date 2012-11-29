@@ -3,8 +3,8 @@ unit UMain;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UMSTEClasses, UDictionary, UTest
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Contnrs,
+  Dialogs, StdCtrls, UMSTEClasses, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UDictionary, UTest
   ;
 
 type
@@ -27,7 +27,7 @@ var
   Form9: TForm9;
 
 implementation
-uses Contnrs;
+
 {$R *.dfm}
 
 procedure TForm9.Button1Click(Sender: TObject);
@@ -116,33 +116,60 @@ begin
 end;
 
 procedure TForm9.FormCreate(Sender: TObject);
+var
+  s: string;
 begin
-  Button1.Click;
-//  Button2.Click;
+
+//  Button1.Click;
+  Button2.Click;
 
 end;
 
 procedure TForm9.Button2Click(Sender: TObject);
 var
-  xt: TTest;
-  xEnc: TMSTEEncoder;
+  pere: TMSParent;
+  mere: TMSParent;
+  fils: TMSSon;
+  famille: TObjectList;
+
   s: string;
+
 begin
-  xt := TTest.Create;
-  xt.IntVal := 123;
-  xt.DateVal := now;
-  xt.StrVal := 'TTest1';
 
-  xt.TestVal.IntVal := 456;
-  xt.TestVal.DateVal := Now;
-  xt.TestVal.StrVal := 'TTest2';
+  pere := TMSParent.Create;
+  pere.Name := 'Dupond';
+  pere.firstName := 'Jean';
+  pere.sex := False;
 
-  xEnc := TMSTEEncoder.Create;
-  s := xEnc.EncodeRootObject(xt);
+  mere := TMSParent.Create;
+  mere.Name := 'Dupond';
+  mere.firstName := 'Ginette';
+  mere.sex := True;
+
+  fils := TMSSon.Create;
+  fils.Father := pere;
+  fils.Mother := mere;
+  fils.firstName := 'Marc';
+  fils.Name := pere.Name;
+  fils.sex := False;
+
+  famille := TObjectList.Create(True);
+  famille.Add(pere);
+  famille.Add(mere);
+  famille.Add(fils);
+
+  pere.son := fils;
+  mere.son := fils;
+
+  s := famille.MSTEncodedString;
   Memo2.Text := s;
-  xEnc.Free;
 
-  xt.Free;
+  famille.Free;
+  Memo2.Lines.Add(
+    '["MSTE0101",60,"CRC564495FB",2,"MSParent2","MSSon2",6,"firstName",'
+    + '"sex","name","son","father","mother",20,3,50,4,0,5,"Jean",1,3,0,2,5,'
+    + '"DUPOND",3,52,5,0,5,"Marc",1,9,3,2,9,4,4,9,1,5,50,4,0,5,"Ginette",1,3,1,2,5,"DURAND",3,9,5,9,7,9,5]'
+    );
 
 end;
 

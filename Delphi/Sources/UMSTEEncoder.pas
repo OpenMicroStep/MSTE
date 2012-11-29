@@ -29,13 +29,12 @@ type
     constructor Create;
     destructor Destroy; override;
     function EncodeRootObject(AObject: TObject): string;
-    procedure EncodeObject(AObject: TObject);
+
+    procedure EncodeObject(AObject: TObject); overload;
+    procedure EncodeObject(AObject: TObject; WeakRef: Boolean); overload;
 
     procedure EncodeBool(b: Boolean; withTokenType: Boolean);
-//    -(void)encodeBytes: (void * )bytes length: (NSUInteger)length withTokenType: (BOOL)token;
-//    -(void)encodeUnicodeString: (const char * )str withTokenType: (BOOL)token; // encodes an UTF8 string
     procedure EncodeString(s: string; withTokenType: Boolean);
-//    -(void)encodeString: (NSString * )s withTokenType: (BOOL)token; // transforms a string in its UTF16 counterpart and encodes it
     procedure EncodeUnsignedChar(c: MSByte; withTokenType: boolean);
     procedure EncodeChar(c: MSChar; withTokenType: boolean);
     procedure EncodeUnsignedShort(s: MSUShort; withTokenType: boolean);
@@ -48,7 +47,7 @@ type
     procedure EncodeDouble(d: Double; withTokenType: boolean);
 
     procedure EncodeArray(AnArray: TObjectList);
-    procedure EncodeDictionary(ADictionary: TMSDictionary);
+    procedure EncodeDictionary(ADictionary: TMSDictionary; isSnapshot: Boolean = False);
 
     procedure EncodeStream64(AStream: TStream; withTokenType: boolean);
 
@@ -114,6 +113,12 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeObject(AObject: TObject);
+begin
+  EncodeObject(AObject, False);
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSTEEncoder.EncodeObject(AObject: TObject; WeakRef: Boolean);
 var
   singleToken, tokenType: TMSTETokenType;
   objectReference, classIndex: Integer;
@@ -129,9 +134,9 @@ begin
   end else begin
     objectReference := FEncodedObjects.IndexOf(AObject);
     if (objectReference <> -1) then begin
-                //this is an already encoded object
+     //this is an already encoded object
       _encodeTokenSeparator;
-      _encodeTokenType(tt_STRONG_REFERENCED_OBJECT);
+      if WeakRef then _encodeTokenType(tt_WEAK_REFERENCED_OBJECT) else _encodeTokenType(tt_STRONG_REFERENCED_OBJECT);
       EncodeUnsignedInt(objectReference, False); //  : (objectReference - 1)withTokenType: NO];
     end else begin
       tokenType := aObject.TokenType;
@@ -147,8 +152,13 @@ begin
         FEncodedObjects.Add(AObject);
 
         _encodeTokenSeparator;
-        _encodeTokenType((classIndex + ord(tt_USER_CLASS) - 1));
-        EncodeDictionary(snapshot);
+
+        if WeakRef then
+          _encodeTokenType(MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT + (2 * classIndex) - 1)
+        else
+          _encodeTokenType(MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 2 * classIndex);
+
+        EncodeDictionary(snapshot, True);
 
         FreeAndNil(snapshot);
 
@@ -323,22 +333,34 @@ procedure TMSTEEncoder._EncodeString(AStream: TStringStream; s: string);
 var
   i: Integer;
   c: char;
+  b: array[0..3] of MSByte;
 begin
   AStream.WriteString('"');
 
   for i := 1 to Length(s) do begin
     c := s[i];
     case c of
+      #8: AStream.WriteString('\b');
       #9: AStream.WriteString('\t');
       #10: AStream.WriteString('\n');
+      #12: AStream.WriteString('\f');
       #13: AStream.WriteString('\r');
-      #22: AStream.WriteString('\"');
+      #34: AStream.WriteString('\"');
+      #47: AStream.WriteString('\/');
       #92: AStream.WriteString('\\');
+
     else
       if ((c < #32) or (c > #127)) then begin
-        AStream.WriteString('\u');
-        //todo .....
-        AStream.WriteString('0000');
+        b[0] := (ord(c) and $0F000) shr 12;
+        b[1] := (ord(c) and $0F00) shr 8;
+        b[2] := (ord(c) and $00F0) shr 4;
+        b[3] := (ord(c) and $000F);
+
+        FBuffer.WriteString('\u');
+        FBuffer.WriteString(IntToHex(b[0], 1));
+        FBuffer.WriteString(IntToHex(b[1], 1));
+        FBuffer.WriteString(IntToHex(b[2], 1));
+        FBuffer.WriteString(IntToHex(b[3], 1));
       end else
         AStream.WriteString(c);
     end;
@@ -349,9 +371,6 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeString(s: string; withTokenType: Boolean);
-var
-  i: Integer;
-  c: char;
 begin
 
   if s = '' then MSRaise(Exception, 'encodeString:withTokenType: no string to encode!');
@@ -362,29 +381,7 @@ begin
   end;
 
   _encodeTokenSeparator;
-  FBuffer.WriteString('"');
-
-  for i := 1 to Length(s) do begin
-    c := s[i];
-    case c of
-      #9: FBuffer.WriteString('\t');
-      #10: FBuffer.WriteString('\n');
-      #13: FBuffer.WriteString('\r');
-      #22: FBuffer.WriteString('\"');
-      #92: FBuffer.WriteString('\\');
-    else
-      if ((c < #32) or (c > #127)) then begin
-        FBuffer.WriteString('\u');
-        //todo .....
-        FBuffer.WriteString('0000');
-      end else
-        FBuffer.WriteString(c);
-    end;
-  end;
-
-  FBuffer.WriteString('"');
-
-   //todo ...
+  _EncodeString(FBuffer, s);
 end;
 
 //------------------------------------------------------------------------------
@@ -392,19 +389,27 @@ end;
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeArray(AnArray: TObjectList);
+var
+  i: Integer;
 begin
-  ShowMessage('EncodeArray Todo');
+  encodeUnsignedLongLong(anArray.count, False);
+  for i := 0 to anArray.Count - 1 do
+    EncodeObject(TObject(AnArray[i]));
+
 end;
 //------------------------------------------------------------------------------
+//weakref ...
 
-procedure TMSTEEncoder.EncodeDictionary(ADictionary: TMSDictionary);
+procedure TMSTEEncoder.EncodeDictionary(ADictionary: TMSDictionary; isSnapshot: Boolean);
 var
   xKeys: TStringList;
   xTmpKeys: TStringList;
   i, keyReference: Integer;
   xObj: TObject;
+  xCpl: TMSCouple;
   xList: TObjectList;
   sKey: string;
+  isWeak: Boolean;
 begin
 
   xList := TObjectList.Create(False);
@@ -412,14 +417,28 @@ begin
 
   xTmpKeys := ADictionary.Value.GetElementsKeys;
 
-  for i := 0 to xTmpKeys.Count - 1 do begin
-    sKey := xTmpKeys[i];
-    xObj := ADictionary.GetValue(sKey);
-    if xObj.SingleEncodingCode <> tt_NULL then begin
-      xKeys.Add(sKey);
-      xList.Add(xObj);
+  if isSnapshot then begin
+    for i := 0 to xTmpKeys.Count - 1 do begin
+      sKey := xTmpKeys[i];
+      xCpl := ADictionary.GetValue(sKey) as TMSCouple;
+      if xCpl.SingleEncodingCode <> tt_NULL then begin
+        xKeys.Add(sKey);
+        xList.Add(xCpl);
+      end;
     end;
+
+  end else begin
+    for i := 0 to xTmpKeys.Count - 1 do begin
+      sKey := xTmpKeys[i];
+      xObj := ADictionary.GetValue(sKey);
+      if xObj.SingleEncodingCode <> tt_NULL then begin
+        xKeys.Add(sKey);
+        xList.Add(xObj);
+      end;
+    end;
+
   end;
+
   xTmpKeys.Free;
 
   EncodeUnsignedLongLong(xKeys.Count, False);
@@ -429,7 +448,13 @@ begin
     keyReference := FKeys.IndexOf(sKey);
     if keyReference = -1 then keyReference := FKeys.Add(sKey);
     EncodeUnsignedLongLong(keyReference, False);
-    EncodeObject(TObject(xList[i]));
+
+    if isSnapshot then begin
+      xCpl := xList[i] as TMSCouple;
+      isWeak := Assigned(xCpl.SecondMember);
+      encodeObject(xCpl.FirstMember, isWeak);
+    end else
+      EncodeObject(TObject(xList[i]));
   end;
 
   xKeys.Free;
@@ -455,7 +480,6 @@ begin
   xBuf.WriteString('["MSTE0101",');
   _encodeUnsignedLongLong(xBuf, 5 + FTokenCount + FKeys.Count + FClasses.Count);
   xBuf.WriteString(',"CRC00000000",');
-  xBuf.WriteString(',');
 
   //Classes list
   _encodeUnsignedLongLong(xBuf, FClasses.Count);

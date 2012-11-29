@@ -1,170 +1,106 @@
 unit UTest;
 
 interface
+
+//UMSTEClasses must be first
+
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
-  Dialogs, StdCtrls, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UMSTEClasses, UDictionary;
+  UMSTEClasses, Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  Dialogs, StdCtrls, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UDictionary;
 
 type
-  TTest2 = class;
 
-  TTest = class(TObject)
+  TMSPerson = class(TObject)
   public
-    IntVal: Integer;
-    DateVal: TDate;
-    StrVal: string;
-    TestVal: TTest2;
-    constructor Create;
-    destructor Destroy; override;
+    Name: string;
+    firstName: string;
+    sex: Boolean;
 
-    function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
     function MSTESnapshot(Encoder: TObject): TMSDictionary; override;
-
   end;
 
-  TTest2 = class(TObject)
-  public
+  TMSSon = class;
 
-    IntVal: Integer;
-    DateVal: TDate;
-    StrVal: string;
+  TMSParent = class(TMSPerson)
+    son: TMSSon;
+    function MSTESnapshot(Encoder: TObject): TMSDictionary; override;
+  end;
 
-    constructor Create;
-    destructor Destroy; override;
-
-    function InitWithDictionary(ADictionary: TMSDictionary): Boolean;
+  TMSSon = class(TMSPerson)
+    Mother: TMSParent;
+    Father: TMSParent;
     function MSTESnapshot(Encoder: TObject): TMSDictionary; override;
   end;
 
 implementation
 
-{ TTest }
-//------------------------------------------------------------------------------
+{ TMSPerson }
 
-constructor TTest.Create;
-begin
-  TestVal := TTest2.Create;
-  IntVal := 155;
-  DateVal := Now;
-  StrVal := 'Test1'
-
-end;
-//------------------------------------------------------------------------------
-
-destructor TTest.Destroy;
-begin
-  TestVal.Free;
-  inherited;
-end;
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-
-function TTest.InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-//var
-//  xObj: TObject;
-//  xDic: TDictionary;
-begin
-//  Result := True;
-//  xDic := ADictionary.Value;
-//
-//  xObj := xDic.GetValue('Int');
-//  if xObj is TMSNumber then begin
-//    IntVal := TMSNumber(xObj);
-//  end;
-//
-//  xObj := xDic.GetValue('Date');
-//  if xObj is TMSDate then begin
-//    DateVal := TMSDate(xObj);
-//  end;
-//
-//  xObj := xDic.GetValue('Str');
-//  if xObj is TMSString then begin
-//    StrVal := TMSString(xObj);
-//  end;
-//
-//  xObj := xDic.GetValue('test');
-//  if xObj is TMSDictionary then begin
-//    TestVal.InitWithDictionary(TMSDictionary(xObj));
-//  end;
-
-end;
-
-//------------------------------------------------------------------------------
-
-function TTest.MSTESnapshot(Encoder: TObject): TMSDictionary;
+function TMSPerson.MSTESnapshot(Encoder: TObject): TMSDictionary;
 var
-  Snapshot: TMSDictionary;
-  n: TMSNumber;
-  d: TMSDate;
-  s: TMSString;
+  xDic: TMSDictionary;
+
+  msCplName, msCplFirstName, msCplSex: TMSCouple;
+  msName, msFirstName: TMSString;
+  msSex: TMSNumber;
+
 begin
-  Snapshot := TMSDictionary.Create(True);
 
-  n := TMSNumber.Create;
-  n.Int := IntVal;
+  msName := TMSString.Create(name);
+  msCplName := TMSCouple.Create(msName, nil);
+  msCplName.FreeOnDestroy := True;
 
-  d := TMSDate.Create(DateVal);
-  s := TMSString.Create(StrVal);
+  msFirstName := TMSString.Create(firstName);
+  msCplFirstName := TMSCouple.Create(msFirstName, nil);
+  msCplFirstName.FreeOnDestroy := True;
 
-  Snapshot.AddValue('Int', n);
-  Snapshot.AddValue('Date', d);
-  Snapshot.AddValue('Str', s);
+  msSex := TMSNumber.Create;
+  msSex.Byte := Integer(sex);
+  msCplSex := TMSCouple.Create(msSex, nil);
+  msCplSex.FreeOnDestroy := True;
 
-  //Snapshot.AddValue('test', TestVal.Assign);
-
-  Result := Snapshot;
+  xDic := TMSDictionary.Create(True);
+  xDic.AddValue('firstName', msCplFirstName);
+  xDic.AddValue('name', msCplName);
+  xDic.AddValue('sex', msCplsex);
+  Result := xDic;
 
 end;
 
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
-{ TTest2 }
-//------------------------------------------------------------------------------
+{ TMSParent }
 
-constructor TTest2.Create;
+function TMSParent.MSTESnapshot(Encoder: TObject): TMSDictionary;
+var
+  xDic: TMSDictionary;
+  msCplSon: TMSCouple;
 begin
-  IntVal := 100;
-  DateVal := Now;
-  StrVal := 'Test2';
+  xDic := inherited MSTESnapshot(Encoder);
+
+  msCplSon := TMSCouple.Create(son, __MSTrue);
+  xDic.AddValue('son', msCplSon);
+
+  Result := xDic;
 
 end;
 
-destructor TTest2.Destroy;
+{ TMSSon }
+
+function TMSSon.MSTESnapshot(Encoder: TObject): TMSDictionary;
+var
+  xDic: TMSDictionary;
+  msCplFather, msCplMother: TMSCouple;
 begin
-  inherited;
+  xDic := inherited MSTESnapshot(Encoder);
+
+  msCplFather := TMSCouple.Create(Father, nil);
+  msCplMother := TMSCouple.Create(Mother, nil);
+
+  xDic.AddValue('father', msCplFather);
+  xDic.AddValue('mother', msCplMother);
+
+  Result := xDic;
+
 end;
 
-function TTest2.InitWithDictionary(ADictionary: TMSDictionary): Boolean;
-//var
-//  xObj: TMSTEObject;
-begin
-//  Result := True;
-//
-//  xObj := ADictionary.GetValue('Int');
-//  IntVal.Assign(xObj);
-//
-//  xObj := ADictionary.GetValue('Date');
-//  DateVal.Assign(xObj);
-//
-//  xObj := ADictionary.GetValue('Str');
-//  StrVal.Assign(xObj);
-
-end;
-//------------------------------------------------------------------------------
-
-function TTest2.MSTESnapshot(Encoder: TObject): TMSDictionary;
-//var
-//  Snapshot: TMSDictionary;
-begin
-//  Snapshot := TMSTEEncoder(AEncoder).getSnapshotDictionary;
-//
-//  Snapshot.AddValue('Int', IntVal);
-//  Snapshot.AddValue('Date', DateVal);
-//  Snapshot.AddValue('Str', StrVal);
-//
-//  Result := Snapshot;
-
-end;
-//------------------------------------------------------------------------------
 end.
 

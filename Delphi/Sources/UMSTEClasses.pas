@@ -7,10 +7,6 @@ uses
   , UDictionary
   ;
 
-const
-//  RecursiveToString = True;
-  RecursiveToString = False;
-
 type
 
   TMSTETokenType
@@ -48,6 +44,14 @@ type
     tt_USER_CLASS = 50
 
     );
+
+const
+//  RecursiveToString = True;
+  RecursiveToString = False;
+  MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT = integer(tt_USER_CLASS);
+  MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT = MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 1;
+
+type
 
   TMSDictionary = class;
 
@@ -237,12 +241,16 @@ type
   private
     FFirstMember: TObject;
     FSecondMember: TObject;
+    FFreeOnDestroy: Boolean;
   public
+    constructor Create(FirstMember: TObject = nil; SecondMember: TObject = nil);
+    destructor Destroy; override;
 //    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
 
+    property FreeOnDestroy: Boolean read FFreeOnDestroy write FFreeOnDestroy;
     property FirstMember: TObject read FFirstMember write FFirstMember;
     property SecondMember: TObject read FSecondMember write FSecondMember;
   end;
@@ -594,6 +602,26 @@ end;
 //  FFirstMember := TMSCouple(AObject).FirstMember;
 //  FSecondMember := TMSCouple(AObject).SecondMember;
 //end;
+//------------------------------------------------------------------------------
+
+constructor TMSCouple.Create(FirstMember, SecondMember: TObject);
+begin
+  inherited Create;
+  FreeOnDestroy := False;
+  FFirstMember := FirstMember;
+  FSecondMember := SecondMember;
+end;
+//------------------------------------------------------------------------------
+
+destructor TMSCouple.Destroy;
+begin
+  if FreeOnDestroy then begin
+    FreeAndNil(FFirstMember);
+    FreeAndNil(FSecondMember);
+  end;
+
+  inherited;
+end;
 //------------------------------------------------------------------------------
 
 procedure TMSCouple.EncodeWithMSTEncoder(Encoder: TObject);
@@ -971,7 +999,7 @@ end;
 
 procedure TObjectList.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-
+  TMSTEEncoder(Encoder).EncodeArray(self);
 end;
 //------------------------------------------------------------------------------
 
@@ -982,8 +1010,12 @@ end;
 //------------------------------------------------------------------------------
 
 function TObjectList.MSTEncodedString: string;
+var
+  encoder: TMSTEEncoder;
 begin
-
+  encoder := TMSTEEncoder.Create;
+  Result := encoder.EncodeRootObject(Tobject(self));
+  FreeAndNil(encoder);
 end;
 //------------------------------------------------------------------------------
 
