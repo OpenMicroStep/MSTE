@@ -917,7 +917,7 @@ begin
   Result := nil;
   s := Ptr^;
 
-  classIndex := round((tokenType - ord(tt_USER_CLASS)) / 2);
+  classIndex := Trunc((tokenType - ord(tt_USER_CLASS)) / 2);
 
   if (classIndex >= 0) and (classIndex < FClasses.Count) then begin
     Result := DecodeDictionary(@s, endPointer, 'DecodeObject', tokenCount);
