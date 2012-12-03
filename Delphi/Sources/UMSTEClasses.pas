@@ -3,9 +3,7 @@ unit UMSTEClasses;
 interface
 
 uses
-  Windows, Messages, SysUtils, Classes, Controls, Contnrs, Graphics, UMSFoundation
-  , UDictionary
-  ;
+  Windows, Messages, SysUtils, Classes, Controls, Contnrs, Graphics, UMSFoundation;
 
 type
 
@@ -46,12 +44,43 @@ type
     );
 
 const
-//  RecursiveToString = True;
   RecursiveToString = False;
   MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT = integer(tt_USER_CLASS);
   MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT = MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 1;
 
+  MaxCapacity = 303;
+  PrimeNumber: array[0..MaxCapacity - 1] of integer =
+  (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
+    101, 103, 107, 109, 113, 127, 131, 137, 139, 149, 151, 157, 163, 167, 173, 179, 181, 191, 193, 197, 199,
+    211, 223, 227, 229, 233, 239, 241, 251, 257, 263, 269, 271, 277, 281, 283, 293,
+    307, 311, 313, 317, 331, 337, 347, 349, 353, 359, 367, 373, 379, 383, 389, 397,
+    401, 409, 419, 421, 431, 433, 439, 443, 449, 457, 461, 463, 467, 479, 487, 491, 499,
+    503, 509, 521, 523, 541, 547, 557, 563, 569, 571, 577, 587, 593, 599,
+    601, 607, 613, 617, 619, 631, 641, 643, 647, 653, 659, 661, 673, 677, 683, 691,
+    701, 709, 719, 727, 733, 739, 743, 751, 757, 761, 769, 773, 787, 797,
+    809, 811, 821, 823, 827, 829, 839, 853, 857, 859, 863, 877, 881, 883, 887,
+    907, 911, 919, 929, 937, 941, 947, 953, 967, 971, 977, 983, 991, 997
+
+    , 1009, 1013, 1019, 1021, 1031, 1033, 1039, 1049, 1051, 1061, 1063, 1069, 1087, 1091, 1093, 1097, 1103,
+    1109, 1117, 1123, 1129, 1151, 1153, 1163, 1171, 1181, 1187, 1193, 1201, 1213, 1217, 1223, 1229, 1231,
+    1237, 1249, 1259, 1277, 1279, 1283, 1289, 1291, 1297, 1301, 1303, 1307, 1319, 1321, 1327, 1361, 1367, 1373,
+    1381, 1399, 1409, 1423, 1427, 1429, 1433, 1439, 1447, 1451, 1453, 1459, 1471, 1481, 1483, 1487, 1489, 1493,
+    1499, 1511, 1523, 1531, 1543, 1549, 1553, 1559, 1567, 1571, 1579, 1583, 1597, 1601, 1607, 1609, 1613, 1619,
+    1621, 1627, 1637, 1657, 1663, 1667, 1669, 1693, 1697, 1699, 1709, 1721, 1723, 1733, 1741, 1747, 1753, 1759,
+    1777, 1783, 1787, 1789, 1801, 1811, 1823, 1831, 1847, 1861, 1867, 1871, 1873, 1877, 1879, 1889, 1901, 1907,
+    1913, 1931, 1933, 1949, 1951, 1973, 1979, 1987, 1993, 1997, 1999
+
+    );
+
 type
+
+  PElement = ^TElement;
+
+  TElement = record
+    Key: Pchar;
+    Value: Pointer;
+    Next: PElement;
+  end;
 
   TMSDictionary = class;
 
@@ -79,7 +108,8 @@ type
     procedure EncodeWithMSTEncoder(Encoder: TObject); dynamic;
 
   end;
-
+//------------------------------------------------------------------------------
+//------------------------------------------------------------------------------
   TMSNull = class(TObject)
   private
     function GetValue: TObject;
@@ -91,7 +121,7 @@ type
 
     property Value: TObject read GetValue;
   end;
-
+//------------------------------------------------------------------------------
   TMSBool = class(TObject)
   private
     FValue: Boolean;
@@ -105,7 +135,7 @@ type
 
     property Value: Boolean read FValue write FValue;
   end;
-
+//------------------------------------------------------------------------------
   TMSString = class(TObject)
   private
     FValue: string;
@@ -120,7 +150,7 @@ type
 
     property Value: string read FValue write FValue;
   end;
-
+//------------------------------------------------------------------------------
   TMSDate = class(TObject)
   private
     FValue: TDateTime;
@@ -135,28 +165,45 @@ type
 
     property Value: TDateTime read FValue write FValue;
   end;
-
+//------------------------------------------------------------------------------
   TMSDictionary = class(TObject)
   private
-    FValue: TDictionary;
-    function GetCount: Integer;
+    FOwnObject: Boolean;
+    FCount, FCapacity: Cardinal;
+    FDepth: Integer;
+    FDictionary: array of PElement;
+    procedure SetCapacity(NewCapacity: Integer);
+    procedure Grow;
+    function Hash(Akey: string): Cardinal;
+    procedure FreeElement(Element: PElement);
+    procedure PutElement(Index: Cardinal; Element: PElement);
+    procedure FreeElementValue(Element: PElement);
+    function GetElements: TList;
   public
-    constructor Create(OwnObject: Boolean = False);
-    destructor Destroy; override;
-
     function IsCollection: Boolean; override;
-    procedure AddValue(Key: string; Value: TObject);
-    function GetValue(Key: string): TObject;
-
-    property Count: Integer read GetCount;
-    property Value: TDictionary read FValue;
-
-//    procedure Assign(AObject: TObject); override;
     function ToString: string; override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-  end;
 
+    constructor Create(OwnObject: Boolean = False); overload;
+    constructor Create(Capacity: Integer; OwnObject: Boolean = False); overload;
+    destructor Destroy; override;
+
+    procedure AddValue(Key: string; Value: TObject);
+    function Remove(Key: string): Boolean;
+    function SetValue(Key: string; Value: TObject): Boolean;
+
+    function GetElementsKeys: TStringList;
+
+//    function Find(Key: String): Boolean;
+    function GetValue(Key: string): TObject;
+    procedure Clear;
+    property Count: Cardinal read FCount;
+    property Capacity: Cardinal read FCapacity;
+    property Depth: integer read FDepth;
+
+  end;
+//------------------------------------------------------------------------------
   TMSNaturalArray = class(TObject)
   private
     FValue: array of MSULong;
@@ -201,6 +248,16 @@ type
     procedure SetAsDouble(const Value: Double);
     procedure SetAsFloat(const Value: Single);
     procedure SetAsULong(const Value: MSULong);
+    function GetAsFloat: Single;
+    function GetAsDouble: Double;
+    function GetAsInt: MSInt;
+    function GetAsChar: MSChar;
+    function GetAsByte: MSByte;
+    function GetAsShort: MSShort;
+    function GetAsUShort: MSUShort;
+    function GetAsUInt: MSUInt;
+    function GetAsLong: MSLong;
+    function GetULong: MSULong;
   public
 
 //    procedure Assign(AObject: TObject); override;
@@ -208,35 +265,43 @@ type
     function TokenType: TMSTETokenType; override;
     function ToString: string; override;
 
-    property Char: MSChar read FValue.v0 write SetAsChar;
-    property Byte: MSByte read FValue.v1 write SetAsByte;
-    property Short: MSShort read FValue.v2 write SetAsShort;
-    property UShort: MSUShort read FValue.v3 write SetAsUShort;
-    property Int: MSInt read FValue.v4 write SetAsInt;
-    property UInt: MSUInt read FValue.v5 write SetAsUInt;
-    property Long: MSLong read FValue.v6 write SetAsLong;
-    property ULong: MSULong read FValue.v7 write SetAsULong;
-    property Float: Single read FValue.v8 write SetAsFloat;
-    property Double: Double read FValue.v9 write SetAsDouble;
+    property Char: MSChar read GetAsChar write SetAsChar;
+    property Byte: MSByte read GetAsByte write SetAsByte;
+    property Short: MSShort read GetAsShort write SetAsShort;
+    property UShort: MSUShort read GetAsUShort write SetAsUShort;
+    property Int: MSInt read GetAsInt write SetAsInt;
+    property UInt: MSUInt read GetAsUInt write SetAsUInt;
+    property Long: MSLong read GetAsLong write SetAsLong;
+    property ULong: MSULong read GetULong write SetAsULong;
+    property Float: Single read GetAsFloat write SetAsFloat;
+    property Double: Double read GetAsDouble write SetAsDouble;
   end;
-
+//------------------------------------------------------------------------------
   TMSColor = class(TObject)
   private
     FValue: TColor;
-    FTransparent: Byte;
+    FTransparency: Byte;
     function GetTRGBValue: MSUInt;
     procedure SetTRGBValue(const Value: MSUInt);
+    function GetB: Byte;
+    function GetG: Byte;
+    function GetR: Byte;
   public
 //    procedure Assign(AObject: TObject); override;
+    constructor Create(); overload;
+    constructor Create(AColor: TColor; ATransparency: Byte = 0); overload;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
 
-    property ColorValue: TColor read FValue write FValue;
-    property TransparentValue: Byte read FTransparent write FTransparent;
-    property TRGBValue: MSUInt read GetTRGBValue write SetTRGBValue;
+    property Color: TColor read FValue write FValue;
+    property Transparency: Byte read FTransparency write FTransparency;
+    property TRGB: MSUInt read GetTRGBValue write SetTRGBValue;
+    property R: Byte read GetR;
+    property G: Byte read GetG;
+    property B: Byte read GetB;
   end;
-
+//------------------------------------------------------------------------------
   TMSCouple = class(TObject)
   private
     FFirstMember: TObject;
@@ -254,7 +319,7 @@ type
     property FirstMember: TObject read FFirstMember write FFirstMember;
     property SecondMember: TObject read FSecondMember write FSecondMember;
   end;
-
+//------------------------------------------------------------------------------
   TMSData = class(TObject)
   private
     FValue: TMemoryStream;
@@ -281,12 +346,12 @@ var
   __theDistantFuture: TMSDate;
 
 implementation
-uses Dialogs, StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
+uses Dialogs, Math, StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
 
 //------------------------------------------------------------------------------
 { TMSNull }
 //------------------------------------------------------------------------------
-
+{$REGION 'TMSNull'}
 //procedure TMSNull.Assign(AObject: TObject);
 //begin
 //  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
@@ -315,10 +380,12 @@ function TMSNull.ToString: string;
 begin
   Result := 'NULL';
 end;
+{$ENDREGION}
+
 //------------------------------------------------------------------------------
 { TMSBool }
 //------------------------------------------------------------------------------
-
+{$REGION 'TMSBool'}
 //procedure TMSBool.Assign(AObject: TObject);
 //begin
 //  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
@@ -349,57 +416,351 @@ function TMSBool.ToString: string;
 begin
   if FValue then Result := 'TRUE' else Result := 'FALSE';
 end;
+{$ENDREGION}
 
 //------------------------------------------------------------------------------
 { TMSDictionary }
-
-procedure TMSDictionary.AddValue(Key: string; Value: TObject);
-begin
-  FValue.AddValue(Key, Value);
-end;
-
 //------------------------------------------------------------------------------
+{$REGION 'TMSDictionary'}
 
 constructor TMSDictionary.Create(OwnObject: Boolean = False);
 begin
-  inherited Create;
-  FValue := TDictionary.Create(OwnObject);
+  Create(11, OwnObject);
 end;
 //------------------------------------------------------------------------------
+
+constructor TMSDictionary.Create(Capacity: Integer; OwnObject: Boolean = False);
+begin
+  FCount := 0;
+  FCapacity := 0;
+  FDepth := 0;
+  FOwnObject := OwnObject;
+  SetCapacity(Capacity);
+end;
+//------------------------------------------------------------------------------
+
+function TMSDictionary.GetElements: TList;
+var
+  i: integer;
+  list: TList;
+  pok: PElement;
+begin
+  list := TList.Create();
+
+  for i := 0 to FCapacity - 1 do begin
+    if FDictionary[i] <> nil then begin
+      pok := FDictionary[i];
+      list.Add(pok);
+      while pok.next <> nil do begin
+        pok := pok.next;
+        if pok <> nil then list.Add(pok)
+      end;
+    end
+  end;
+
+  Result := list
+end;
+//------------------------------------------------------------------------------
+
+function TMSDictionary.GetElementsKeys: TStringList;
+var
+  i: integer;
+  list: TStringList;
+  pok: PElement;
+  sKey: string;
+begin
+  list := TStringList.Create();
+
+  for i := 0 to FCapacity - 1 do begin
+    if FDictionary[i] <> nil then begin
+      pok := FDictionary[i];
+      sKey := pok.Key;
+      list.Add(sKey);
+      while pok.next <> nil do begin
+        pok := pok.next;
+        if pok <> nil then begin
+          sKey := pok.Key;
+          list.Add(sKey);
+        end;
+      end;
+    end
+  end;
+
+  list.Sort;
+  Result := list
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSDictionary.SetCapacity(NewCapacity: Integer);
+var
+  tmpList: TList;
+  i, index: cardinal;
+  el: PElement;
+begin
+  FDepth := 0;
+  if FCount = 0 then begin
+    SetLength(FDictionary, NewCapacity);
+    FCapacity := NewCapacity;
+  end else begin
+    tmpList := GetElements;
+    FCount := 0;
+    FCapacity := NewCapacity;
+    SetLength(FDictionary, 0);
+    SetLength(FDictionary, FCapacity);
+
+    for i := 0 to tmpList.Count - 1 do begin
+      el := PElement(tmpList[i]);
+      el.Next := nil;
+      Index := Hash(el.Key);
+      PutElement(index, PElement(el));
+      Inc(FCount);
+    end;
+
+    tmpList.Free;
+  end;
+
+end;
+
+//------------------------------------------------------------------------------
+{ Destroy the hash map }
 
 destructor TMSDictionary.Destroy;
 begin
-  FreeAndNil(FValue);
-  inherited;
+  Clear;
+  inherited Destroy
 end;
 
 //------------------------------------------------------------------------------
 
-function TMSDictionary.GetCount: Integer;
+procedure TMSDictionary.FreeElementValue(Element: PElement);
 begin
-  Result := FValue.Count;
+  if FOwnObject and (Element.Value <> nil) then begin
+    TObject(Element.Value).Free;
+    Element.Value := nil;
+  end;
+end;
+
+//------------------------------------------------------------------------------
+
+procedure TMSDictionary.FreeElement(Element: PElement);
+begin
+  FreeElementValue(Element);
+  FreeMem(Element.Key);
+  FreeMem(Element);
+  Dec(FCount);
+end;
+
+//------------------------------------------------------------------------------
+{ Calculate the hash value of a string }
+
+function TMSDictionary.Hash(Akey: string): Cardinal;
+var
+  i: Cardinal;
+  x: Cardinal;
+begin
+  Result := 0;
+  for i := 1 to Length(Akey) do begin
+    Result := (Result shl 4) + Ord(Akey[i]);
+    x := Result and $F0000000;
+    if (x <> 0) then begin
+      Result := Result xor (x shr 24);
+    end;
+    Result := Result and (not x);
+  end;
+  Result := Result mod FCapacity;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSDictionary.SetValue(Key: string; Value: TObject): Boolean;
+var
+  Index: Cardinal;
+  el, pok: PElement;
+begin
+  Result := False;
+  index := Hash(key);
+
+  el := FDictionary[index];
+  if (el <> nil) and (CompareStr(Key, el.Key) = 0) then begin
+    if CompareStr(Key, el.key) = 0 then begin
+      FreeElementValue(el);
+      el.Value := Value;
+      Result := True;
+    end else begin
+      while (el.Next <> nil) and (CompareStr(Key, el.Next.Key) <> 0) do
+        el := el.Next;
+      if el <> nil then begin
+        pok := el.Next;
+        el.Next := pok.Next;
+        FreeElementValue(el);
+        el.Value := Value;
+        Result := True;
+      end;
+    end;
+  end
+
+end;
+
+//------------------------------------------------------------------------------
+{ Add a new string to the hash table }
+
+procedure TMSDictionary.AddValue(Key: string; Value: TObject);
+var
+  Index: Cardinal;
+  el: PElement;
+begin
+
+  if FCount = FCapacity then Grow;
+  Inc(FCount);
+  Index := Hash(Key);
+
+  GetMem(el, SizeOf(TElement));
+  key := Key + #0;
+  GetMem(el.Key, Length(Key));
+  StrPCopy(el.Key, Key);
+  el.Value := Value;
+  el.Next := nil;
+
+  PutElement(Index, el);
+
 end;
 //------------------------------------------------------------------------------
 
-function TMSDictionary.GetValue(Key: string): TObject;
+procedure TMSDictionary.PutElement(Index: Cardinal; Element: PElement);
+var
+  pok: PElement;
+  xDepth: Integer;
 begin
-  Result := TObject(FValue.GetValue(Key));
+  xDepth := 0;
+  if FDictionary[Index] = nil then
+    FDictionary[Index] := Element
+  else begin
+    pok := FDictionary[Index];
+    while pok.Next <> nil do begin
+      pok := pok.Next;
+      inc(xDepth);
+    end;
+    pok.Next := Element
+  end;
+
+  FDepth := Max(FDepth, xDepth);
+
 end;
+
+//------------------------------------------------------------------------------
+{ Remove a string from the hash table }
+
+function TMSDictionary.Remove(Key: string): Boolean;
+var
+  Index: Cardinal;
+  el, pok: PElement;
+
+begin
+  Result := False;
+  index := Hash(key);
+
+  if (FDictionary[index] <> nil) then begin
+    el := FDictionary[index];
+    if CompareStr(Key, el.key) = 0 then begin
+      FDictionary[index] := el.Next;
+      FreeElement(el);
+      Result := True;
+    end else begin
+      while (el.Next <> nil) and (CompareStr(Key, el.Next.Key) <> 0) do
+        el := el.Next;
+      if el <> nil then begin
+        pok := el.Next;
+        el.Next := pok.Next;
+        FreeElement(pok);
+        Result := True;
+      end
+    end;
+  end
+
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSDictionary.GetValue(key: string): TObject;
+var
+  Index: Cardinal;
+  el: PElement;
+begin
+  Result := nil;
+  Index := Hash(key);
+  el := FDictionary[index];
+
+  while (el <> nil) do
+    if CompareStr(Key, el.Key) = 0 then break else el := el.Next;
+
+  if el <> nil then Result := el.Value;
+
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSDictionary.Grow;
+var
+  i: Integer;
+  newCapacity: Cardinal;
+begin
+
+  if FCapacity >= 1999 then begin
+    newCapacity := FCapacity + FCapacity div 4;
+  end else
+    for i := 0 to MaxCapacity - 1 do begin
+      newCapacity := PrimeNumber[i];
+      if newCapacity > FCapacity then begin
+        Break;
+      end;
+    end;
+
+  SetCapacity(newCapacity);
+
+end;
+
+//------------------------------------------------------------------------------
+{ Clear all the values from the hash map }
+
+procedure TMSDictionary.Clear;
+var
+  i: integer;
+  pok, prev: PElement;
+begin
+  for i := 0 to High(FDictionary) do begin
+    if FDictionary[i] <> nil then begin
+      pok := FDictionary[i];
+      while pok.next <> nil do begin
+        prev := pok;
+        pok := pok.next;
+        FreeElement(prev);
+      end;
+      FreeElement(pok);
+      FDictionary[i] := nil;
+    end;
+
+  end;
+  FCount := 0;
+end;
+
+//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 
 function TMSDictionary.IsCollection: Boolean;
 begin
   Result := True;
 end;
-
 //------------------------------------------------------------------------------
 
-//procedure TMSDictionary.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  //Todo ....
-////  FValue := TMSDate(AObject).Value;
-//end;
+procedure TMSDictionary.EncodeWithMSTEncoder(Encoder: TObject);
+begin
+  TMSTEEncoder(Encoder).EncodeDictionary(Self);
+end;
+//------------------------------------------------------------------------------
+
+function TMSDictionary.TokenType: TMSTETokenType;
+begin
+  Result := tt_DICTIONARY;
+end;
 //------------------------------------------------------------------------------
 
 function TMSDictionary.ToString: string;
@@ -410,7 +771,7 @@ var
   xObj: TObject;
 begin
 
-  sl := FValue.GetElementsKeys;
+  sl := GetElementsKeys;
 
   s := #13#10'{'#13#10;
 
@@ -418,7 +779,6 @@ begin
     sKey := sl[i];
     xObj := GetValue(sKey);
     if xObj.IsCollection then begin
-//    if (not RecursiveToString) and ((xObj is TMSDictionary)) then begin
       s := s + sKey + '=' + xObj.ClassName + #13#10;
     end else begin
       sObj := xObj.ToString;
@@ -431,24 +791,12 @@ begin
   Result := s;
 end;
 
-//------------------------------------------------------------------------------
-
-function TMSDictionary.TokenType: TMSTETokenType;
-begin
-  Result := tt_DICTIONARY;
-end;
-
-//------------------------------------------------------------------------------
-
-procedure TMSDictionary.EncodeWithMSTEncoder(Encoder: TObject);
-begin
-  TMSTEEncoder(Encoder).EncodeDictionary(Self);
-end;
+{$ENDREGION}
 
 //------------------------------------------------------------------------------
 { TMSString }
 //------------------------------------------------------------------------------
-
+{$REGION 'TMSString'}
 //procedure TMSString.Assign(AObject: TObject);
 //begin
 //  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
@@ -487,8 +835,12 @@ function TMSString.ToString: string;
 begin
   Result := FValue;
 end;
+{$ENDREGION}
 //------------------------------------------------------------------------------
 { TMSDate }
+//------------------------------------------------------------------------------
+
+{$REGION 'TMSDate'}
 
 //procedure TMSDate.Assign(AObject: TObject);
 //begin
@@ -535,11 +887,12 @@ function TMSDate.ToString: string;
 begin
   Result := FormatDateTime('dd/mm/yyyy', FValue)
 end;
-//------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
+{$ENDREGION}
 
+//------------------------------------------------------------------------------
 { TMSColor }
-
+//------------------------------------------------------------------------------
+{$REGION 'TMSColor'}
 //procedure TMSColor.Assign(AObject: TObject);
 //begin
 //  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
@@ -548,15 +901,47 @@ end;
 //end;
 //------------------------------------------------------------------------------
 
+constructor TMSColor.Create(AColor: TColor; ATransparency: Byte);
+begin
+  inherited Create;
+  FValue := AColor;
+  FTransparency := ATransparency;
+end;
+//------------------------------------------------------------------------------
+
+constructor TMSColor.Create;
+begin
+  Create(0, 0);
+end;
+//------------------------------------------------------------------------------
+
 procedure TMSColor.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-  TMSTEEncoder(Encoder).EncodeUnsignedInt(TRGBValue, False);
+  TMSTEEncoder(Encoder).EncodeUnsignedInt(TRGB, False);
+end;
+//------------------------------------------------------------------------------
+
+function TMSColor.GetB: Byte;
+begin
+  Result := ColorToRGB(FValue) shr 16;
+end;
+//------------------------------------------------------------------------------
+
+function TMSColor.GetG: Byte;
+begin
+  Result := ColorToRGB(FValue) shr 8;
+end;
+//------------------------------------------------------------------------------
+
+function TMSColor.GetR: Byte;
+begin
+  Result := ColorToRGB(FValue);
 end;
 //------------------------------------------------------------------------------
 
 function TMSColor.GetTRGBValue: MSUInt;
 begin
-  Result := ColorToRGB(FValue) + (FTransparent shl 24);
+  Result := ColorToRGB(FValue) + (FTransparency shl 24);
 end;
 //------------------------------------------------------------------------------
 
@@ -571,7 +956,7 @@ begin
   B := (Value and $FF);
 
   FValue := RGB(R, G, B);
-  FTransparent := T;
+  FTransparency := T;
 
 end;
 
@@ -589,13 +974,16 @@ var
 begin
   rgb := ColorToRGB(FValue);
   Result := Format('#%.2x%.2x%.2x%.2x',
-    [FTransparent, GetRValue(rgb), GetGValue(rgb), GetBValue(rgb)]);
+    [FTransparency, GetRValue(rgb), GetGValue(rgb), GetBValue(rgb)]);
 
 end;
+{$ENDREGION}
+
+//------------------------------------------------------------------------------
+{ TMSCouple }
 //------------------------------------------------------------------------------
 
-{ TMSCouple }
-
+{$REGION 'TMSColor'}
 //procedure TMSCouple.Assign(AObject: TObject);
 //begin
 //  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
@@ -642,9 +1030,13 @@ begin
   if Assigned(FFirstMember) then Result := FFirstMember.ToString;
   if Assigned(FSecondMember) then Result := Result + '/' + FSecondMember.ToString;
 end;
+{$ENDREGION}
 
 //------------------------------------------------------------------------------
 { TMSData }
+//------------------------------------------------------------------------------
+
+{$REGION 'TMSColor'}
 
 //procedure TMSData.Assign(AObject: TObject);
 //begin
@@ -717,9 +1109,14 @@ begin
   else
     BinToHex(FValue.Memory, PAnsiChar(Result), FValue.Size);
 end;
+
+{$ENDREGION}
+
+//------------------------------------------------------------------------------
+{ TMSNumber }
 //------------------------------------------------------------------------------
 
-{ TMSNumber }
+{$REGION 'TMSNumber'}
 
 //procedure TMSNumber.Assign(AObject: TObject);
 //begin
@@ -753,6 +1150,90 @@ procedure TMSNumber.SetAsChar(const Value: MSChar);
 begin
   FValue.NType := 0;
   FValue.v0 := Value;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsChar: MSChar;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v0;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsByte: MSByte;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v1;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsShort: MSShort;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v2;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsUShort: MSUShort;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v3;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsInt: MSInt;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v4;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsUInt: MSUInt;
+begin
+  if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else Result := FValue.v5;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsLong: MSLong;
+begin
+  if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else Result := FValue.v6;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetULong: MSULong;
+begin
+  if FValue.NType = 8 then Result := Trunc(FValue.v8)
+  else if FValue.NType = 9 then Result := Trunc(FValue.v9)
+  else Result := FValue.v7;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsDouble: Double;
+begin
+  if FValue.NType = 8 then Result := FValue.v8
+  else if FValue.NType = 9 then Result := FValue.v9
+  else Result := FValue.v6;
+end;
+//------------------------------------------------------------------------------
+
+function TMSNumber.GetAsFloat: Single;
+begin
+  if FValue.NType = 8 then Result := FValue.v8
+  else if FValue.NType = 9 then Result := FValue.v9
+  else Result := FValue.v6;
 end;
 
 //------------------------------------------------------------------------------
@@ -846,10 +1327,13 @@ begin
   end;
 
 end;
-//------------------------------------------------------------------------------
+{$ENDREGION}
 
+//------------------------------------------------------------------------------
 { TMSNaturalArray }
 //------------------------------------------------------------------------------
+
+{$REGION 'TMSNaturalArray'}
 
 //procedure TMSNaturalArray.Assign(AObject: TObject);
 //begin
@@ -915,14 +1399,13 @@ begin
   Result := 'TMSNaturalArray.ToString : A IMPEMENTER';
 end;
 
-//------------------------------------------------------------------------------
+{$ENDREGION}
 
-//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 { TObject }
 //------------------------------------------------------------------------------
-//------------------------------------------------------------------------------
 
+{$REGION 'TObject'}
 //procedure TObject.Assign(AObject: TObject);
 //begin
 //
@@ -965,32 +1448,16 @@ end;
 
 function TObject.ToString: string;
 begin
-
+  MSRaise(Exception, 'ToString method must be overrited');
 end;
 
-//------------------------------------------------------------------------------
+{$ENDREGION}
 
-//function TMSArray.ToString: string;
-//var
-//  i: Integer;
-//  xObj: TObject;
-//  s, sobj: string;
-//begin
-//
-//  s := #13#10'['#13#10;
-//  for I := 0 to FValue.Count - 1 do begin
-//    xObj := Value[i];
-//    sObj := xObj.ToString;
-//    s := s + sObj + #13#10;
-//  end;
-//  s := s + ']';
-//
-//  result := s;
-//end;
-
-//------------------------------------------------------------------------------
 //------------------------------------------------------------------------------
 { TObjectList }
+//------------------------------------------------------------------------------
+
+{$REGION 'TObjectList'}
 
 procedure TObjectList.Assign(AObject: TObject);
 begin
@@ -1054,6 +1521,8 @@ begin
 
   result := s;
 end;
+
+{$ENDREGION}
 
 //------------------------------------------------------------------------------
 

@@ -154,7 +154,7 @@ end;
 
 procedure LogDico(ADico: TMSDictionary);
 begin
-  aWriteLog(format('-- %p -- %d', [addr(ADico), ADico.Value.Count]));
+  aWriteLog(format('-- %p -- %d', [addr(ADico), ADico.Count]));
   aWriteLog(ADico.ToString);
 end;
 
@@ -343,7 +343,7 @@ begin
   trgbValue := _DecodeUnsignedInt(@s, endPointer, operation);
 
   xColor := TMSColor.Create;
-  xColor.TRGBValue := trgbValue;
+  xColor.TRGB := trgbValue;
   Result := xColor;
 
   ptr^ := s;

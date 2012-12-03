@@ -9,8 +9,7 @@ uses
   UMSFoundation in '..\Sources\UMSFoundation.pas',
   UMSTEClasses in '..\Sources\UMSTEClasses.pas',
   UMSTEDecoder in '..\Sources\UMSTEDecoder.pas',
-  UMSTEEncoder in '..\Sources\UMSTEEncoder.pas',
-  UDictionary in '..\Sources\UDictionary.pas';
+  UMSTEEncoder in '..\Sources\UMSTEEncoder.pas';
 
 {$R *.res}
 

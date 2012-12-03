@@ -3,8 +3,10 @@ unit UMain;
 interface
 
 uses
-  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms, Contnrs,
-  Dialogs, StdCtrls, UMSTEClasses, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UDictionary, UTest
+  Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
+  //   UMSTEClasses must be after Contnrssociete
+  Contnrs, UMSTEClasses,
+  Dialogs, StdCtrls, UMSFoundation, UMSTEDecoder, UMSTEEncoder, UDictionary, UTest
   ;
 
 type
@@ -13,9 +15,11 @@ type
     Button1: TButton;
     Memo2: TMemo;
     Button2: TButton;
+    Button3: TButton;
     procedure Button1Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure Button2Click(Sender: TObject);
+    procedure Button3Click(Sender: TObject);
   private
     xDecoder: TMSTEDecoder;
     { Déclarations privées }
@@ -35,12 +39,7 @@ var
   bCrc: Boolean;
   ms: TMemoryStream;
   s: string;
-
   root: TObject;
-  a: TObjectList;
-  d0, d1, d2: TMSDictionary;
-
-  r: TObject;
 
 begin
 
@@ -64,8 +63,8 @@ begin
   s := StringReplace(s, #13#10, '', [rfReplaceAll]);
   xDecoder := TMSTEDecoder.Create;
   ms := TMemoryStream.Create;
-//  ms.LoadFromFile('MSTE.TXT');
-  ms.Write(s[1], Length(s));
+  ms.LoadFromFile('MSTE.TXT');
+//  ms.Write(s[1], Length(s));
   ms.Seek(0, soFromBeginning);
   root := xDecoder.Decode(ms, bCrc);
 
@@ -92,13 +91,12 @@ begin
   Memo2.Lines.Add('Classe du root = ' + root.ClassName);
   Memo2.Lines.Add('--------------------------------------------------------');
 
-  r := root;
   Memo2.Lines.Add(Format('%d', [ord(UMSTEClasses.TObjectList(Root).TokenType)]));
   Memo2.Lines.Add(Format('%d', [ord(UMSTEClasses.TObject(Root).TokenType)]));
   Memo2.Lines.Add(Format('%d', [ord(root.TokenType)]));
 
   Memo2.Lines.Add(
-    r.ToString
+    root.ToString
     );
 
   Memo2.Lines.Add('--------------------------------------------------------');
@@ -116,13 +114,10 @@ begin
 end;
 
 procedure TForm9.FormCreate(Sender: TObject);
-var
-  s: string;
 begin
-
 //  Button1.Click;
-  Button2.Click;
-
+//  Button2.Click;
+  Button3.Click;
 end;
 
 procedure TForm9.Button2Click(Sender: TObject);
@@ -170,6 +165,31 @@ begin
     + '"sex","name","son","father","mother",20,3,50,4,0,5,"Jean",1,3,0,2,5,'
     + '"DUPOND",3,52,5,0,5,"Marc",1,9,3,2,9,4,4,9,1,5,50,4,0,5,"Ginette",1,3,1,2,5,"DURAND",3,9,5,9,7,9,5]'
     );
+
+end;
+
+procedure TForm9.Button3Click(Sender: TObject);
+var
+  n: TMSNumber;
+  c: TMSColor;
+begin
+
+  n := TMSNumber.Create;
+  n.Int := 100;
+  n.Float := 100.10;
+  n.Double := 100.10;
+
+//  Memo2.Lines.Add(IntToStr(n.Int));
+//  Memo2.Lines.Add(FloatToStr(n.Float));
+//  Memo2.Lines.Add(FloatToStr(n.Double));
+
+  n.Free;
+
+  c := TMSColor.Create(clLime, 0);
+  Memo2.Lines.Add(IntToStr(c.r));
+  Memo2.Lines.Add(IntToStr(c.g));
+  Memo2.Lines.Add(IntToStr(c.b));
+  c.Free;
 
 end;
 

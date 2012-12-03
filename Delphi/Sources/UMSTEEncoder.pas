@@ -415,7 +415,7 @@ begin
   xList := TObjectList.Create(False);
   xKeys := TStringList.Create;
 
-  xTmpKeys := ADictionary.Value.GetElementsKeys;
+  xTmpKeys := ADictionary.GetElementsKeys;
 
   if isSnapshot then begin
     for i := 0 to xTmpKeys.Count - 1 do begin
