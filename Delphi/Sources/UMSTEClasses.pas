@@ -98,7 +98,7 @@ type
 
   TObjectList = class(Contnrs.TObjectList)
   public
-    procedure Assign(AObject: TObject); dynamic;
+    procedure Assign(AObjectList: TObjectList); dynamic;
     function IsCollection: Boolean; dynamic;
     function TokenType: TMSTETokenType; dynamic; //dynamic;
     function ToString: string; dynamic;
@@ -112,14 +112,15 @@ type
 //------------------------------------------------------------------------------
   TMSNull = class(TObject)
   private
-    function GetValue: TObject;
+    FValue: TObject;
   public
-//    procedure Assign(AObject: TObject); override;
+    constructor Create;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     function ToString: string; override;
 
-    property Value: TObject read GetValue;
+    property Value: TObject read FValue;
   end;
 //------------------------------------------------------------------------------
   TMSBool = class(TObject)
@@ -128,7 +129,7 @@ type
   public
     constructor Create(AValue: Boolean);
 
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     function ToString: string; override;
@@ -142,7 +143,7 @@ type
   public
     constructor Create(AString: string = '');
 
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
@@ -157,7 +158,7 @@ type
   public
     constructor Create(AValue: TDateTime = 0);
 
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
@@ -179,12 +180,13 @@ type
     procedure PutElement(Index: Cardinal; Element: PElement);
     procedure FreeElementValue(Element: PElement);
     function GetElements: TList;
+    procedure AddNew(pok: PElement);
   public
     function IsCollection: Boolean; override;
     function ToString: string; override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-
+    procedure Assign(AObject: TObject); override;
     constructor Create(OwnObject: Boolean = False); overload;
     constructor Create(Capacity: Integer; OwnObject: Boolean = False); overload;
     destructor Destroy; override;
@@ -208,19 +210,22 @@ type
   private
     FValue: array of MSULong;
     function GetCount: Integer;
+  protected
+    function GetValue(Index: Integer): MSULong;
+    procedure SetValue(Index: Integer; AValue: MSULong);
+
   public
     constructor Create(ALen: Integer);
-
-    procedure SetValue(AIndex: Integer; AValue: MSULong);
-    function ValueAtIndex(AIndex: Integer): MSULong;
-    property Count: Integer read GetCount;
-
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function ToString: string; override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
-  end;
 
+    property Count: Integer read GetCount;
+    property Values[index: integer]: MSULong read GetValue write SetValue; default;
+
+  end;
+//------------------------------------------------------------------------------
   TMSNumberInstance = packed record
     case NType: Integer of
       0: (v0: MSChar); //Char
@@ -260,7 +265,7 @@ type
     function GetULong: MSULong;
   public
 
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function TokenType: TMSTETokenType; override;
     function ToString: string; override;
@@ -287,7 +292,7 @@ type
     function GetG: Byte;
     function GetR: Byte;
   public
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     constructor Create(); overload;
     constructor Create(AColor: TColor; ATransparency: Byte = 0); overload;
     function TokenType: TMSTETokenType; override;
@@ -310,7 +315,7 @@ type
   public
     constructor Create(FirstMember: TObject = nil; SecondMember: TObject = nil);
     destructor Destroy; override;
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
@@ -327,7 +332,7 @@ type
     constructor Create;
     destructor Destroy; override;
 
-//    procedure Assign(AObject: TObject); override;
+    procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     procedure EncodeWithMSTEncoder(Encoder: TObject); override;
     function ToString: string; override;
@@ -352,15 +357,17 @@ uses Dialogs, Math, StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
 { TMSNull }
 //------------------------------------------------------------------------------
 {$REGION 'TMSNull'}
-//procedure TMSNull.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//end;
+
+procedure TMSNull.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
+end;
 //------------------------------------------------------------------------------
 
-function TMSNull.GetValue: TObject;
+constructor TMSNull.Create;
 begin
-  Result := nil;
+  inherited;
+  FValue := nil;
 end;
 //------------------------------------------------------------------------------
 
@@ -386,11 +393,14 @@ end;
 { TMSBool }
 //------------------------------------------------------------------------------
 {$REGION 'TMSBool'}
-//procedure TMSBool.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  FValue := TMSBool(AObject).Value;
-//end;
+
+procedure TMSBool.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then
+    MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue := TMSBool(AObject).Value;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSBool.Create(AValue: Boolean);
@@ -624,6 +634,7 @@ begin
   PutElement(Index, el);
 
 end;
+
 //------------------------------------------------------------------------------
 
 procedure TMSDictionary.PutElement(Index: Cardinal; Element: PElement);
@@ -719,7 +730,59 @@ begin
 end;
 
 //------------------------------------------------------------------------------
-{ Clear all the values from the hash map }
+
+procedure TMSDictionary.AddNew(pok: PElement);
+var
+  sKey: string;
+  xObj, xDest: TObject;
+begin
+
+  sKey := pok.Key;
+  xObj := TObject(pok.Value);
+
+  if FOwnObject then begin
+    xDest := TObject(xObj.ClassType.Create);
+    xDest.Assign(xObj);
+    xObj := xDest;
+  end;
+
+  AddValue(sKey, xObj)
+
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSDictionary.Assign(AObject: TObject);
+var
+  i: integer;
+  pok: PElement;
+  xSrc: TMSDictionary;
+begin
+
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else begin
+    Clear;
+    xSrc := TMSDictionary(AObject);
+
+    FOwnObject := xsrc.FOwnObject;
+
+    for i := 0 to xSrc.FCapacity - 1 do begin
+      if xSrc.FDictionary[i] <> nil then begin
+        pok := xSrc.FDictionary[i];
+        AddNew(pok);
+        while pok.next <> nil do begin
+          pok := pok.next;
+          if pok <> nil then begin
+            AddNew(pok);
+          end;
+        end;
+      end
+    end;
+
+  end;
+
+end;
+
+//------------------------------------------------------------------------------
 
 procedure TMSDictionary.Clear;
 var
@@ -797,11 +860,14 @@ end;
 { TMSString }
 //------------------------------------------------------------------------------
 {$REGION 'TMSString'}
-//procedure TMSString.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  FValue := TMSString(AObject).Value;
-//end;
+
+procedure TMSString.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then
+    MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue := TMSString(AObject).Value;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSString.Create(AString: string = '');
@@ -842,11 +908,12 @@ end;
 
 {$REGION 'TMSDate'}
 
-//procedure TMSDate.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  FValue := TMSDate(AObject).Value;
-//end;
+procedure TMSDate.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue := TMSDate(AObject).Value;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSDate.Create(AValue: TDateTime);
@@ -893,12 +960,15 @@ end;
 { TMSColor }
 //------------------------------------------------------------------------------
 {$REGION 'TMSColor'}
-//procedure TMSColor.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  FValue := TMSColor(AObject).ColorValue;
-//  FTransparent := TMSColor(AObject).TransparentValue;
-//end;
+
+procedure TMSColor.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else begin
+    FValue := TMSColor(AObject).Color;
+    FTransparency := TMSColor(AObject).Transparency;
+  end;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSColor.Create(AColor: TColor; ATransparency: Byte);
@@ -984,12 +1054,15 @@ end;
 //------------------------------------------------------------------------------
 
 {$REGION 'TMSColor'}
-//procedure TMSCouple.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//  FFirstMember := TMSCouple(AObject).FirstMember;
-//  FSecondMember := TMSCouple(AObject).SecondMember;
-//end;
+
+procedure TMSCouple.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else begin
+    FFirstMember.Assign(TMSCouple(AObject).FirstMember);
+    FSecondMember.Assign(TMSCouple(AObject).SecondMember);
+  end;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSCouple.Create(FirstMember, SecondMember: TObject);
@@ -1038,11 +1111,12 @@ end;
 
 {$REGION 'TMSColor'}
 
-//procedure TMSData.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-////TODO ...
-//end;
+procedure TMSData.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue.LoadFromStream(TMSData(AObject).Value);
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSData.Create;
@@ -1118,13 +1192,13 @@ end;
 
 {$REGION 'TMSNumber'}
 
-//procedure TMSNumber.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-//
-//  CopyMemory(@FValue, @TMSNumber(AObject).FValue, SizeOf(TMSNumberInstance));
-//
-//end;
+procedure TMSNumber.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    CopyMemory(@FValue, @TMSNumber(AObject).FValue, SizeOf(TMSNumberInstance));
+
+end;
 //------------------------------------------------------------------------------
 
 procedure TMSNumber.EncodeWithMSTEncoder(Encoder: TObject);
@@ -1335,11 +1409,17 @@ end;
 
 {$REGION 'TMSNaturalArray'}
 
-//procedure TMSNaturalArray.Assign(AObject: TObject);
-//begin
-//  if not (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName]);
-////todo
-//end;
+procedure TMSNaturalArray.Assign(AObject: TObject);
+var
+  i: Integer;
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else begin
+    SetLength(FValue, TMSNaturalArray(AObject).Count);
+    for i := 0 to Count - 1 do
+      SetValue(i, TMSNaturalArray(AObject)[i]);
+  end;
+end;
 //------------------------------------------------------------------------------
 
 constructor TMSNaturalArray.Create(ALen: Integer);
@@ -1366,11 +1446,22 @@ begin
 end;
 //------------------------------------------------------------------------------
 
-procedure TMSNaturalArray.SetValue(AIndex: Integer; AValue: MSULong);
+function TMSNaturalArray.GetValue(Index: Integer): MSULong;
 begin
-  if AIndex < Length(FValue) then
-    FValue[AIndex] := AValue;
+  if (Index < 0) or (Index >= Count) then
+    MSRaise(ERangeError, 'Invalid index %d', [Index]);
+  Result := FValue[Index];
 end;
+//------------------------------------------------------------------------------
+
+procedure TMSNaturalArray.SetValue(Index: Integer; AValue: MSULong);
+begin
+  if (Index < 0) or (Index >= Count) then
+    MSRaise(ERangeError, 'Invalid index %d', [Index]);
+  FValue[Index] := AValue;
+end;
+
+//------------------------------------------------------------------------------
 
 function TMSNaturalArray.TokenType: TMSTETokenType;
 begin
@@ -1379,24 +1470,21 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TMSNaturalArray.ValueAtIndex(AIndex: Integer): MSULong;
+function TMSNaturalArray.ToString: string;
+var
+  i: Integer;
+  c: MSULong;
 begin
-  if AIndex < Length(FValue) then
-    Result := FValue[AIndex]
-  else
-  begin
-    result := 0;
-    MSRaise(ERangeError, 'Invalid index %s', [AIndex]);
+  Result := '[';
+  for i := 0 to Count - 1 do begin
+    c := GetValue(i);
+    Result := Result + ',' + IntToStr(c);
   end;
 
-end;
+  if Count <> 0 then
+    delete(Result, 2, 1);
 
-//------------------------------------------------------------------------------
-
-function TMSNaturalArray.ToString: string;
-begin
-//TODO
-  Result := 'TMSNaturalArray.ToString : A IMPEMENTER';
+  Result := Result + ']';
 end;
 
 {$ENDREGION}
@@ -1406,14 +1494,10 @@ end;
 //------------------------------------------------------------------------------
 
 {$REGION 'TObject'}
-//procedure TObject.Assign(AObject: TObject);
-//begin
-//
-//end;
 
 procedure TObject.Assign(AObject: TObject);
 begin
-
+  MSRaise(Exception, '%s : Assign method must be overritten', [ClassName]);
 end;
 
 procedure TObject.EncodeWithMSTEncoder(Encoder: TObject);
@@ -1448,7 +1532,7 @@ end;
 
 function TObject.ToString: string;
 begin
-  MSRaise(Exception, 'ToString method must be overrited');
+  MSRaise(Exception, '%s : ToString method must be overritten', [ClassName]);
 end;
 
 {$ENDREGION}
@@ -1459,10 +1543,32 @@ end;
 
 {$REGION 'TObjectList'}
 
-procedure TObjectList.Assign(AObject: TObject);
+procedure TObjectList.Assign(AObjectList: TObjectList);
+var
+  i: Integer;
+  xSrc, xDest: TObject;
 begin
+  clear;
+  OwnsObjects := AObjectList.OwnsObjects;
 
+  if not OwnsObjects then
+    inherited Assign(AObjectList) //TList.assign only copy pointers
+
+  else begin
+     //create and assign new obj
+    for I := 0 to AObjectList.Count - 1 do begin
+      xSrc := TObject(AObjectList.Items[i]);
+      if Assigned(xSrc) then begin
+        xDest := TObject(xSrc.ClassType.Create);
+        xDest.Assign(xSrc);
+      end
+      else xDest := nil;
+      Add(xDest);
+    end;
+
+  end;
 end;
+//------------------------------------------------------------------------------
 
 procedure TObjectList.EncodeWithMSTEncoder(Encoder: TObject);
 begin
@@ -1511,12 +1617,16 @@ var
   s, sobj: string;
 begin
 
-  s := #13#10'['#13#10;
+  s := '[';
+
   for I := 0 to Count - 1 do begin
     xObj := TObject(Items[i]);
     sObj := xObj.ToString;
-    s := s + sObj + #13#10;
+    s := s + ',' + sObj;
   end;
+
+  if Count <> 0 then system.delete(s, 2, 1);
+
   s := s + ']';
 
   result := s;

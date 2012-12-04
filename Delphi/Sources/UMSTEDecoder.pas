@@ -725,7 +725,7 @@ begin
     for i := 0 to count - 1 do begin
       JumpToNextToken(@s, endPointer, tokenCount);
       natural := _DecodeUnsignedLong(@s, endPointer, operation);
-      xArray.SetValue(i, natural);
+      xArray[i] := natural;
     end;
   end;
 

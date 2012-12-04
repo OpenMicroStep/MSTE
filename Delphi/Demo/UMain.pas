@@ -170,26 +170,94 @@ end;
 
 procedure TForm9.Button3Click(Sender: TObject);
 var
-  n: TMSNumber;
-  c: TMSColor;
+  i: Integer;
+  s1, s2: TMSString;
+  n1, n2: TMSNumber;
+  c1, c2: TMSColor;
+  na1, na2: TMSNaturalArray;
+
+  o1, o2: TObjectList;
+  d1, d2: TMSDictionary;
 begin
 
-  n := TMSNumber.Create;
-  n.Int := 100;
-  n.Float := 100.10;
-  n.Double := 100.10;
+  Memo2.Lines.Add('TMSDictionary');
+  d1 := TMSDictionary.Create(True);
+  for I := 0 to 10 do begin
+    s1 := TMSString.Create(IntToStr(i));
+    d1.AddValue('Key' + IntToHex(i, 1), s1);
+  end;
+  Memo2.Lines.Add(d1.ToString);
 
-//  Memo2.Lines.Add(IntToStr(n.Int));
-//  Memo2.Lines.Add(FloatToStr(n.Float));
-//  Memo2.Lines.Add(FloatToStr(n.Double));
+  d2 := TMSDictionary.Create(True);
+  d2.Assign(d1);
+  Memo2.Lines.Add(d2.ToString);
+  d2.Free;
+  d1.Free;
 
-  n.Free;
+  Exit;
 
-  c := TMSColor.Create(clLime, 0);
-  Memo2.Lines.Add(IntToStr(c.r));
-  Memo2.Lines.Add(IntToStr(c.g));
-  Memo2.Lines.Add(IntToStr(c.b));
-  c.Free;
+  Memo2.Lines.Add('TObjectList');
+  o1 := TObjectList.Create;
+  for I := 0 to 10 do begin
+    s1 := TMSString.Create(IntToStr(i));
+    o1.Add(s1)
+  end;
+
+  Memo2.Lines.Add(o1.ToString);
+
+  o2 := TObjectList.Create;
+  o2.Assign(o1);
+  Memo2.Lines.Add(o2.ToString);
+  o2.free;
+  o1.Free;
+  Exit;
+
+  Memo2.Lines.Add('TMSNaturalArray');
+  na1 := TMSNaturalArray.Create(5);
+  for i := 1 to 5 do na1[i - 1] := i;
+  Memo2.Lines.Add(na1.ToString);
+
+  na2 := TMSNaturalArray.Create(0);
+  na2.Assign(na1);
+  Memo2.Lines.Add(na2.ToString);
+
+  na1.free;
+  na2.free;
+  Exit;
+
+  Memo2.Lines.Add('TMSString');
+  s1 := TMSString.Create('String1');
+  s2 := TMSString.Create('String2');
+  s2.Assign(s1);
+  Memo2.Lines.Add(s1.Value);
+  Memo2.Lines.Add(s2.Value);
+  s1.Free;
+  s2.Free;
+
+  exit;
+  Memo2.Lines.Add('TMSNumber');
+  n1 := TMSNumber.Create;
+  n1.Int := 100;
+  n1.Float := 100.10;
+  n1.Double := 100.10;
+
+  n2 := TMSNumber.Create;
+  n2.Assign(n1);
+
+  Memo2.Lines.Add(IntToStr(n2.Int));
+  Memo2.Lines.Add(FloatToStr(n2.Float));
+  Memo2.Lines.Add(FloatToStr(n2.Double));
+
+  n1.Free;
+  n2.Free;
+
+  exit;
+  Memo2.Lines.Add('TMSColor');
+  c1 := TMSColor.Create(clLime, 0);
+  Memo2.Lines.Add(IntToStr(c1.r));
+  Memo2.Lines.Add(IntToStr(c1.g));
+  Memo2.Lines.Add(IntToStr(c1.b));
+  c1.Free;
 
 end;
 
