@@ -133,6 +133,15 @@ function _msteEncodePrivate(rootObject) {
 						for (j = 0 ; j < jcount ; j++) _encodeObject(o[j]) ;
 					}
 					break ;
+				case 'NaturalArray':
+					if (_mustPushObject(o)) {
+						stream[stream.length] = 21 ;
+						stream[stream.length] = jcount = o.length ;
+						for (j = 0 ; j < jcount ; j++) {
+							stream[stream.length] = Math.round(o[j]) ;
+						}
+					}
+					break ;
 				case 'Couple':
 					if (_mustPushObject(o)) {
 						stream[stream.length] = 22 ;
@@ -323,7 +332,7 @@ function _msteDecodePrivate(source, options) {
 		stack[key] = a ;
 	}
 	function fn21(r, stack, key) {
-		var j, n = r.tokens[r.index++], a = [] ;
+		var j, n = r.tokens[r.index++], a = newMSNaturalArray() ;
 		r.objects[r.objects.length] = a ;
 		for (j=0;j<n;j++) a[j] = r.tokens[r.index++] ;
 		stack[key] = a ;

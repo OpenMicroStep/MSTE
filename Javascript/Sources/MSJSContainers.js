@@ -84,6 +84,13 @@ Array.prototype.copy = function() {
 	return ret ; 
 } ;
 
+function newMSNaturalArray()
+{
+    var naturalArray = [] ;
+    naturalArray.isa = 'NaturalArray' ;
+    return naturalArray ;
+}
+
 function MSRGBAColor(r,g,b,a)
 {
 	if (r.isa == 'String') {
