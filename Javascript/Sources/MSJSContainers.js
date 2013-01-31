@@ -271,7 +271,7 @@ MSRGBAColor.prototype.isa = 'Color' ;
 function MSData(initialBase64String)
 {
 	this.base64String = initialBase64String ;
-	this.length = (content.length > 1) ? content.length - 1 : 0 ; // we remove the final '=' from the length
+	this.length = (initialBase64String.length > 1) ? initialBase64String.length - 1 : 0 ; // we remove the final '=' from the length
 }
 var _MSDataBase64Tokens = {
 	'A':0,  'B':1,  'C':2,  'D':3,  'E':4,  'F':5,  'G':6,  'H':7,  'I':8,  'J':9,  'K':10, 'L':11, 'M':12, 'N':13, 'O':14, 'P':15,
