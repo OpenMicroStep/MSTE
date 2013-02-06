@@ -220,3 +220,4 @@ function $MSDomSetOpacity(node, opacity) {
 	}
 }
 
+function $MSIsWordSeparator(c) { return (c == 32 || c == 9 || (c >= 44 && c <= 48) || c == 58 || c == 59) ? true : false ; }

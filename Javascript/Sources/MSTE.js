@@ -95,9 +95,9 @@ function _msteEncodePrivate(rootObject) {
 					}
 					break ;			
 				case 'Date':
-					t = o.getTime() ;
-					if (t >= 8640000000000000) { stream[stream.length] = 25 ; }
-					else if ( t <= -8640000000000000) { stream[stream.length] = 24  ;}
+					t = o.getUTCSeconds() ;
+					if (t >= 8640000000000) { stream[stream.length] = 25 ; }
+					else if ( t <= -8640000000000) { stream[stream.length] = 24  ;}
 					else {
 						identifier = o[referenceKey] ;
 						if ($MSOK(identifier)) { stream[stream.length] = 9 ; stream[stream.length] = identifier ;}
@@ -105,10 +105,9 @@ function _msteEncodePrivate(rootObject) {
 							identifier = encodedObjects.length ;
 							o[referenceKey] = identifier ;
 							encodedObjects[identifier] = o ;
-							t = (t - (t % 1000))/1000 ; 
 							stream[stream.length] = 6 ;
-							stream[stream.length] = t ;	
-						}						
+							stream[stream.length] = t ;
+						}
 					}
 					break ;
 				case 'Data':
@@ -125,7 +124,7 @@ function _msteEncodePrivate(rootObject) {
 					break ;
 				case 'Function':
 					throw "Impossible to encode a function" ;
-					break ;
+				break ;
 				case 'Array':
 					if (_mustPushObject(o)) {
 						stream[stream.length] = 20 ;
@@ -133,13 +132,13 @@ function _msteEncodePrivate(rootObject) {
 						for (j = 0 ; j < jcount ; j++) _encodeObject(o[j]) ;
 					}
 					break ;
-				case 'NaturalArray':
+                case 'NaturalArray':
 					if (_mustPushObject(o)) {
 						stream[stream.length] = 21 ;
 						stream[stream.length] = jcount = o.length ;
 						for (j = 0 ; j < jcount ; j++) {
-							stream[stream.length] = Math.round(o[j]) ;
-						}
+                            stream[stream.length] = Math.round(o[j]) ;
+                        }
 					}
 					break ;
 				case 'Couple':
@@ -300,17 +299,19 @@ function _msteDecodePrivate(source, options) {
 		stack[key] = v ;
 	}
 	function fn6(r, stack, key) {
-		var t = r.tokens[r.index++]*1000, d ;
-		if (t >= 8640000000000000) { stack[key] =  Date.DISTANT_FUTURE ; }
-		else if ( t <= -8640000000000000) { stack[key] = Date.DISTANT_PAST ; }
+		var timeInSeconds = r.tokens[r.index++];
+		var d ;
+		if (timeInSeconds >= 8640000000000) { stack[key] =  Date.DISTANT_FUTURE ; }
+		else if ( timeInSeconds <= -8640000000000) { stack[key] = Date.DISTANT_PAST ; }
 		else {
-			d = new Date(t) ;
+			d = Date.initWithUTCSeconds(timeInSeconds) ;
 			r.objects[r.objects.length] = d ;
 			stack[key] = d ; 
 		}
 	}
 	function fn7(r, stack, key) {
 		var trgb = r.tokens[r.index++] ;
+//console.log("COLOR, receievr trgb, " + trgb);
 		var color = new MSRGBAColor((trgb >> 16) & 0xff, (trgb >> 8) & 0xff, trgb & 0xff, 0xff - ((trgb >> 24) & 0xff)) ;
 		r.objects[r.objects.length] = color ;
 		stack[key] = color ;
@@ -338,14 +339,14 @@ function _msteDecodePrivate(source, options) {
 		stack[key] = a ;
 	}
 	function fn22(r, stack, key) { 
-		var c = new MSCouple() ;
+		var c = new MSCouple();
 		r.objects[r.objects.length] = c ;
 		_decodeObject(r, c, 'firstMember') ;
 		_decodeObject(r, c, 'secondMember') ; 
 		stack[key] = c ;
 	}
 	function fn23(r, stack, key) { 
-		var b = new MSData(MSTE.decodeBase64(r.tokens[r.index++])) ; 
+		var b = new MSData(r.tokens[r.index++]) ; 
 		r.objects[r.objects.length] = b ;
 		stack[key] = b ;
 	}
@@ -409,7 +410,8 @@ MSTE={
 		}
 		return r ;
 	},
-	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
+    
+/*	_keyStr : "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=",
 	encodeBase64 :  function(input) {
 	    var output = "";
 	    var chr1, chr2, chr3, enc1, enc2, enc3, enc4;
@@ -475,7 +477,7 @@ MSTE={
 	    output = MSTE._utf8_decode(output);
 
 	    return output;
-	},
+	},*/
 	
 	_utf8_encode : function (string) {
 	    string = string.replace(/\r\n/g,"\n");

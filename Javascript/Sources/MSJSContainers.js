@@ -8,7 +8,21 @@ String.prototype.hasPrefix = function(str) { var r = new RegExp("^"+str) ; retur
 String.prototype.removeDiacritics = function() {
 	return this.replace(/[^A-Za-z0-9]/g, function(x) { return _MSRemoveDiacriticsMap[x] || x; }) ;
 };
-
+String.prototype.containsWord = function(aWord) {
+	var wlen = $MSLength(aWord) ;
+	if (wlen > 0 && wlen <= this.length) {
+		var c, pos = this.indexOf(aWord) ;
+		if (pos == 0) {
+			if (pos+wlen == this.length || $MSIsWordSeparator(this.charCodeAt(pos+wlen))) { return true ; }			
+		}
+		else if (pos > 0) {
+			if ($MSIsWordSeparator(this.charCodeAt(pos-1))) {
+				if (pos+wlen == this.length || $MSIsWordSeparator(this.charCodeAt(pos+wlen))) { return true ; }
+			}
+		}
+	}
+	return false ;
+};
 Number.prototype.isa = 'Number' ;
 
 Boolean.prototype.isa = 'Boolean' ;
@@ -17,9 +31,26 @@ Date.prototype.isa = 'Date' ;
 Date.DISTANT_PAST = new Date(-8640000000000000) ;
 Date.DISTANT_FUTURE = new Date(8640000000000000) ;
 
+Date.initWithUTCSeconds = function(utc)
+{
+	var d, t ;
+	utc = 0+utc*1000 ;
+	d = new Date(utc) ;
+	t = d.getTimezoneOffset() ;
+	if (t !== 0) { d.setTime(utc+t*60000) ; }
+	return d ;
+} ;
+
+Date.prototype.getUTCSeconds = function()
+{
+	return this.getTime()/1000 - this.getTimezoneOffset()*60 ;
+} ;
+
 Date.prototype.date = function() {
 	return new Date(this.getTime()) ;
 } ;
+
+Date.prototype.copy = Date.prototype.date ;
 
 Date.prototype.dateWithoutTime = function() {
 	var utc = this.getTime() ;
@@ -33,6 +64,10 @@ Date.prototype.getDayTime = function() {
 
 Date.prototype.shiftDays = function(ndays) {
 	this.setTime(this.getTime()+ndays*86400000) ;
+} ;
+
+Date.prototype.shiftSeconds = function(seconds) {
+	this.setTime(this.getTime()+seconds*1000) ;
 } ;
 
 Date.prototype.isLeap = function() { return $IsLeapYear(this.getFullYear()) ; } ;
@@ -89,6 +124,16 @@ function newMSNaturalArray()
     var naturalArray = [] ;
     naturalArray.isa = 'NaturalArray' ;
     return naturalArray ;
+}
+
+function newMSNaturalArrayFromArray(array)
+{
+	var naturalArray = [];
+	naturalArray.isa = 'NaturalArray' ;
+	for (j = 0 ; j < array.length ; j++) {
+        naturalArray.push(Math.round(array[j]));
+    }
+	return naturalArray;
 }
 
 function MSRGBAColor(r,g,b,a)
@@ -200,7 +245,6 @@ MSRGBAColor.prototype.lightestColor = function() {
 							$MSLighter($MSLighter(this.blue)), this.alpha) ;
 } ;
 
-
 MSRGBAColor.prototype.matchingColor = function() { return this.isPale() ? this.darkestColor() : MSRGBAColor.whiteColor ; } ;
 
 MSRGBAColor.prototype.toString = function() {
@@ -208,8 +252,13 @@ MSRGBAColor.prototype.toString = function() {
 } ;
 
 MSRGBAColor.prototype.trgbValue = function() {
-	return ((255-this.alpha)<<24) | (this.red << 16) | (this.green << 8) | this.blue ;
+	return ((255-this.alpha)*16777216) + (this.red*65536) + (this.green*256) + this.blue ;
 } ;
+
+/*
+MSRGBAColor.prototype.toHex = function() {
+} ;
+*/
 
 MSRGBAColor.prototype.rgbaValue = function() {
 	return (this.red << 24) | (this.green << 16) | (this.blue << 8) | this.alpha ;
@@ -218,13 +267,29 @@ MSRGBAColor.prototype.rgbaValue = function() {
 MSRGBAColor.prototype.isa = 'Color' ;
 
 
-function MSData(content)
+// MSData are base64 buffers
+function MSData(initialBase64String)
 {
-	this.binary = content ;
-	this.length = content.length ;
+	this.base64String = initialBase64String ;
+	this.length = (initialBase64String.length > 1) ? initialBase64String.length - 1 : 0 ; // we remove the final '=' from the length
 }
+var _MSDataBase64Tokens = {
+	'A':0,  'B':1,  'C':2,  'D':3,  'E':4,  'F':5,  'G':6,  'H':7,  'I':8,  'J':9,  'K':10, 'L':11, 'M':12, 'N':13, 'O':14, 'P':15,
+	'Q':16, 'R':17, 'S':18, 'T':19, 'U':20, 'V':21, 'W':22, 'X':23, 'Y':24, 'Z':25, 'a':26, 'b':27, 'c':28, 'd':29, 'e':30, 'f':31,
+	'g':32, 'h':33, 'i':34, 'j':35, 'k':36, 'l':37, 'm':38, 'n':39, 'o':40, 'p':41, 'q':42, 'r':43, 's':44, 't':45, 'u':46, 'v':47,
+	'w':48, 'x':49, 'y':50, 'z':51, '0':52, '1':53, '2':54, '3':55, '4':56, '5':57, '6':58, '7':59, '8':60, '9':61, '+':62, '/':63
+} ;
 
-MSData.prototype.toString = function() { return MSTE.encodeBase64(this.binary) ; } ;
+MSData.prototype.toString = function() { return this.base64String ; } ;
+MSData.prototype.bitAtIndex = function(i) {
+	if (i >= 0) {
+		var charIndex = Math.floor(i / 6) ;
+		if (charIndex < this.length) {
+			return (_MSDataBase64Tokens[this.base64String.charAt(charIndex)] & (1 << (i % 6))) ? true : false ;
+		}
+	}
+	return false ;
+} ;
 MSData.prototype.isa = 'Data' ;
 
 function MSString(content)
