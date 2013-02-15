@@ -629,7 +629,6 @@ NSMutableDictionary *_MSTDecodeDictionary(unsigned char **pointer, unsigned char
             
             if (!object) object = __theNull ;
             [ret setObject:object forKey:key] ;
-            [object release] ;
             
             if (isWeakRef) {
                 if (decodingUserClass) {
@@ -664,7 +663,6 @@ NSMutableArray *_MSTDecodeArray(unsigned char **pointer, unsigned char *endPoint
             object = _MSTDecodeObject(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount, &isWeakRef, allowsUnknownUserClasses, zone) ;
             if (!object) object = __theNull ;
             [ret addObject:object] ;
-            [object release] ;
             
             if (isWeakRef) [NSException raise:NSGenericException format:@"_MSTDecodeArray - Weakly referenced object encountered while decoding an array!"] ;
         }
@@ -694,8 +692,6 @@ MSMutableCouple *_MSTDecodeCouple(unsigned char **pointer, unsigned char *endPoi
 
     [ret setFirstMember:firstMember] ;
     [ret setSecondMember:secondMember] ;
-    [firstMember release] ;
-    [secondMember release] ;
     
     *pointer = s ;
     return [ret autorelease] ;
@@ -779,7 +775,7 @@ id _MSTDecodeUserDefinedObject(unsigned char **pointer, unsigned char *endPointe
             [ret autorelease] ;
         }
         else if (allowsUnknownUserClasses) {
-            ret = [_MSTDecodeDictionary(&s, endPointer, @"_MSTDecodeUserDefinedObject", decodedObjects, classes, keys, tokenCount, YES, YES, allowsUnknownUserClasses, zone) retain] ;
+            ret = _MSTDecodeDictionary(&s, endPointer, @"_MSTDecodeUserDefinedObject", decodedObjects, classes, keys, tokenCount, YES, YES, allowsUnknownUserClasses, zone) ;
         }
         else [NSException raise:NSGenericException format:@"_MSTDecodeUserDefinedObject - unable to find user class %@ in current system", className] ;
     }
@@ -816,7 +812,7 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
         case MSTE_TOKEN_TYPE_REAL_VALUE :
         {            
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeNumber(&s, endPointer, tokenType, zone) retain] ;
+            ret = _MSTDecodeNumber(&s, endPointer, tokenType, zone) ;
             [decodedObjects addObject:ret] ;
             break ;
         }
@@ -833,13 +829,13 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
         {
             //no reference on simple types
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeNumber(&s, endPointer, tokenType, zone) retain] ;
+            ret = _MSTDecodeNumber(&s, endPointer, tokenType, zone) ;
             break ;
         }
         case MSTE_TOKEN_TYPE_STRING :
         {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeString(&s, endPointer, @"_MSTDecodeObject") retain] ;
+            ret = _MSTDecodeString(&s, endPointer, @"_MSTDecodeObject") ;
             [decodedObjects addObject:ret] ;
             break ;
         }
@@ -848,14 +844,14 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
             MSLong seconds ;            
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
             seconds = _MSTDecodeLong(&s, endPointer, @"_MSTDecodeObject") ;
-            ret = [[[[NSDate allocWithZone:zone] initWithTimeIntervalSince1970:(NSTimeInterval)seconds] autorelease] retain] ;
+            ret = [[[NSDate allocWithZone:zone] initWithTimeIntervalSince1970:(NSTimeInterval)seconds] autorelease] ;
             [decodedObjects addObject:ret] ;
             break ;
         }
         case MSTE_TOKEN_TYPE_DICTIONARY :
         {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeDictionary(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, YES, NO, allowsUnknownUserClasses, zone) retain] ;
+            ret = _MSTDecodeDictionary(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, YES, NO, allowsUnknownUserClasses, zone) ;
             break ;
         }
         case MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT :
@@ -863,53 +859,53 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
             NSUInteger objectReference ;            
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
             objectReference = _MSTDecodeLong(&s, endPointer, @"_MSTDecodeObject") ;
-            ret = [[decodedObjects objectAtIndex:objectReference] retain] ;
+            ret = [decodedObjects objectAtIndex:objectReference] ;
             break ;
         }
         case MSTE_TOKEN_TYPE_COLOR : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeColor(&s, endPointer, @"_MSTDecodeObject", zone) retain] ;
+            ret = _MSTDecodeColor(&s, endPointer, @"_MSTDecodeObject", zone) ;
             [decodedObjects addObject:ret] ;
             break ;
         }
         case MSTE_TOKEN_TYPE_ARRAY : {            
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) retain] ;
+            ret = _MSTDecodeArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) ;
             break ;
         }
         case MSTE_TOKEN_TYPE_NATURAL_ARRAY : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) retain] ;
+            ret = _MSTDecodeArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) ;
             break ;
         }
         case MSTE_TOKEN_TYPE_COUPLE : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeCouple(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) retain] ;
+            ret = _MSTDecodeCouple(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone);
             break ;
         }
         case MSTE_TOKEN_TYPE_BASE64_DATA : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = [_MSTDecodeBufferBase64String(&s, endPointer, @"_MSTDecodeObject", zone) retain] ;
+            ret = _MSTDecodeBufferBase64String(&s, endPointer, @"_MSTDecodeObject", zone) ;
             [decodedObjects addObject:ret] ;
             break ;
         }
         case MSTE_TOKEN_TYPE_DISTANT_PAST : {
-            ret = [__theDistantPast retain] ;
+            ret = __theDistantPast ;
             break ;
         }
         case MSTE_TOKEN_TYPE_DISTANT_FUTURE : {
-            ret = [__theDistantFuture retain] ;
+            ret = __theDistantFuture ;
             break ;
         }
         case MSTE_TOKEN_TYPE_EMPTY_STRING : {
-            ret = [[NSString allocWithZone:zone] init] ;
+            ret = [NSString string] ;
             break ;
         }
         case MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT : {
             NSUInteger objectReference ;
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
             objectReference = _MSTDecodeLong(&s, endPointer, @"_MSTDecodeObject") ;
-            ret = [[decodedObjects objectAtIndex:objectReference] retain] ;
+            ret = [decodedObjects objectAtIndex:objectReference] ;
             if (isWeaklyReferenced) *isWeaklyReferenced = YES ;
             break ;
         }
@@ -918,7 +914,7 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
             if (tokenType >= MSTE_TOKEN_TYPE_USER_CLASS) {
                  
                 _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-                ret = [_MSTDecodeUserDefinedObject(&s, endPointer, @"__MSTDecodeObject", tokenType, decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) retain] ;
+                ret = _MSTDecodeUserDefinedObject(&s, endPointer, @"__MSTDecodeObject", tokenType, decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) ;
 
                 if (isWeaklyReferenced) *isWeaklyReferenced = ((tokenType - MSTE_TOKEN_TYPE_USER_CLASS)%2)>0 ;
             }
@@ -1090,7 +1086,7 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
                 case MSTE_DECODING_ROOT_OBJECT : {
                     NS_DURING
                         decodedObjects = [[NSMutableArray alloc] initWithCapacity:32] ;
-                        object = _MSTDecodeObject(&s, end, @"root object", decodedObjects, decodedClasses, decodedKeys, &myTokenCount, NULL, allowsUnknownUserClasses, zone) ;
+                        object = [_MSTDecodeObject(&s, end, @"root object", decodedObjects, decodedClasses, decodedKeys, &myTokenCount, NULL, allowsUnknownUserClasses, zone) retain] ;
                     DESTROY(decodedClasses) ;
                     DESTROY(decodedKeys) ;
                     DESTROY(decodedObjects) ;
