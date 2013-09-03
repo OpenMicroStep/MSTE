@@ -1140,4 +1140,10 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
 
 @end
 
+@implementation NSObject (MSTDecoding)
+- (id)initWithDictionary:(NSDictionary *)values
+{
+	return [self notImplemented:NSSelectorFromString(@"initWithDictionary:")] ;
+}
+@end
 

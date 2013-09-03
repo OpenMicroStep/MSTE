@@ -632,7 +632,6 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
     [self _encodeGlobalHexaUnsignedInt:[_global longCRC] inRange:range] ;
    
     ret = [_global retain] ;
-    NSLog(@"encode %@",[[NSString alloc]initWithData:_global encoding:NSUTF8StringEncoding]);
       
     return [ret autorelease] ;
     

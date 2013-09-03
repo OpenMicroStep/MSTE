@@ -64,3 +64,6 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
 - (id)MSTDecodedObjectAndVerifyCRC:(BOOL)verifyCRC allowsUnknownUserClasses:(BOOL)allowsUnknownUserClasses ;
 @end
 
+@interface NSObject (MSTDecoding)
+- (id)initWithDictionary:(NSDictionary *)values ;
+@end
