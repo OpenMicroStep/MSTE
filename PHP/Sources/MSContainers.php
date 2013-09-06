@@ -29,10 +29,12 @@ class MSObject {
 	}
 
 	function getValueFromKey($key) {
-		return $this->_values[$key];
+		if (sizeof($this->_values) == 0) {return null;}
+		return (array_key_exists($key, $this->_values) ? $this->_values[$key] : null);
+		// return $this->_values[$key];
 	}
 
-	function setValueForKey($value, $key) {
+	function setValueForKey(&$value, $key) {
 		$this->_values[$key] = $value;
 	}
 
@@ -55,10 +57,13 @@ class MSArray extends MSObject {
 		if (is_int($key)) return $this->_values[$key];
 	}
 
-	function setValueForKey($value, $key) {
+	function setValueForKey(&$value, $key) {
 		if (is_int($key)) { 
 			$this->_values[$key] = $value;
 		}
+	}
+	function getSize() {
+		return sizeof($this->_values);
 	}
 }
 // -----------------------------------------------------------------------------
@@ -85,7 +90,7 @@ class MSNaturalArray extends MSObject {
 		if (is_int($key)) return $this->_values[$key];
 	}
 
-	function setValueForKey($value, $key) {
+	function setValueForKey(&$value, $key) {
 		if (is_int($key)) { 
 			array_push($this->_values, $value);
 		}
@@ -133,7 +138,7 @@ class MSCouple extends MSObject {
 		return $this->getValueFromKey(MSCouple::SECOND_MEMBER);
 	}
 
-	function setValueForKey($value, $key) {
+	function setValueForKey(&$value, $key) {
 		if ($key == MSCouple::FIRST_MEMBER || $key == MSCouple::SECOND_MEMBER) { 
 			$this->_values[$key] = $value;
 		}
@@ -181,7 +186,7 @@ class MSData extends MSObject{
 	}
 
 	// setters
-	function setValueForKey($value, $key) {
+	function setValueForKey(&$value, $key) {
 		if ($key == MSData::B64_STRING || $key == MSData::B64_LENGHT) { 
 			$this->_values[$key] = $value;
 		}
@@ -195,10 +200,15 @@ class MSData extends MSObject{
 
 	private function _isBase64Valid() {
  		return (bool) preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $this->getString());
+ 		// return  (bool) (base64_encode(base64_decode($this->getString())) === $this->getString());
 
 	}
 	private function _isBase64ValidDecode() {
 		return base64_decode($mystring, true);
+	}
+
+	public static function isValid($s) {
+		return (bool) preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $s);
 	}
 }
 // -----------------------------------------------------------------------------
@@ -220,28 +230,31 @@ class MSString extends MSObject{
 
 	// getters
 	function getValueFromKey($key) {
-		if ($key == MSData::S_STRING || $key == MSData::S_LENGHT) { 
+		if ($key == MSString::S_STRING || $key == MSString::S_LENGHT) { 
 			return $this->_values[$key];
 		}
 	}
 	function getString() {
-		return $this->getValueFromKey(MSData::S_STRING);
+		return $this->getValueFromKey(MSString::S_STRING);
+	}
+	function toString() {
+		return $this->getValueFromKey(MSString::S_STRING);
 	}
 	function getLength() {
-		return $this->getValueFromKey(MSData::S_LENGHT);
+		return $this->getValueFromKey(MSString::S_LENGHT);
 	}
 
 	// setters
-	function setValueForKey($value, $key) {
-		if ($key == MSData::S_STRING || $key == MSData::S_LENGHT) { 
+	function setValueForKey(&$value, $key) {
+		if ($key == MSString::S_STRING || $key == MSString::S_LENGHT) { 
 			$this->_values[$key] = $value;
 		}
 	}
-	function setString($value) {
-		$this->setValueForKey($value, MSData::S_STRING);
+	function setString(&$value) {
+		$this->setValueForKey($value, MSString::S_STRING);
 	}
-	function setLength($value) {
-		$this->setValueForKey($value, MSData::S_LENGHT);
+	function setLength(&$value) {
+		$this->setValueForKey($value, MSString::S_LENGHT);
 	}
 }
 // -----------------------------------------------------------------------------
@@ -466,4 +479,19 @@ class MSColor {
 }
 // -----------------------------------------------------------------------------
 
+
+// -----------------------------------------------------------------------------
+// Interce for user Classes
+// -----------------------------------------------------------------------------
+interface iMSTE {
+
+	// must ovverides to use constructor and init with dict param return instance
+	public static function initWithDictionnary(&$obj,&$dict);
+
+	public static function newObject();
+	
+	public function MSTESnapshot();
+}
+
+// -----------------------------------------------------------------------------
 ?>

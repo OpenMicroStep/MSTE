@@ -1,3 +1,9 @@
+<!DOCTYPE html>
+<HTML>
+	<HEAD>
+		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
+		<TITLE>MSTE (PHP)</TITLE>
+
 <?php
 	error_reporting(E_ALL);
 
@@ -5,53 +11,95 @@
 	require_once('Person.php');
 
 	if (get_magic_quotes_gpc()) {
-	    function undoMagicQuotes($array, $topLevel=true) {
-	        $newArray = array();
-	        foreach($array as $key => $value) {
-	            if (!$topLevel) {
-	                $key = stripslashes($key);
-	            }
-	            if (is_array($value)) {
-	                $newArray[$key] = undoMagicQuotes($value, false);
-	            }
-	            else {
-	                $newArray[$key] = stripslashes($value);
-	            }
-	        }
-	        return $newArray;
-	    }
-	    $_POST = undoMagicQuotes($_POST);
+		function undoMagicQuotes($array, $topLevel=true) {
+			$newArray = array();
+			foreach($array as $key => $value) {
+				if (!$topLevel) {
+					$key = stripslashes($key);
+				}
+				if (is_array($value)) {
+					$newArray[$key] = undoMagicQuotes($value, false);
+				}
+				else {
+					$newArray[$key] = stripslashes($value);
+				}
+			}
+			return $newArray;
+		}
+		$_POST = undoMagicQuotes($_POST);
 	}
 	
-	// DEcode
-	if (isset($_POST['tStringToDecode'])) {
-		$s = htmlentities(utf8_encode($_POST['tStringToDecode']), ENT_NOQUOTES); 
-		$oMste = MSTE::decode($s);
-		$sDecodedObject = print_r($oMste->getValueFromKey("root"), true);
+	// -----------------------------------------------------------------------------------------------------------------
+	// // Decode Dict
+	// if (isset($_POST['submitDecodeD'])) {
+	// 	$s = htmlentities(utf8_encode($_POST['tStringToDecode']), ENT_NOQUOTES); 
+	// 	// to Object
+	// 	$oMste = MSTE::decode($s, array('withMSString'=>false, 'withClass'=>false));
+	// 	$sDecodedObject = print_r($oMste->getValueFromKey("root"), true);
+	// 	// To String
+	// 	$arrDecodedString = MSTE::encode($oMste->getValueFromKey("root"));
+	// 	$sDecodedString = json_encode($arrDecodedString);
+	// }
+
+	// Decode Objet
+	if (isset($_POST['submitDecodeO'])) {
+		$sO = htmlentities(utf8_encode($_POST['tStringToDecodeO']), ENT_NOQUOTES); 
+		$oMsteO = MSTE::decode($sO);
+		$sDecodedObjectO = print_r($oMsteO->getValueFromKey("root"), true);
+		$arrDecodedStringO = MSTE::encode($oMsteO->getValueFromKey("root"));
+		$sDecodedStringO = json_encode($arrDecodedStringO);
 	}
 
+	// -----------------------------------------------------------------------------------------------------------------
 	// Encode
-	$p = new Person("Durand", "Yves", mktime(0,0,0,4,11,1962));
-	$m = new Person("Durand", "Claire", mktime(0,0,0,6,7,1963));
-	$f = new Person("Durand", "Lou", mktime(0,0,0,7,1,1987));
-	$p->setMariedTo($m);
-	$m->setMariedTo($p);
-	$f->setMother($m);
-	$f->setFather($p);
+	// $p = new Person("Durand", "Yves", mktime(0,0,0,4,11,1962));
+	// $m = new Person("Durand", "Claire", mktime(0,0,0,6,7,1963));
+	// $f = new Person("Durand", "Lou", mktime(0,0,0,7,1,1987));
+	// $p->setMariedTo($m);
+	// $m->setMariedTo($p);
+	// $f->setMother($m);
+	// $f->setFather($p);
 
 	
-	$msObj = array ($p, $m, $f);
-	$sObj = print_r($msObj, true);
- 	if (isset($_POST['bEncode'])) {
-		$sMste = MSTE::encode($msObj);
-	}
+	// $msObj = array ($p, $m, $f);
+	// $sObj = print_r($msObj, true);
+ // 	if (isset($_POST['bEncode'])) {
+	// 	$arrMste = MSTE::encode($msObj);
+	// 	// print_r($arrMste);
+	// 	$sMste = json_encode($arrMste);
+	// }
+	// // 
+	// //["MSTE0101",59,"CRC74FD101E",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",20,3,50,4,0,5,"Yves",1,50,4,0,5,"Claire",1,9,1,2,5,"Durand",3,6,-207360000,2,9,5,3,6,-243820800,9,3,50,5,0,5,"Lou",4,9,3,2,9,5,3,6,552096000,5,9,1]
+
+	// // Encode 2 avec objet MS
+	// $p = new Person("Durand", "Yves", new MSDate(mktime(0,0,0,4,11,1962)))  ;
+	// $m = new Person("Durand", "Claire", new MSDate(mktime(0,0,0,6,7,1963)));
+	// $f = new Person("Durand", "Lou", new MSDate(mktime(0,0,0,7,1,1987)));
+	// $p->setMariedTo($m);
+	// $m->setMariedTo($p);
+	// $f->setMother($m);
+	// $f->setFather($p);
+
+	
+	// $msObj2 = array ($p, $m, $f);
+	// $sObj2 = print_r($msObj2, true);
+ // 	if (isset($_POST['bEncode2'])) {
+	// 	$arrMste2 = MSTE::encode($msObj2);
+	// 	// print_r($arrMste);
+	// 	$sMste2 = json_encode($arrMste2);
+	// }
+
+	// test sans interface
+	// $ch = '["MSTE0101",59,"CRC74FD101E",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",20,3,50,4,0,5,"Yves",1,50,4,0,5,"Claire",1,9,1,2,5,"Durand",3,6,-207360000,2,9,5,3,6,-243820800,9,3,50,5,0,5,"Lou",4,9,3,2,9,5,3,6,552096000,5,9,1]';
+	// $obj = MSTE::decode($ch);
+	// $sObj = print_r($obj->getValueFromKey("root"), true);
+	// echo '<br><textarea rows="50" cols="80">'.$sObj.'</textarea>';
+	// echo '<textarea rows="50" cols="80">'.print_r($obj->objects, true).'</textarea>';
+	// $arrTest = MSTE::encode($obj->getValueFromKey("root"));
+	// echo '<textarea rows="50" cols="80">'.json_encode($arrTest).'</textarea>';
+
 ?> 
-<!DOCTYPE html>
-<HTML>
-	<HEAD>
-		<meta http-equiv="content-type" content="text/html; charset=utf-8" />
-		<TITLE>MSTE (PHP)</TITLE>
-		<script src="jquery-1.9.1.min.js"></script>
+
 		<SCRIPT>
 			function encodeObject() {
 			}
@@ -71,7 +119,7 @@
 	<BODY>
 		<form action="MSTETester.php" id="fEncode" method="POST" enctype="multipart/form-data">
 		<h1>Page de test encodage / decodage MSTE</h1>
-		<hr><hr>
+<!-- 		<hr><hr>
 		<h3>Encodage</h3>
 		<hr>
 			<table border=0 width=100%>
@@ -81,43 +129,88 @@
 				</tr>
 				<tr>
 					<td>
-						<textarea rows="20" cols="80" id="tObjToEncode" name="tObjToEncode"><?php echo isset($sObj) ? $sObj : ''; ?></textarea><br>
+						<textarea rows="50" cols="80" id="tObjToEncode" name="tObjToEncode"><?php echo isset($sObj) ? $sObj : ''; ?></textarea><br>
 					</td>
 					<td>
-						<textarea rows="20" cols="80" id="tEncodedString"><?php echo isset($sMste) ? $sMste : '';?></textarea>
+						<textarea rows="50" cols="80" id="tEncodedString"><?php echo (isset($sMste) ? $sMste : ''); ?></textarea>
 					</td>
 				</tr>
 				<tr>
 					<td colspan="2"><input type="submit" id="bEncode" name="bEncode" value="<<< GO >>>"></td>
 				</tr>
-			</table>
-<!-- 		<p>Encodage d'un objet d'exemple > <a onclick="encodeObject();" href="#">GO</a></p>
-		<textarea rows="20" cols="120" id="tEncodedString"><?php echo isset($sDecodedString) ? $sDecodedString : '';?></textarea></textarea>
+			</table> -->
+<!-- 		<hr><hr>
+		<h3>Encodage 2 </h3>
 		<hr>
- -->
-		<hr><hr>
-		<h3>Decodage</h3>
+			<table border=0 width=100%>
+				<tr>
+					<td>Encodage objet MS :</td>
+					<td>Chaine encodée :</td>
+				</tr>
+				<tr>
+					<td>
+						<textarea rows="50" cols="80" id="tObjToEncode" name="tObjToEncode2"><?php echo isset($sObj2) ? $sObj2 : ''; ?></textarea><br>
+					</td>
+					<td>
+						<textarea rows="50" cols="80" id="tEncodedString"><?php echo (isset($sMste2) ? $sMste2 : ''); ?></textarea>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="2"><input type="submit" id="bEncode2" name="bEncode2" value="<<< GO >>>"></td>
+				</tr>
+			</table> -->
+ 		<hr><hr>
+		<h3>Decodage avec Dict</h3>
 		<hr>
 			<table border=0 width=100%>
 				<tr>
 					<td>Decodage de la chaine chaine :</td>
-					<td>Chaine décodée :</td>
+					<td>Objet décodé :</td>
+					<td>Encodage de l'objet décodée :</td>
 				</tr>
 				<tr>
 					<td>
-						<textarea rows="20" cols="80" id="tStringToDecode" name="tStringToDecode"><?php echo !isset($_POST['tStringToDecode']) ? '["MSTE0101",59,"CRCC41DBEF3",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",20,3,50,4,0,5,"Durand",1,5,"Yves",2,6,-243820800,3,51,4, 0,9,2,1,5,"Claire",2,6,-207360000,3,27,1,9,5,50,5,0,9,2,1,5,"Lou",2,6,552096000,4,9,1,5,9,5]' : $_POST['tStringToDecode']; ?></textarea><br>
+						<textarea rows="50" cols="40" id="tStringToDecode" name="tStringToDecode"><?php echo !isset($_POST['tStringToDecode']) ? '["MSTE0101",59,"CRC74FD101E",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",20,3,50,4,0,5,"Yves",1,50,4,0,5,"Claire",1,9,1,2,5,"Durand",3,6,-207360000,2,9,5,3,6,-243820800,9,3,50,5,0,5,"Lou",4,9,3,2,9,5,3,6,552096000,5,9,1]' : $_POST['tStringToDecode']; ?></textarea><br>
 					</td>
 					<td>
-						<textarea rows="20" cols="80" id="tDecodedString"><?php echo isset($sDecodedObject) ? $sDecodedObject : '';?></textarea>
+						<textarea rows="50" cols="80" id="tDecodedObject"><?php echo isset($sDecodedObject) ? $sDecodedObject : '';?></textarea>
+					</td>
+					<td>
+						<textarea rows="50" cols="40" id="tDecodedString"><?php echo isset($sDecodedString) ? $sDecodedString : '';?></textarea>
 					</td>
 				</tr>
 				<tr>
-					<td colspan="2"><input type="submit" value="<<< GO >>>"></td>
+					<td colspan="3"><input type="submit" name='submitDecodeD' value="<<< GO >>>"></td>
 				</tr>
 			</table>
 		<br><br>
 
-		</form>
+		<hr><hr>
+		<h3>Decodage avec Class</h3>
+		<hr>
+			<table border=0 width=100%>
+				<tr>
+					<td>Decodage de la chaine chaine :</td>
+					<td>Objet décodé :</td>
+					<td>Encodage de l'objet décodée :</td>
+				</tr>
+				<tr>
+					<td>
+						<textarea rows="50" cols="40" id="tStringToDecodeO" name="tStringToDecodeO"><?php echo !isset($_POST['tStringToDecodeO']) ? '["MSTE0101",59,"CRC74FD101E",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",20,3,50,4,0,5,"Yves",1,50,4,0,5,"Claire",1,9,1,2,5,"Durand",3,6,-207360000,2,9,5,3,6,-243820800,9,3,50,5,0,5,"Lou",4,9,3,2,9,5,3,6,552096000,5,9,1]' : $_POST['tStringToDecodeO']; ?></textarea><br>
+					</td>
+					<td>
+						<textarea rows="50" cols="80" id="tDecodedObjectO"><?php echo isset($sDecodedObjectO) ? $sDecodedObjectO : '';?></textarea>
+					</td>
+					<td>
+						<textarea rows="50" cols="40" id="tDecodedStringO"><?php echo isset($sDecodedStringO) ? $sDecodedStringO : '';?></textarea>
+					</td>
+				</tr>
+				<tr>
+					<td colspan="3"><input type="submit" name='submitDecodeO' value="<<< GO >>>"></td>
+				</tr>
+			</table>
+		<br><br>
+	</form>
 	</BODY>
 </HTML>
 
