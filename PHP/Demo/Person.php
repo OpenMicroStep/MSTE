@@ -1,7 +1,6 @@
 <?php
 
 class Person implements iMSTE {
-
 	
 	private $firstName;
 	private $mariedTo;
@@ -17,6 +16,15 @@ class Person implements iMSTE {
 		$this->mariedTo 	= $mt;
 		$this->mother 		= $m;
 		$this->father 		= $f;
+	}
+
+	public function __destruct() {
+		unset($this->name);
+		unset($this->firstName);
+		unset($this->birthday);
+		unset($this->mariedTo);
+		unset($this->mother);
+		unset($this->father);
 	}
 
 	function setName($s) {
@@ -38,17 +46,14 @@ class Person implements iMSTE {
 		$this->father = $pers;
 	}
 
+	// From interface
+
 	public static function newObject() {
 		$p = new Person('', '', '');
 		return $p;
 	}
 
-
 	public static function initWithDictionnary(&$obj, &$dict) {
-		// if ($dict->isA != MSType::MSDICT) {
-		// 	throw new Excpetion("method : newWithDictionnary > wrong parameter type must be MSDict");
-		// }
-		// logEvent(true, "<hr>newWithDictionnary <hr>");
 		$n 	= $dict->getValueFromKey('name') ? $dict->getValueFromKey('name') : "";
 		$fn = $dict->getValueFromKey('firstName') != '' ? $dict->getValueFromKey('firstName') : "";
 		$bd = $dict->getValueFromKey('birthday') ? $dict->getValueFromKey('birthday') : null;
@@ -61,17 +66,20 @@ class Person implements iMSTE {
 		$obj->setMariedTo($mt);
 		$obj->setMother($m);
 		$obj->setFather($f);
-		// logEvent(true, "<hr>CLASS OBJECT <br>".print_r($obj,true)."<hr>");
 	}
 
-	public function MSTESnapshot() {
+	public static function MSTESnapshot() {
 		$dict = new MSDict();
-		$dict->setValueFromKey('toto', 'toto');
+		$dict->setValueForKey('name', 'name');
+		$dict->setValueForKey('firstName', 'firstName');
+		$dict->setValueForKey('birthday', 'birthday');
+		$dict->setValueForKey('maried-to', 'mariedTo');
+		$dict->setValueForKey('mother', 'mother');
+		$dict->setValueForKey('father', 'father');
 		return  $dict;
 	}
 
 }
-
 
 class mother {
 	private $attr1;

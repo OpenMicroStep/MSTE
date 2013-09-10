@@ -18,12 +18,14 @@ class MSTEEncoder {
 	private $stream = array();
 	private $encodedObjects = array();
 	private $keyNames = array();
+	private $keyNamesReal = array();
 	private $keysIndexes = array(); // {}
+	private $keysClass = array();
 	private $classesNames = array();
 	private $classesIndexes = array(); //{} ;
 
 	private $stringIndexes = array();
-	static $trace = false;
+	static $trace = true;
 
 	function __construct($rootObject) {
 		$this->_encodeObject($rootObject) ;
@@ -36,31 +38,33 @@ class MSTEEncoder {
 			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->classesNames[$i]; }
 			// logEvent(MSTEEncoder::$trace, "<hr>Classes : <br>Tab : ".print_r($this->classesNames,true)."<hr>");
 
-			$icount = sizeof($this->keyNames);
+			$icount = sizeof($this->keyNamesReal);
 			$this->tokens[sizeof($this->tokens)] = $icount;
-			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->keyNames[$i]; }
-			logEvent(MSTEEncoder::$trace, "<hr>Keys : <br>Tab : ".print_r($this->keyNames,true)."<hr>");
+			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->keyNamesReal[$i]; }
+			logEvent(MSTEEncoder::$trace, "<hr>Keys : <br>Tab : ".print_r($this->keyNamesReal,true)."<hr>");
 			
 			$icount = sizeof($this->stream);
 			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->stream[$i]; }
-			logEvent(MSTEEncoder::$trace, "<hr>Stream : <br>Tab : ".print_r($this->stream,true)."<hr>");
-
-			logEvent(MSTEEncoder::$trace, "<hr>Encoded Objects : <br>Tab : ".print_r($this->encodedObjects,true)."<hr>");
-
-			// print_r($this->tokens);
+			// logEvent(MSTEEncoder::$trace, "<hr>Stream : <br>Tab : ".print_r($this->stream,true)."<hr>");
 			
 			$icount = sizeof($this->encodedObjects) ;
 			for ($i=0; $i<$icount; $i++) {
 				$element = $this->encodedObjects[$i];
 				try {
-					//unset ($element[$this->referenceKey]);
+					if (is_object($element)) {
+						unset ($element->{$this->referenceKey});
+					} else {
+						// unset ($element[$this->referenceKey]);
+					}
 				} catch (Exception $e) {}
 				// unset($element);
 				// delete element[$referenceKey] ;
 			}
 			
+			// size 
 			$this->tokens[1] = sizeof($this->tokens);
-			// print_r($this->tokens);
+			// CRC
+			$this->tokens[2] = 'CRC'.strtoupper(dechex(crc32(implode($this->tokens))));
 		}		
 
 	}
@@ -76,7 +80,7 @@ class MSTEEncoder {
 	// because the parameter MUST BE passed by REFERENCE
 	private function _mustPushObject($o) {
 		$identifier = null;
-		logEvent(MSTEEncoder::$trace, "<br>_mustPushObject : ".""."<br>");
+		// logEvent(MSTEEncoder::$trace, "<br>_mustPushObject : ".""."<br>");
 		if (array_key_exists($this->referenceKey, $o) || isset($o->{$this->referenceKey})) { 
 			$identifier = $o->{$this->referenceKey};
 			$this->stream[sizeof($this->stream)] = 9; 
@@ -96,24 +100,26 @@ class MSTEEncoder {
 		
 	}
 	
-	private function _pushKey($aKey) {
+	private function _pushKey($aKey, $rKey) {
 		if ($aKey) {
 			// logEvent(MSTEEncoder::$trace, "<hr>Push key indexes: ".print_r($this->keysIndexes,true)."<hr>");
 			if (!array_key_exists($aKey, $this->keysIndexes)) {
 				$index = sizeof($this->keyNames);
-				$this->keyNames[$index] = $aKey ;
+				$this->keyNames[$index] = $aKey;
+				$this->keyNamesReal[$index] = $rKey;
 				$this->keysIndexes[$aKey] = $index ;
 			} else {
 				$index = $this->keysIndexes[$aKey];
 			}
-			logEvent(MSTEEncoder::$trace, "<hr>Push key : $index<hr>");
+			// logEvent(MSTEEncoder::$trace, "<hr>Push key [$aKey] : $index<hr>");
 			$this->stream[sizeof($this->stream)] = $index ;
+			// logEvent(MSTEEncoder::$trace, "<hr>Stream : ".print_r($this->stream, true)."<hr>");
 		}
 	}
 	
     private function _pushClass($aClass) {
     	if ($aClass) {
-			logEvent(MSTEEncoder::$trace, "<hr>_pushClass : $aClass<hr>");
+			// logEvent(MSTEEncoder::$trace, "<hr>_pushClass : $aClass<hr>");
 			if (!array_key_exists($aClass, $this->classesIndexes)) { 
 				$index = sizeof($this->classesNames) ;
 				$this->classesNames[$index] = $aClass ;
@@ -121,7 +127,8 @@ class MSTEEncoder {
 			} else {
 				$index = $this->classesIndexes[$aClass];
 			}
-			$this->stream[sizeof($this->stream)] = 50+2*$index ;
+			// $this->stream[sizeof($this->stream)] = 50+2*$index ;
+			$this->stream[sizeof($this->stream)] = 50+$index ;
 		}
 
 		// logEvent(MSTEEncoder::$trace, "<hr>Class key : ".$this->stream[sizeof($this->stream)-1]."<hr>");
@@ -142,6 +149,12 @@ class MSTEEncoder {
 			}
 			if ($cls == 'array' && array_key_exists('isA', $o)) {
 				$cls = $o['isA']; 
+			}
+
+			// if we use php array as dict we convert into MSDict
+			if ($cls == 'array' && isAssoc($o)) {
+				$cls = 'object'; 
+				$o = MSDICT::initWithArray($o);
 			}
 
 			// logEvent(MSTEEncoder::$trace, "<hr>Fonction ".print_r($o,true)."<hr>");
@@ -189,7 +202,6 @@ class MSTEEncoder {
 						$this->encodedObjects[$identifier] = $o ;
 						$this->stream[sizeof($this->stream)] = 5 ;
 						$this->stream[sizeof($this->stream)] = $cls==MSType::MSSTRING ? $o->toString() : $o;
-						//->toString() ; // KEEP IT HERE for MSString
 					}	
 					// $identifier = $o[$this->referenceKey];
 					// if (isset($identifier)) { 
@@ -206,6 +218,7 @@ class MSTEEncoder {
 			}		
 			else if ($cls==MSType::MSDATE) { 
 				$t = $o->getValue();
+				// $t = $o->getOriginalValue();
 				if ($t >= MSDate::DISTANT_FUTURE) { $this->stream[sizeof($this->stream)] = 25; }
 				else if ($t <= MSDate::DISTANT_PAST) { $this->stream[sizeof($this->stream)] = 24; }
 				else {
@@ -231,7 +244,7 @@ class MSTEEncoder {
 			else if ($cls==MSType::MSCOLOR) {
 				if ($this->_mustPushObject($o)) {
 					$this->stream[sizeof($this->stream)] = 7 ;
-					$this->stream[sizeof($this->stream)] = $o->trgbValue() ;
+					$this->stream[sizeof($this->stream)] = $o->getStringValue() ;
 				}
 			}
 			else if ($cls=='function') {
@@ -253,34 +266,33 @@ class MSTEEncoder {
 			// a voir
             else if ($cls==MSType::MSNATURALARRAY) {
 				if ($this->_mustPushObject($o)) {
-					$jcount = sizeof($o);
+					$jcount = sizeof($o->getValues());
 					$this->stream[sizeof($this->stream)] = 21 ;
 					$this->stream[sizeof($this->stream)] = $jcount;
 					for ($j=0; $j<$jcount; $j++) {
-						$this->stream[sizeof($this->stream)] = round($o[$j]) ;
+						$this->stream[sizeof($this->stream)] = round($o->getValueFromKey($j)) ;
 					}
 				}
 			}
 			else if ($cls==MSType::MSCOUPLE) {
 				if ($this->_mustPushObject($o)) {
 					$this->stream[sizeof($this->stream)] = 22 ;
-					$this->_encodeObject($o->getFirstMember) ;
-					$this->_encodeObject($o->getSecondMember) ;						
+					$this->_encodeObject($o->getFirstMember()) ;
+					$this->_encodeObject($o->getSecondMember()) ;						
 				}
 			}
 			else {
 				$userCls = get_class($o);
 				if ($userCls===MSType::MSOBJECT || $userCls===MSType::MSDICT) {
 					$userCls = $o->className;
+				} else {
+					$this->keysClass[$userCls] = call_user_func(MSClass::getSnap($userCls));
 				}
-				// $o = $o->getValues();
-				logEvent(MSTEEncoder::$trace, "<hr>USER CLS obj : ".print_r($userCls,true)."<hr>");
-
+				// logEvent(MSTEEncoder::$trace, "<hr>USER CLS obj : ".print_r($userCls,true)."<hr>");
 
 				// means an object
 				if ($this->_mustPushObject($o)) {
 					$total = 0;
-					logEvent(MSTEEncoder::$trace, "<hr>STRLEN : ".strlen($userCls)."<hr>");
 					if ($userCls!==MSType::MSDICT) {
 						if (strlen($userCls)>0) {
 							//user class
@@ -297,69 +309,70 @@ class MSTEEncoder {
 						$keys = call_user_func(get_class($o)."->msteKeys");
 					}
 
+					// logEvent(MSTEEncoder::$trace, "<hr>USER CLS obj : ".print_r($this->keyNamesReal,true)."<hr>");
 					$jcount = sizeof($keys);
+					// if authorized keys are defined
 					if ($jcount>0) {
-						logEvent(MSTEEncoder::$trace, "<hr>JE suis PASSE PAR ICI<hr>");
 						// we take the keys the object gave us
 						for ($j=0; $j<$jcount; $j++) {
 							$localKey = $keys[$j];
 							$v = $o[$localKey]; // attention ici
+							
 							$t = gettype($v);
 							if ($v !== null && $t !== 'function' && $t !== 'undefined') {
 								$total++ ;
-								$this->_pushKey($k) ;
+								$this->_pushKey($localKey, $this->_getRealKey($localKey, $userCls)) ;
 								$this->_encodeObject($v) ;
 							}
 						}
 					}
 					else {
-						// we loop on standard object keys
+						// retrieve forbidden keys
 						if (method_exists($o, 'msteNotKeys')) {
 							$forbiddenKeys = call_user_func(get_class($o)."->msteNotKeys");
 							if ($forbiddenKeys) { $forbiddenKeys = array(); }
 						}
 						
-						// $clsKeys = get_class_members($o);
 						$arrObj = array();
+						// Type Object
 						if (get_class($o)!==MSType::MSDICT) {
 							$arrObj = object2Array($o);
-
-							logEvent(MSTEEncoder::$trace, "<hr>TYPE objet2Array : ".print_r(array_keys($arrObj),true)."<hr>");
 							foreach ($arrObj as $key => $value) {
-								logEvent(MSTEEncoder::$trace, "<hr>Object for : [$key] = ".print_r($value,true)."<hr>");
+								// logEvent(MSTEEncoder::$trace, "<hr>Key : ".$key."<hr>");
 						        if ($value != '') {
 									$c = substr($key, 0, 1);
 									if ($c != '_' && $c != '$') {
 										$t = gettype($value);
 										if ($value !== null && $t !== 'function' && $t !== 'undefined' && !isset($forbiddenKeys[$key]) ) {
 											$total++;
-											$this->_pushKey($key);
+											$this->_pushKey($key, $this->_getRealKey($key, $userCls));
 											$this->_encodeObject($value);
 										}
 									}
 								}
 							}
 							unset ($arrObj);
-						} else {
-
-							logEvent(MSTEEncoder::$trace, "<hr>TYPE MSDICT : ".print_r(array_keys($arrObj),true)."<hr>");
-							foreach ($o->getValues() as $key => $value) {
-								logEvent(MSTEEncoder::$trace, "<hr>Object for : [$key] = ".print_r($value,true)."<hr>");
-						        if ($value != '') {
-									$c = substr($key, 0, 1);
-									if ($c != '_' && $c != '$') {
-										$t = gettype($value);
-										if ($value !== null && $t !== 'function' && $t !== 'undefined' && !isset($forbiddenKeys[$key]) ) {
-											$total++;
-											$this->_pushKey($key);
-											$this->_encodeObject($value);
+						} 
+						// Type array
+						else {
+							$arrObj = $o->getValues();
+							if (sizeof($arrObj)>0) {
+								foreach ($arrObj as $key => $value) {
+									if ($value != '') {
+										$c = substr($key, 0, 1);
+										if ($c != '_' && $c != '$') {
+											$t = gettype($value);
+											if ($value !== null && $t !== 'function' && $t !== 'undefined' && !isset($forbiddenKeys[$key]) ) {
+												$total++;
+												$this->_pushKey($key, $this->_getRealKey($key, $userCls));
+												$this->_encodeObject($value);
+											}
 										}
 									}
 								}
 							}
 						}
 					}
-					// logEvent(MSTEEncoder::$trace, "<hr>Total : $total<hr>");
 					$this->stream[$idx] = $total ;
 				}
 			}
@@ -369,12 +382,20 @@ class MSTEEncoder {
 		}
 	}
 
-	// private function _processData($o) {
-	// 	if ($this->_mustPushObject($o)) {
-	// 		$this->stream[sizeof($this->stream)] = 23 ;
-	// 		$this->stream[sizeof($this->stream)] = $o->toString() ;
-	// 	}
-	// }
+	static function isReadyForMSTE($cls) {
+		$methodArr = get_class_methods($cls);
+		return in_array(MSClass::SNAP, $methodArr);
+	}
+
+	private function _getRealKey($oKey, $class) {
+		if (sizeof($this->keysClass)>0) {
+			if (array_key_exists($class, $this->keysClass)) {
+				return $this->keysClass[$class]->getValueFromKey($oKey);
+			} else { return $oKey; }
+		} else {
+			return $oKey;
+		}									
+	}
 }
 // -----------------------------------------------------------------------------
 

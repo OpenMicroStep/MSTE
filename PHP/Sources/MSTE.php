@@ -47,42 +47,93 @@ class MSTE {
 
 	private static function _msteEncodePrivate($rootObject) {
 		$e = new MSTEEncoder($rootObject);	
+		// echo '<hr>'.print_r($e,true).'<hr>';
 		return $e->getTokens();
 	}
 }
 
 
 // -----------------------------------------------------------------------------
+// Interce for user Classes
+// -----------------------------------------------------------------------------
+interface iMSTE {
+
+	// must ovveride to use constructor and init with dict param return instance
+	// return nothing
+	public static function initWithDictionnary(&$obj,&$dict);
+
+	// replace an empty constructor
+	// return a blank object
+	public static function newObject();
+	
+	// get the correspondance table for object attributes
+	// return MSDict classValue => msteValue
+	public static function MSTESnapshot();
+
+}
+
+class MSClass {
+
+	const CONSTR = 'newObject';
+	const INIT	 = 'initWithDictionnary'; 
+	const SNAP 	 = 'MSTESnapshot';
+
+	static function getNew($class) {
+		return $class.'::'.MSClass::CONSTR;
+	}
+
+	static function getInit($class) {
+		return $class.'::'.MSClass::INIT;
+	}
+
+	static function getSnap($class) {
+		return $class.'::'.MSClass::SNAP;
+	}
+	
+}
+
+// -----------------------------------------------------------------------------
+
+
+// -----------------------------------------------------------------------------
 // functions
 // -----------------------------------------------------------------------------
+
 function object2Array ($o) {
-	if (gettype($o) !== "object") {
+	if (!is_object($o)) {
 		return null;
 	}
 
-	$attr = array();
-	$size =strlen(get_class($o))+2;
-	while (list($key,$value) = each($o)) {
-		if (strlen($key) > $size) {
-			$k = substr($key, $size); // du to classe name separator
-			$attr[$k] = $value;
+	$attr = (array) $o;
+	$attrRes = array();
+	$attrCount = sizeof($attr);
+	foreach ($attr as $key => $value) {
+		$keys = mb_split(chr(0), $key);
+		if (sizeof($keys) >= 3) {
+			$attrRes[$keys[2]] 	= $value;
+		} else {
+			$attrRes[$key] 		= $value;
 		}
 	}
-	// logEvent(MSTEEncoder::$trace, "<hr>TABEEEEEE  : ".print_r(array_keys($attr), true)."<hr>");
-	return $attr;
+	unset ($attr);
+	return $attrRes;
 }
 
-function get_class_members ($o) {
-	if (gettype($o) != "object") {
-		return null;
+function AsciiToInt($char){
+	$success = "";
+	if(strlen($char) == 1)
+		return "char(".ord($char).")";
+	else{
+		for($i = 0; $i < strlen($char); $i++){
+			if($i == strlen($char) - 1)
+				$success .= ord($char[$i]);
+			else
+				$success .= ord($char[$i]).",";
+		}
+		return "char(".$success.")";
 	}
-
-	$attr = array();
-	while (list($key,$value) = each($o)) {
-		array_push($attr, str_replace(get_class($o), '', $key));
-	}
-	return $attr;
 }
+
 // -----------------------------------------------------------------------------
 
 

@@ -14,13 +14,14 @@ class MSType {
 	const MSCOLOR 			= "MSColor";
 	const MSDATA 			= "MSData";
 	const MSSTRING 			= "MSString";
+	const MSNULL			= "MSNull";
 } 
 
 // -----------------------------------------------------------------------------
 // Class Object : bases class for decoding
 // -----------------------------------------------------------------------------
 class MSObject {
-	private $_values;
+	protected $_values;
 	public $className;
 	public $isA;
 
@@ -34,7 +35,11 @@ class MSObject {
 		// return $this->_values[$key];
 	}
 
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
+		$this->_values[$key] = $value;
+	}
+
+	function setValueForKey($value, $key) {
 		$this->_values[$key] = $value;
 	}
 
@@ -57,7 +62,7 @@ class MSArray extends MSObject {
 		if (is_int($key)) return $this->_values[$key];
 	}
 
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
 		if (is_int($key)) { 
 			$this->_values[$key] = $value;
 		}
@@ -75,10 +80,8 @@ class MSArray extends MSObject {
 class MSNaturalArray extends MSObject {
 	function __construct($arr=null) {
 		$this->isA = MSType::MSNATURALARRAY;
-		if ($arr==null) {
-			$this->_values = array();
-		} else {
-			$this->_values = array();
+		$this->_values = array();
+		if ($arr!=null) {
 			for ($j=0; $j<sizeof($arr); $j++) {
 				array_push($this->_values, round($arr[$j]));
 			}
@@ -90,11 +93,15 @@ class MSNaturalArray extends MSObject {
 		if (is_int($key)) return $this->_values[$key];
 	}
 
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
 		if (is_int($key)) { 
 			array_push($this->_values, $value);
 		}
 	}
+
+	// function getValues() {
+	// 	return $this->_values;
+	// }
 }
 // -----------------------------------------------------------------------------
 
@@ -106,7 +113,23 @@ class MSDict extends MSObject {
 	function __construct() {
 		$this->isA = MSType::MSDICT;
 	}
+
+	public static function  initWithArray($arr) {
+		if (isAssoc($arr)) {
+			$d = new MSDict();
+			foreach ($arr as $key => $value) {
+				$d->setObjectForKey($value, $key);
+			}
+			return $d;
+		}
+		return null;
+	}
 }
+
+function isAssoc($array) {
+	return ($array !== array_values($array));
+}
+
 // -----------------------------------------------------------------------------
 
 
@@ -118,7 +141,7 @@ class MSCouple extends MSObject {
 	const FIRST_MEMBER = "firstMember"; 
 	const SECOND_MEMBER = "secondMember"; 
 
-	function __construct($f, $s) {
+	function __construct($f=null, $s=null) {
 		$this->isA 			= MSType::MSCOUPLE;
 		$this->setFirstMember($f);
 		$this->setSecondMember($s);
@@ -138,18 +161,18 @@ class MSCouple extends MSObject {
 		return $this->getValueFromKey(MSCouple::SECOND_MEMBER);
 	}
 
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
 		if ($key == MSCouple::FIRST_MEMBER || $key == MSCouple::SECOND_MEMBER) { 
 			$this->_values[$key] = $value;
 		}
 	}
 
 	function setFirstMember($value) {
-		$this->setValueForKey($value, MSCouple::FIRST_MEMBER);
+		$this->setObjectForKey($value, MSCouple::FIRST_MEMBER);
 	}
 
 	function setSecondMember($value) {
-		$this->setValueForKey($value, MSCouple::SECOND_MEMBER);
+		$this->setObjectForKey($value, MSCouple::SECOND_MEMBER);
 	}
 }
 // -----------------------------------------------------------------------------
@@ -181,21 +204,24 @@ class MSData extends MSObject{
 	function getString() {
 		return $this->getValueFromKey(MSData::B64_STRING);
 	}
+	function toString() {
+		return $this->getString();
+	}
 	function getLength() {
 		return $this->getValueFromKey(MSData::B64_LENGHT);
 	}
 
 	// setters
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
 		if ($key == MSData::B64_STRING || $key == MSData::B64_LENGHT) { 
 			$this->_values[$key] = $value;
 		}
 	}
 	function setString($value) {
-		$this->setValueForKey($value, MSData::B64_STRING);
+		$this->setObjectForKey($value, MSData::B64_STRING);
 	}
 	function setLength($value) {
-		$this->setValueForKey($value, MSData::B64_LENGHT);
+		$this->setObjectForKey($value, MSData::B64_LENGHT);
 	}
 
 	private function _isBase64Valid() {
@@ -245,16 +271,16 @@ class MSString extends MSObject{
 	}
 
 	// setters
-	function setValueForKey(&$value, $key) {
+	function setObjectForKey(&$value, $key) {
 		if ($key == MSString::S_STRING || $key == MSString::S_LENGHT) { 
 			$this->_values[$key] = $value;
 		}
 	}
 	function setString(&$value) {
-		$this->setValueForKey($value, MSString::S_STRING);
+		$this->setObjectForKey($value, MSString::S_STRING);
 	}
 	function setLength(&$value) {
-		$this->setValueForKey($value, MSString::S_LENGHT);
+		$this->setObjectForKey($value, MSString::S_LENGHT);
 	}
 }
 // -----------------------------------------------------------------------------
@@ -275,10 +301,14 @@ class MSDate {
 	private static $ddp;
 	private static $ddf;
 
-	function __construct($val) {
+	function __construct($val, $isUTC=true) {
 		$this->isA 				= MSType::MSDATE;
 		$this->orginalTimeValue = $val;
-		$this->decodedTimeValue = $this->_decodeValue();
+		if (!$isUTC) {	
+			$this->decodedTimeValue = $this->_decodeValue();
+		} else {
+			$this->decodedTimeValue = $this->orginalTimeValue;
+		}
 	}
 	private function _decodeValue() {
 		$timeInSeconds = $this->orginalTimeValue;
@@ -366,7 +396,7 @@ class MSColor {
 		$nb 		= func_num_args();
 		$args 		= func_get_args();
 
-		echo '<br>Args: '.gettype($args[0]).'<br>';
+		// echo '<br>Args: '.gettype($args[0]).'<br>';
 		if ($nb==1 && gettype($args[0]) == 'string') {
 			$this->_initWithString($args);
 		}
@@ -479,19 +509,4 @@ class MSColor {
 }
 // -----------------------------------------------------------------------------
 
-
-// -----------------------------------------------------------------------------
-// Interce for user Classes
-// -----------------------------------------------------------------------------
-interface iMSTE {
-
-	// must ovverides to use constructor and init with dict param return instance
-	public static function initWithDictionnary(&$obj,&$dict);
-
-	public static function newObject();
-	
-	public function MSTESnapshot();
-}
-
-// -----------------------------------------------------------------------------
 ?>
