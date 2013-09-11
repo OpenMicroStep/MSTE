@@ -14,7 +14,6 @@ class MSType {
 	const MSCOLOR 			= "MSColor";
 	const MSDATA 			= "MSData";
 	const MSSTRING 			= "MSString";
-	const MSNULL			= "MSNull";
 } 
 
 // -----------------------------------------------------------------------------

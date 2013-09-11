@@ -22,16 +22,29 @@ class MSTE {
 		return $r ;
 	}
 
-	// create MSTE string from object
-	public static function encode($obj) {
+	// create MSTE array from object
+	public static function tokenize($obj) {
 		$r = null ;
 		try {
-			$r = MSTE::_msteEncodePrivate($obj) ;
+			$r = MSTE::_msteEncodePrivate($obj);
+		}
+		catch (Exception $e) { 
+			echo "Unable to create MSTE array : ".$e->getMessage(); 
+		}
+		return $r;
+	}
+
+	// create MSTE string from object
+	public static function stringify($obj) {
+		$r = null ;
+		try {
+			$r = MSTE::tokenize($obj);
+			$s = json_encode($r);
 		}
 		catch (Exception $e) { 
 			echo "Unable to create MSTE string : ".$e->getMessage(); 
 		}
-		return $r;
+		return $s;
 	}
 
 	private static function _msteDecodePrivate($source, $options) {
@@ -89,7 +102,7 @@ class MSClass {
 	static function getSnap($class) {
 		return $class.'::'.MSClass::SNAP;
 	}
-	
+
 }
 
 // -----------------------------------------------------------------------------

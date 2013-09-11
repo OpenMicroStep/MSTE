@@ -41,7 +41,7 @@ class MSTEEncoder {
 			$icount = sizeof($this->keyNamesReal);
 			$this->tokens[sizeof($this->tokens)] = $icount;
 			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->keyNamesReal[$i]; }
-			logEvent(MSTEEncoder::$trace, "<hr>Keys : <br>Tab : ".print_r($this->keyNamesReal,true)."<hr>");
+			// logEvent(MSTEEncoder::$trace, "<hr>Keys : <br>Tab : ".print_r($this->keyNamesReal,true)."<hr>");
 			
 			$icount = sizeof($this->stream);
 			for ($i=0; $i<$icount; $i++) { $this->tokens[sizeof($this->tokens)] = $this->stream[$i]; }
