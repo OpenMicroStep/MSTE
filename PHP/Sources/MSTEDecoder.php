@@ -31,6 +31,7 @@ class MSTEResult extends MSObject {
 		$i = $kn = $cn = $n = 0 ;
 		// echo "Source : $source<br>";
 		$this->tokens = json_decode($source);
+		print_r($this->tokens);
 		if ($this->tokens === null) {
 			throw new Exception("JSON string incorrect"); 
 		}
