@@ -53,7 +53,7 @@ class Person implements iMSTE {
 		return $p;
 	}
 
-	public static function initWithDictionnary(&$obj, &$dict) {
+	public static function initWithDictionary(&$obj, &$dict) {
 		$n 	= $dict->getValueFromKey('name') ? $dict->getValueFromKey('name') : "";
 		$fn = $dict->getValueFromKey('firstName') != '' ? $dict->getValueFromKey('firstName') : "";
 		$bd = $dict->getValueFromKey('birthday') ? $dict->getValueFromKey('birthday') : null;

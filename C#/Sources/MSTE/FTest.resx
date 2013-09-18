@@ -117,7 +117,4 @@
   <resheader name="writer">
     <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=2.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
   </resheader>
-  <data name="txtDecode.Text" xml:space="preserve">
-    <value>["MSTE0101",59,"CRC74FD101E",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",20,3,50,4,0,5,"Yves",1,50,4,0,5,"Claire",1,9,1,2,5,"Durand",3,6,-207360000,2,9,5,3,6,-243820800,9,3,50,5,0,5,"Lou",4,9,3,2,9,5,3,6,552096000,5,9,1]</value>
-  </data>
 </root>

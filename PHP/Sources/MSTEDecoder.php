@@ -36,7 +36,7 @@ class MSTEResult extends MSObject {
 			throw new Exception("JSON string incorrect"); 
 		}
 		if ($this->tokens) { 
-			$n = sizeof($this->tokens);
+			$n = sizeof($this-i>tokens);
 		}
 		if ($n < 4) {
 			throw new Exception("Unable to create MSTEResult object : two few tokens"); 

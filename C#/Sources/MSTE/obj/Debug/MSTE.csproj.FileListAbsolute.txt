@@ -1,0 +1,8 @@
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\ResolveAssemblyReference.cache
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\MSTE.csproj.GenerateResource.Cache
+Y:\Developer\MSTE\C#\Sources\MSTE\bin\Debug\MSTE.exe
+Y:\Developer\MSTE\C#\Sources\MSTE\bin\Debug\MSTE.pdb
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\MSTE.exe
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\MSTE.pdb
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\MSTEClasses.FTest.resources
+Y:\Developer\MSTE\C#\Sources\MSTE\obj\Debug\MSTEClasses.Properties.Resources.resources

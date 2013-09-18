@@ -73,7 +73,7 @@ interface iMSTE {
 
 	// must ovveride to use constructor and init with dict param return instance
 	// return nothing
-	public static function initWithDictionnary(&$obj,&$dict);
+	public static function initWithDictionary(&$obj,&$dict);
 
 	// replace an empty constructor
 	// return a blank object
@@ -88,7 +88,7 @@ interface iMSTE {
 class MSClass {
 
 	const CONSTR = 'newObject';
-	const INIT	 = 'initWithDictionnary'; 
+	const INIT	 = 'initWithDictionary'; 
 	const SNAP 	 = 'MSTESnapshot';
 
 	static function getNew($class) {

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MSTE {
+namespace MSTEClasses {
     public class MSColor {
         private bool InstanceFieldsInitialized = false;
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MSTE {
+namespace MSTEClasses {
     class MSCRC32 {
 
         // all private vars we want to declare here
@@ -16,7 +16,7 @@ namespace MSTE {
 
         // put your own methods, class methods or constructors here
         public static string getCRC(string theFile) {
-            sbyte[] bytes = theFile.GetBytes();
+            sbyte[] bytes = MSTE.stringToSbyteArray(theFile);
             int crc = unchecked((int)0xffffffff);
             foreach (sbyte b in bytes) {
                 crc = ((int)((uint)crc >> 8)) ^ __table[(crc ^ b) & 0xff];

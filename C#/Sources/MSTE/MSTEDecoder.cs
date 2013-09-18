@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Collections;
 using System.Text.RegularExpressions;
 
-namespace MSTE {
+namespace MSTEClasses {
 
     	
     public class MSTEDecoder
@@ -163,7 +163,7 @@ namespace MSTE {
 			if (!separatorFound) {
 				throw new MSTEException("_MSTJumpToNextToken: - Bad format (no next token)");
 			}
-			Console.WriteLine("_MSTJumpToNextToken" + (char)data[pos[0]]);
+			MSTE.logEvent("_MSTJumpToNextToken" + (char)data[pos[0]]);
 		}
 
 		private object _MSTDecodeNumber(sbyte[] data, int[] pos, int tokenType)	{
@@ -576,7 +576,7 @@ namespace MSTE {
 						Dictionary<string, object> dict = new Dictionary<string, object>();
                         decodedObjects.Add(ret);
                         dict = _MSTDecodeDictionary(data, pos, operation, decodedObjects, classes, keys, tokenCount, false, true, allowsUnknownUserClasses);
-                        MethodInfo initMethod = aClass.GetMethod("initWithDictionary");
+                        MethodInfo initMethod = aClass.GetMethod(MSTEIMethods.INIT);
                         if (initMethod == null) {
                             throw new MSTEException("_MSTDecodeUserDefinedObject: -	unable to find initWithDictionary method in " + className + " in current system");
                         }
@@ -728,7 +728,6 @@ namespace MSTE {
 							throw new MSTEException("_MSTDecodeString: (unexpected escaped character) " + operation);
 						}
 					}
-						goto default;
 					default: {
 						throw new MSTEException("_MSTDecodeString: (unknown state) " + operation);
 					}
@@ -742,7 +741,7 @@ namespace MSTE {
 			object ret = null;
 
 			int tokenType = (int)_MSTDecodeUnsignedShort(data, pos,"token type");
-        	Console.WriteLine("_MSTDecodeObject tokenType" + tokenType);
+        	MSTE.logEvent("_MSTDecodeObject tokenType : " + tokenType);
 			switch (tokenType) {
 				case MSTE_TOKEN_TYPE_NULL :	{
 					//nothing to do: returning nil
@@ -787,8 +786,9 @@ namespace MSTE {
 					long? seconds = long.MinValue;
 					_MSTJumpToNextToken(data, pos, tokenCount);
 					seconds = _MSTDecodeLong(data, pos, "_MSTDecodeObject");
-                    //ret = new DateTime((long)seconds * 1000);
-                    ret = null;
+                    DateTime? dt = UnixEpoch.getDateTime((long)seconds);
+                    ret = (dt == null ? this.__theDistantPast : dt);
+                    //ret = null;
 					decodedObjects.Add(ret);
 					break;
 				}
@@ -798,13 +798,13 @@ namespace MSTE {
 					break;
 				}
 				case MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT : {
-	                Console.WriteLine("_MSTDecodeObject objectReference in MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT");
+	                MSTE.logEvent("_MSTDecodeObject objectReference in MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT");
 					int? objectReference;
 					_MSTJumpToNextToken(data, pos, tokenCount);
 					objectReference = _MSTDecodeInt(data, pos, "_MSTDecodeObject");
-                    //Console.WriteLine("_MSTDecodeObject objectReference" + objectReference);
+                    //MSTE.logEvent("_MSTDecodeObject objectReference" + objectReference);
 					ret = decodedObjects[(int)objectReference];
-                    //Console.WriteLine("_MSTDecodeObject ret" + ret.ToString());
+                    //MSTE.logEvent("_MSTDecodeObject ret" + ret.ToString());
 					break;
 				}
 				case MSTE_TOKEN_TYPE_COLOR : {
@@ -927,7 +927,7 @@ namespace MSTE {
 				int keysNumber = 0;
 
 				while (pos[0] < len) {
-	                Console.WriteLine("Position = " + pos[0] + " / taille =" + len + " valeur =" + (char)data[pos[0]] + " State =" + state);
+	                MSTE.logEvent("Position = " + pos[0] + " / taille =" + len + " valeur =" + (char)data[pos[0]] + " State =" + state);
 					switch (state) {
 						case MSTE_DECODING_ARRAY_START : {
 							if ((char)data[pos[0]] == ' ') {
@@ -1088,7 +1088,6 @@ namespace MSTE {
 							break;
 						}
 						case MSTE_DECODING_KEYS_NUMBER_VALUE : {
-							int? end = 0;
 							keysNumber = (int)_MSTDecodeInt(data, pos,"keys number");
 							if (keysNumber > 0) {
 								decodedKeys = new List<string>(keysNumber);
@@ -1184,5 +1183,6 @@ namespace MSTE {
 			}
 			return buffer;
 		}
+
 	}
 }

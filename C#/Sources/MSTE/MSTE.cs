@@ -4,17 +4,22 @@ using System.Linq;
 using System.Text;
 using System.Reflection;
 
-namespace MSTE {
+namespace MSTEClasses {
+
     class MSTE {
+
+        public static string log;
+
 	    // create object from MSTE string
 	    public static object decode(string source) {
             object r = null;
 		    try {
+                MSTE.log = "";
                 r = MSTE._msteDecodePrivate(source, null) ;
 		    }
 		    catch (Exception e) { 
 			     // throw new Exception("Unable to create MSTE object : ".$e->getMessage()); 
-			     Console.WriteLine("Unable to create MSTE object : " + e.Message); 
+			     MSTE.logEvent("Unable to create MSTE object : " + e.Message); 
 		    }
 		    return r ;
 	    }
@@ -22,15 +27,29 @@ namespace MSTE {
         public static object decode(string source, Dictionary<string,object> options) {
             object r = null;
 		    try {
+                MSTE.log = "";
                 r = MSTE._msteDecodePrivate(source, options) ;
 		    }
 		    catch (Exception e) { 
 			     // throw new Exception("Unable to create MSTE object : ".$e->getMessage()); 
-			     Console.WriteLine("Unable to create MSTE object : " + e.Message); 
+			     MSTE.logEvent("Unable to create MSTE object : " + e.Message); 
 		    }
 		    return r ;
 	    }
 
+        public static string encode(object obj) {
+            string r = null;
+		    try {
+                MSTE.log = "";
+                r = MSTE._msteEncodePrivate(obj) ;
+		    }
+		    catch (Exception e) { 
+			     // throw new Exception("Unable to create MSTE object : ".$e->getMessage()); 
+			     MSTE.logEvent("Unable to create MSTE object : " + e.Message); 
+		    }
+		    return r ;
+        }
+        
         //// create MSTE array from object
         //public static function tokenize($obj) {
         //    $r = null ;
@@ -61,17 +80,43 @@ namespace MSTE {
             bool vCRC = options.ContainsKey("ValidateCRC") ? (bool)options["ValidateCRC"] : false;
             bool uUserClass = options.ContainsKey("UknownUserClass") ? (bool)options["UknownUserClass"] : true;
 
-            return decoder.decodeObject(source.GetBytes(), vCRC, uUserClass);
+            return decoder.decodeObject(MSTE.stringToSbyteArray(source), vCRC, uUserClass);
 	    }
 
-        //private static function _msteEncodePrivate($rootObject) {
-        //    $e = new MSTEEncoder($rootObject);	
-        //    // echo '<hr>'.print_r($e,true).'<hr>';
-        //    return $e->getTokens();
-        //}
+        private static string _msteEncodePrivate(object o) {
+            MSTEEncoder e = new MSTEEncoder();
+            Dictionary<string, object> res = e.encodeRootObject(o);
+            return (string)res["msteString"];
+        }
 
+        public static void logEvent(string s) {
+            Console.WriteLine(s);
+            log += s + Environment.NewLine;
+        }
+
+        #region "For Byte"
+
+        public static string sbyteArrayToString(sbyte[] data) {
+            Encoding enc8 = Encoding.UTF8;
+            byte[] byteData = Array.ConvertAll(data, (a) => (byte)a);
+            string s = enc8.GetString(byteData);
+            byteData = null;
+            return s;
+        }
+
+        public static sbyte[] stringToSbyteArray(string s) {
+            Encoding enc8 = Encoding.UTF8;
+            byte[] abData = enc8.GetBytes(s);
+            sbyte[] sbyteData = Array.ConvertAll(abData, (a) => (sbyte)a);
+            abData = null;
+            return sbyteData;
+        }
+
+        #endregion
     }
 }
+
+
 
 //public static class TypeEx {
 //     public const string  NS = "MSTETypes.";

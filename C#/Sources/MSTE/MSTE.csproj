@@ -8,7 +8,7 @@
     <ProjectGuid>{A83F4F2F-85ED-4C48-91F9-D14B690900AB}</ProjectGuid>
     <OutputType>WinExe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MSTE</RootNamespace>
+    <RootNamespace>MSTEClasses</RootNamespace>
     <AssemblyName>MSTE</AssemblyName>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
@@ -60,8 +60,10 @@
     <Compile Include="MSCRC32.cs" />
     <Compile Include="MSTE.cs" />
     <Compile Include="MSTEDecoder.cs" />
+    <Compile Include="MSTEEncoder.cs" />
     <Compile Include="MSTEException.cs" />
     <Compile Include="MSTEInterface.cs" />
+    <Compile Include="MSTypes.cs" />
     <Compile Include="Person.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -77,6 +79,7 @@
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Resources.resx</DependentUpon>
+      <DesignTime>True</DesignTime>
     </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
@@ -87,7 +90,6 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
-    <Compile Include="StringHelperClass.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

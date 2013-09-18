@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace MSTE {
+namespace MSTEClasses {
     static class Program {
         /// <summary>
         /// Point d'entrée principal de l'application.

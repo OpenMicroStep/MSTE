@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MSTE {
+namespace MSTEClasses {
     class MSType {
 	    public const string MSOBJECT 		= "MSObject";
 	    public const string MSARRAY 		= "MSArray"; 
