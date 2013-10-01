@@ -679,9 +679,19 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
                         [_global appendBytes:(const void*)"r" length:1];
                         break ;
                     }
-                    case 22 : { // \"
+                    case 34 : { // \"
                         [_global appendBytes:(const void*)"\\" length:1];
                         [_global appendBytes:(const void*)"\"" length:1];
+                        break ;
+                    }
+                    case 92 : { // antislash
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        break ;
+                    }
+                    case 47 : { // slash
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        [_global appendBytes:(const void*)"/" length:1];
                         break ;
                     }
                     default: {
