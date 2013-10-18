@@ -22,7 +22,7 @@ namespace MSTEClasses {
                 crc = ((int)((uint)crc >> 8)) ^ __table[(crc ^ b) & 0xff];
             }
             crc = (int) (crc ^ 0xffffffff);
-            return crc.ToString("x");
+            return crc.ToString("x").PadLeft(8,'0');
         }
     }
  }

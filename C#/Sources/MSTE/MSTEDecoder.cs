@@ -109,21 +109,11 @@ namespace MSTEClasses {
 		// ========= constructors and destructors =========
 		public MSTEDecoder(Dictionary<string, object> options)
 		{
-			if (!InstanceFieldsInitialized)
-			{
+			if (!InstanceFieldsInitialized) {
 				InitializeInstanceFields();
 				InstanceFieldsInitialized = true;
 			}
-
             this.dUserClass = options.ContainsKey(MSTEDecoder.OPT_USER_CLASS) ? (Dictionary<string, string>)options[MSTEDecoder.OPT_USER_CLASS] : null;
-            //bool useUUC = options.ContainsKey(MSTEDecoder.OPT_UNKNOWN_USER_CLASS) ? (bool)options[MSTEDecoder.OPT_UNKNOWN_USER_CLASS] : true;
-            //if (useUUC) {
-            //    foreach (var pair in this.dUserClass) {
-            //        if (Type.GetType(pair.Value)==null) {
-            //            throw new MSTEException("MSTEDecoder : - Unknown User Class " + pair.Value);
-            //        }
-            //    }  
-            //}
 		}
 		~MSTEDecoder()
 		{
@@ -163,7 +153,7 @@ namespace MSTEClasses {
 			if (!separatorFound) {
 				throw new MSTEException("_MSTJumpToNextToken: - Bad format (no next token)");
 			}
-			MSTE.logEvent("_MSTJumpToNextToken" + (char)data[pos[0]]);
+			MSTE.logEvent("_MSTJumpToNextToken > " + (char)data[pos[0]]);
 		}
 
 		private object _MSTDecodeNumber(sbyte[] data, int[] pos, int tokenType)	{
@@ -556,7 +546,7 @@ namespace MSTEClasses {
 				try {
                     Type aClass = Type.GetType(className);
                     if (aClass==null) {
-                        if (this.dUserClass.Count > 0) {
+                        if (this.dUserClass != null && this.dUserClass.Count > 0) {
                             if (this.dUserClass.ContainsKey(className)) {
                                 aClass = Type.GetType(this.dUserClass[className]);
                             } else {
@@ -576,12 +566,15 @@ namespace MSTEClasses {
 						Dictionary<string, object> dict = new Dictionary<string, object>();
                         decodedObjects.Add(ret);
                         dict = _MSTDecodeDictionary(data, pos, operation, decodedObjects, classes, keys, tokenCount, false, true, allowsUnknownUserClasses);
+                        // retrieve init interface method
                         MethodInfo initMethod = aClass.GetMethod(MSTEIMethods.INIT);
                         if (initMethod == null) {
                             throw new MSTEException("_MSTDecodeUserDefinedObject: -	unable to find initWithDictionary method in " + className + " in current system");
                         }
+                        // call to init interface method
                         initMethod.Invoke(ret, new object[] { dict });
 					}
+                    // if unknown user class are allowed we decode as dictionnary
 					else if ((bool)allowsUnknownUserClasses) {
 						ret = _MSTDecodeDictionary(data, pos, "_MSTDecodeUserDefinedObject", decodedObjects, classes, keys, tokenCount, true, true,allowsUnknownUserClasses);
 					}
@@ -709,11 +702,11 @@ namespace MSTEClasses {
 							char? s3 = (char)data[pos[0] + 4];
                             Regex rx = new Regex(@"[0-9A-Fa-f]+");
 
-                            if ((rx.Matches(s0.ToString()).Count > 0) || (rx.Matches(s1.ToString()).Count > 0) || (rx.Matches(s2.ToString()).Count > 0) || (rx.Matches(s2.ToString()).Count > 0)) {
+                            if ((rx.Matches(s0.ToString()).Count <= 0) || (rx.Matches(s1.ToString()).Count <= 0) || (rx.Matches(s2.ToString()).Count <= 0) || (rx.Matches(s2.ToString()).Count <= 0)) {
 								throw new MSTEException("_MSTDecodeString: (bad hexadecimal character for UTF16) " + operation);
 							}
 							else {
-								sbyte b0 = (sbyte)data[pos[0] + 1];
+                                sbyte b0 = (sbyte)data[pos[0] + 1];
 								sbyte b1 = (sbyte)data[pos[0] + 2];
 								sbyte b2 = (sbyte)data[pos[0] + 3];
 								sbyte b3 = (sbyte)data[pos[0] + 4];
@@ -847,7 +840,7 @@ namespace MSTEClasses {
 					break;
 				}
 				case MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT : {
-					//Decoded like Strongly référenced
+					//Decoded like Strongly referenced
 					int? objectReference;
 					_MSTJumpToNextToken(data, pos, tokenCount);
 					objectReference = _MSTDecodeInt(data, pos, "_MSTDecodeObject");

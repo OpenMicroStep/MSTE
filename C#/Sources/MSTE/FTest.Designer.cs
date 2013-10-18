@@ -30,7 +30,6 @@
             this.txtEncoded = new System.Windows.Forms.TextBox();
             this.txtDecoded = new System.Windows.Forms.TextBox();
             this.txtDecode = new System.Windows.Forms.TextBox();
-            this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtErrors = new System.Windows.Forms.TextBox();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -56,7 +55,6 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.txtErrors);
-            this.splitContainer1.Panel2.Controls.Add(this.groupBox2);
             this.splitContainer1.Size = new System.Drawing.Size(1164, 697);
             this.splitContainer1.SplitterDistance = 344;
             this.splitContainer1.TabIndex = 2;
@@ -124,25 +122,13 @@
             this.txtDecode.Size = new System.Drawing.Size(350, 278);
             this.txtDecode.TabIndex = 1;
             // 
-            // groupBox2
-            // 
-            this.groupBox2.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-                        | System.Windows.Forms.AnchorStyles.Left)
-                        | System.Windows.Forms.AnchorStyles.Right)));
-            this.groupBox2.Location = new System.Drawing.Point(3, 4);
-            this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(752, 343);
-            this.groupBox2.TabIndex = 3;
-            this.groupBox2.TabStop = false;
-            this.groupBox2.Text = "Encodage";
-            // 
             // txtErrors
             // 
-            this.txtErrors.Location = new System.Drawing.Point(772, 4);
+            this.txtErrors.Location = new System.Drawing.Point(3, 4);
             this.txtErrors.Multiline = true;
             this.txtErrors.Name = "txtErrors";
             this.txtErrors.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.txtErrors.Size = new System.Drawing.Size(384, 333);
+            this.txtErrors.Size = new System.Drawing.Size(1153, 333);
             this.txtErrors.TabIndex = 5;
             // 
             // FTest
@@ -170,7 +156,6 @@
         private System.Windows.Forms.TextBox txtDecoded;
         private System.Windows.Forms.TextBox txtDecode;
         private System.Windows.Forms.TextBox txtEncoded;
-        private System.Windows.Forms.GroupBox groupBox2;
         private System.Windows.Forms.Button btnDecode;
         private System.Windows.Forms.Button button1;
         private System.Windows.Forms.TextBox txtErrors;

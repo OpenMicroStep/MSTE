@@ -395,19 +395,19 @@ namespace MSTEClasses {
             if (isSnapshot) {
                 foreach (var oDict in aDictionary) {
                     theKey = oDict.Key;
-                    MSTE.logEvent("encodeDictionary key=" + theKey);
+                    MSTE.logEvent("encodeDictionary key= " + theKey);
                     if (aDictionary[theKey] != null) {
                         MSCouple o = (MSCouple)aDictionary[theKey];
                         keys.Add(theKey);
                         objects.Add(o);
-                        MSTE.logEvent("encodeDictionary value=" + o);
+                        MSTE.logEvent("encodeDictionary value= " + o);
                     }
                 }
             }
             else {
                 _encodeTokenSeparator();
                 _encodeTokenType(MSTE_TOKEN_TYPE_DICTIONARY);
-                encodeInt(aDictionary.Count, false);
+                //encodeInt(aDictionary.Count, false);
 
                 foreach (var oDict in aDictionary) {
                     theKey = oDict.Key;
@@ -418,9 +418,11 @@ namespace MSTEClasses {
                     }
                 }
             }
+
+            // write size of dict
             int count = keys.Count;
             encodeInt(count, false);
-            MSTE.logEvent("encodeDictionary 2");
+
             for (int i = 0; i < count; i++) {
                 string stringKey = (string)keys[i];
                 int keyReference = 0;
@@ -445,10 +447,9 @@ namespace MSTEClasses {
                     encodeObject(objects[i], isSnapshot);
                 }
             }
-            MSTE.logEvent("encodeDictionary 3");
+
             objects = null;
             keys = null;
-            //tempKeys = null;
         }
 
         private void encodeObject(object anObject, bool isSnapshot) {
@@ -595,29 +596,44 @@ namespace MSTEClasses {
                         char c = str[i];
                         switch ((int)c) {
                             case 9: { //\t
-                                    _global.Append("\\");
-                                    _global.Append("t");
-                                    break;
-                                }
+                                _global.Append("\\");
+                                _global.Append("t");
+                                break;
+                            }
                             case 10: { //\n
-                                    _global.Append("\\");
-                                    _global.Append("n");
-                                    break;
-                                }
+                                _global.Append("\\");
+                                _global.Append("n");
+                                break;
+                            }
                             case 13: { //\r
-                                    _global.Append("\\");
-                                    _global.Append("r");
-                                    break;
-                                }
+                                _global.Append("\\");
+                                _global.Append("r");
+                                break;
+                            }
                             case 22: { //\"
-                                    _global.Append("\\");
-                                    _global.Append("\"");
-                                    break;
-                                }
+                                _global.Append("\\");
+                                _global.Append("\"");
+                                break;
+                            }
+                            case 34: { // \"
+								_global.Append("\\");
+								_global.Append("\"");
+								break;
+                            }
+                            case 92: { // antislash
+								_global.Append("\\");
+								_global.Append("\\");
+                                break;
+                            }
+                            case 47: { // slash
+								_global.Append("\\");
+								_global.Append("/");
+                                break;
+                            }
                             default: {
-                                    _global.Append(c);
-                                    break;
-                                }
+                                _global.Append(c);
+                                break;
+                            }
                         }
                     }
                 }
