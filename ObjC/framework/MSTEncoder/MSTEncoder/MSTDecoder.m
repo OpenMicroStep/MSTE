@@ -103,7 +103,7 @@ NSString *_MSTDecodeString(unsigned char **pointer, unsigned char *endPointer, N
 NSNumber *_MSTDecodeNumber(unsigned char **pointer, unsigned char *endPointer, MSShort tokenType, NSZone *zone) ;
 NSMutableDictionary *_MSTDecodeDictionary(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, NSArray *classes, NSArray *keys, MSULong *tokenCount, BOOL manageReference, BOOL decodingUserClass, BOOL allowsUnknownUserClasses, NSZone *zone) ;
 NSMutableArray *_MSTDecodeArray(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, NSArray *classes, NSArray *keys, MSULong *tokenCount, BOOL allowsUnknownUserClasses, NSZone *zone) ;
-//MSNaturalArray *_MSTDecodeNaturalArray(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, MSULong *tokenCount, NSZone *zone) ;
+NSMutableArray *_MSTDecodeNaturalArray(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, MSULong *tokenCount, NSZone *zone) ;
 MSMutableCouple *_MSTDecodeCouple(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, NSArray *classes, NSArray *keys, MSULong *tokenCount, BOOL allowsUnknownUserClasses, NSZone *zone) ;
 NSData *_MSTDecodeBufferBase64String(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSZone *zone) ;
 NSData *_MSTDecodeBufferHexaString(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSZone *zone) ;
@@ -672,6 +672,30 @@ NSMutableArray *_MSTDecodeArray(unsigned char **pointer, unsigned char *endPoint
     return [ret autorelease] ;
 }
 
+NSMutableArray *_MSTDecodeNaturalArray(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, MSULong *tokenCount, NSZone *zone)
+{
+    unsigned char *s = (unsigned char *)*pointer ;
+    NSMutableArray *ret = nil ;
+    NSUInteger count = _MSTDecodeUnsignedLong(&s, endPointer, operation) ;
+    
+    ret = [[NSMutableArray allocWithZone:zone] initWithCapacity:count] ;
+    [decodedObjects addObject:ret] ;
+    
+    if (count) {
+        NSUInteger i ;
+        
+        for (i = 0 ; i < count ; i++) {
+            NSUInteger natural ;
+            _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
+            natural = _MSTDecodeUnsignedLong(&s, endPointer, operation) ;
+            [ret addObject:[NSNumber numberWithUnsignedLong:natural]] ;
+        }
+    }
+    
+    *pointer = s ;
+    return [ret autorelease] ;
+}
+
 
 MSMutableCouple *_MSTDecodeCouple(unsigned char **pointer, unsigned char *endPointer, NSString *operation, NSMutableArray *decodedObjects, NSArray *classes, NSArray *keys, MSULong *tokenCount, BOOL allowsUnknownUserClasses, NSZone *zone)
 {
@@ -875,7 +899,7 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
         }
         case MSTE_TOKEN_TYPE_NATURAL_ARRAY : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = _MSTDecodeArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses, zone) ;
+            ret = _MSTDecodeNaturalArray(&s, endPointer, @"_MSTDecodeObject", decodedObjects, tokenCount, zone) ;
             break ;
         }
         case MSTE_TOKEN_TYPE_COUPLE : {
@@ -1140,4 +1164,10 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
 
 @end
 
+@implementation NSObject (MSTDecoding)
+- (id)initWithDictionary:(NSDictionary *)values
+{
+	return [self notImplemented:NSSelectorFromString(@"initWithDictionary:")] ;
+}
+@end
 

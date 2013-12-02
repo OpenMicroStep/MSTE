@@ -632,7 +632,6 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
     [self _encodeGlobalHexaUnsignedInt:[_global longCRC] inRange:range] ;
    
     ret = [_global retain] ;
-    NSLog(@"encode %@",[[NSString alloc]initWithData:_global encoding:NSUTF8StringEncoding]);
       
     return [ret autorelease] ;
     
@@ -680,9 +679,19 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
                         [_global appendBytes:(const void*)"r" length:1];
                         break ;
                     }
-                    case 22 : { // \"
+                    case 34 : { // \"
                         [_global appendBytes:(const void*)"\\" length:1];
                         [_global appendBytes:(const void*)"\"" length:1];
+                        break ;
+                    }
+                    case 92 : { // antislash
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        break ;
+                    }
+                    case 47 : { // slash
+                        [_global appendBytes:(const void*)"\\" length:1];
+                        [_global appendBytes:(const void*)"/" length:1];
                         break ;
                     }
                     default: {

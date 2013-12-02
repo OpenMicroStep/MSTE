@@ -61,7 +61,11 @@ Jean-Michel Bertheas :  jean-michel.bertheas@club-internet.fr
 
 #ifndef GNUSTEP
 - (id)notImplemented:(SEL)aSel // for Gnustep compatibilkity
-{ [NSException raise:NSGenericException format:@"method not implemented"] ; return nil ;}
+{
+	if (aSel) [NSException raise:NSGenericException format:@"method not implemented - %@", NSStringFromSelector(aSel)] ;
+	else [NSException raise:NSGenericException format:@"method not implemented"] ;
+	return nil ;
+}
 #endif
 
 - (id)notYetImplemented:(SEL)aSel ;
@@ -70,6 +74,11 @@ Jean-Michel Bertheas :  jean-michel.bertheas@club-internet.fr
 
 @end
 
+@implementation NSString (MSObjectAdditions)
+
+- (NSString *)toString { return self ; }
+
+@end
 
 @implementation NSData (MSDataAdditions)
 
