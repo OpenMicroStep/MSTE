@@ -233,7 +233,7 @@ void _MSTJumpToNextToken(unsigned char **pointer, unsigned char *endPointer, MSU
         if (*s == (unichar)' ') { s++ ; }
         nextFound = (*s != (unichar)' ') ;
     }
-    if (!separatorFound) [NSException raise:NSGenericException format:@"MSTDecodeRetainedObject - Bad format (no next token)"] ;
+    if (!nextFound) [NSException raise:NSGenericException format:@"MSTDecodeRetainedObject - Bad format (no next token)"] ;
 
     *pointer = s ;
 }
