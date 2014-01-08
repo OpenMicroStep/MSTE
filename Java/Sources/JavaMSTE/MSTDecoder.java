@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 
-public class MSTEDecoder {
+public class MSTDecoder {
 	
 	
 	final int MSTE_TOKEN_MUST_ENCODE						= -1;
@@ -94,7 +94,7 @@ public class MSTEDecoder {
 	final java.util.Date __theDistantFuture = new java.util.Date(Long.MAX_VALUE)  ;
 
 	// ========= constructors and destructors =========
-	public MSTEDecoder() {}
+	public MSTDecoder() {}
 	public void finalize(){
 		_tokenCount = 0;
 	}

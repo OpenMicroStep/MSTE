@@ -118,7 +118,7 @@ public class MSTETests{
 			p3.setFather(p1);
 			p3.setMother(p2);
 		*/	
-			MSTEEncoder encoder = new MSTEEncoder();
+			MSTEncoder encoder = new MSTEncoder();
 			res = encoder.encodeRootObject(lstPersons);
 
 		//res = "[\"MSTE0101\",59,\"CRCC41DBEF3\",1,\"org.openmicrostep.mste.Person\",6,\"name\",\"firstName\",\"birthday\",\"maried-to\",\"father\",\"mother\",20,3,50,4,0,5,\"Durand\",1,5,\"Yves\",2,6,-1222131600,3,51,4, 0,9,2,1,5,\"Claire\",2,6,-1185667200,3,27,1,9,5,50,5,0,9,2,1,5,\"Lou\",2,6,-426214800,4,9,1,5,9,5]".getBytes();
@@ -130,8 +130,8 @@ public class MSTETests{
 
 	private static void testMSTEFile(String filename){
 		
-		MSTEEncoder encoder = new MSTEEncoder();
-		MSTEDecoder decoder = new MSTEDecoder();
+		MSTEncoder encoder = new MSTEncoder();
+		MSTDecoder decoder = new MSTDecoder();
 		byte[] res = null;
 		try {
 			//*************************************************************************************

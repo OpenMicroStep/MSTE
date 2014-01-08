@@ -251,9 +251,12 @@ MSRGBAColor.prototype.toString = function() {
 	return "rgba("+this.red+","+this.green+","+this.blue+","+(this.alpha/255.0)+")" ;
 } ;
 
-MSRGBAColor.prototype.trgbValue = function() {
+MSRGBAColor.prototype.cssValue = function() {
 	return ((255-this.alpha)*16777216) + (this.red*65536) + (this.green*256) + this.blue ;
 } ;
+
+// trgbValue is obsolete, please use cssValue
+MSRGBAColor.prototype.trgbValue = MSRGBAColor.prototype.cssValue ;
 
 /*
 MSRGBAColor.prototype.toHex = function() {

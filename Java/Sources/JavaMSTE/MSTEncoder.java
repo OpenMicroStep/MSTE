@@ -9,10 +9,10 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
-import java.lang.reflect.*;
+//import java.lang.reflect.*;
 import java.util.Locale;
 
-public class MSTEEncoder {
+public class MSTEncoder {
 
 private StringBuffer _content;
 private StringBuffer _global;
@@ -61,7 +61,7 @@ final int MSTE_TOKEN_LAST_DEFINED_TYPE = MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJEC
 
 
 // ========= constructors and destructors =========
-public MSTEEncoder() {}
+public MSTEncoder() {}
 public void finalize(){
 	_content = null;
 	_tokenCount = 0;
@@ -478,6 +478,7 @@ private void encodeObject(Object anObject, Boolean isSnapshot) throws MSTEExcept
 			//HashMap dictSnapshot = anObject.getSnapshot();
 			HashMap dictSnapshot = null;
 			if (anObject instanceof MSTEEncoderInterface){
+/*				
 				java.lang.reflect.Method method;
 				try {
 					method = anObject.getClass().getMethod("getSnapshot");					
@@ -496,6 +497,8 @@ private void encodeObject(Object anObject, Boolean isSnapshot) throws MSTEExcept
 				} catch (InvocationTargetException e) {
 					throw new MSTEException("encodeObject:unknow InvocationTargetException : " + e.toString());
 				}
+*/				
+				dictSnapshot=(HashMap)((MSTEEncoderInterface)anObject).getSnapshot();
 			}
 
 			String aClassName = anObject.getClass().getName();
