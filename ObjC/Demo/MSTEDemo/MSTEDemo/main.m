@@ -31,6 +31,12 @@
 
 @end
 
+@interface Person2 : Person
+{
+}
+@end
+
+
 @implementation Person
 
 + (id)personWithName:(NSString *)name firstName:(NSString *)firstName birthDay:(NSDate *)birthDay
@@ -72,17 +78,17 @@
 }
 
 - (NSString *)description
-{ return [NSString stringWithFormat:@"%@ %@ %@", _name, _firstName, _birthday] ; }
+{ return [NSString stringWithFormat:@"Person: %@ %@ %@", _name, _firstName, _birthday] ; }
 
 - (NSDictionary *)MSTESnapshot
 {
 	return [NSDictionary dictionaryWithObjectsAndKeys:
-		[MSCouple coupleWithFirstMember:_name secondMember:nil], @"name",
-		[MSCouple coupleWithFirstMember:_firstName secondMember:nil], @"firstName",
-		[MSCouple coupleWithFirstMember:_birthday secondMember:nil], @"birthday",
-		[MSCouple coupleWithFirstMember:_maried_to secondMember:nil], @"maried-to",
-		[MSCouple coupleWithFirstMember:_father secondMember:nil], @"father",
-		[MSCouple coupleWithFirstMember:_mother secondMember:nil], @"mother",
+		_name, @"name",
+		_firstName, @"firstName",
+		_birthday, @"birthday",
+		_maried_to, @"maried-to",
+		_father, @"father",
+		_mother, @"mother",
 		nil] ;
 }
 
@@ -96,6 +102,13 @@
 	_mother = [[values objectForKey:@"mother"] retain] ;
 	return self ;
 }
+
+@end
+
+@implementation Person2
+
+- (NSString *)description
+{ return [NSString stringWithFormat:@"Person2: %@ %@ %@", _name, _firstName, _birthday] ; }
 
 @end
 
@@ -126,10 +139,12 @@ int main(int argc, const char * argv[])
     NSLog(@"decodage après encodage %@", encodeDecode);
     NSLog(@"decodage autre chaine %@", decode);*/
 	
-	Person *pers1 = [Person personWithName:@"Durand" firstName:@"Yves" birthDay:[NSDate dateWithTimeIntervalSince1970:-243820800]] ;
+	Person *pers1 = [Person personWithName:@"Durand ¥-$-€" firstName:@"Yves" birthDay:[NSDate dateWithTimeIntervalSince1970:-243820800]] ;
 	Person *pers2 = [Person personWithName:@"Durand" firstName:@"Claire" birthDay:[NSDate dateWithTimeIntervalSince1970:-207360000]] ;
-	Person *pers3 = [Person personWithName:@"Durand" firstName:@"Lou" birthDay:[NSDate dateWithTimeIntervalSince1970:552096000]] ;
-	NSArray *tab = [NSArray arrayWithObjects:pers1, pers2, pers3, nil] ;
+	Person2 *pers3 = [Person2 personWithName:@"Durand" firstName:@"Lou" birthDay:[NSDate dateWithTimeIntervalSince1970:552096000]] ;
+    NSData *emptyData = [NSData data] ;
+    NSData *filledData = [NSData dataWithBytes:"F7y4" length:4] ;
+	NSArray *tab = [NSArray arrayWithObjects:pers1, pers2, pers3, emptyData, filledData, pers1, filledData, emptyData, nil] ;
 	NSData *buffer = nil ;
 	
 	[pers1 setMariedTo:pers2] ;
@@ -144,6 +159,17 @@ int main(int argc, const char * argv[])
 
 	NSLog(@"DECODED = %@", [buffer MSTDecodedObject]);
 	
+    buffer = [[[NSData alloc] initWithContentsOfFile:@"/Users/jm-bertheas/Developer/LOGITUD_Sources/MSTE/ObjC/Demo/MSTEDemo/MSTEDemo/MSTE_Example-UTF8.txt"] autorelease];
+    if ([buffer length]) {
+        NSLog(@"DECODING UTF8 FILE... ***************************");
+        NSLog(@"DECODED UTF8 FILE -> %@", [buffer MSTDecodedObject]);
+    }
+
+    buffer = [[[NSData alloc] initWithContentsOfFile:@"/Users/jm-bertheas/Developer/LOGITUD_Sources/MSTE/ObjC/Demo/MSTEDemo/MSTEDemo/MSTE_Example-ASCII7.txt"] autorelease];
+    if ([buffer length]) {
+        NSLog(@"DECODING ASCII 7 BITS FILE... ***************************");
+        NSLog(@"DECODED ASCII 7 BITS FILE -> %@", [buffer MSTDecodedObject]);
+    }
 
     [pool release] ;
     return 0;

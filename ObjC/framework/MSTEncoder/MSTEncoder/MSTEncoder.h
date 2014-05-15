@@ -43,18 +43,20 @@
  include <MSFoundation/MSFoundation.h>
  */
 
+#define MSTE_CURRENT_VERSION                "0102"
+
 #define MSTE_TOKEN_MUST_ENCODE              -1
 
 #define MSTE_TOKEN_TYPE_NULL                0
 #define MSTE_TOKEN_TYPE_TRUE                1
 #define MSTE_TOKEN_TYPE_FALSE               2
-#define MSTE_TOKEN_TYPE_INTEGER_VALUE       3
-#define MSTE_TOKEN_TYPE_REAL_VALUE          4
-#define MSTE_TOKEN_TYPE_STRING              5
-#define MSTE_TOKEN_TYPE_DATE                6
-#define MSTE_TOKEN_TYPE_COLOR               7
-#define MSTE_TOKEN_TYPE_DICTIONARY          8
-#define MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT   9
+#define MSTE_TOKEN_TYPE_EMPTY_STRING        3
+#define MSTE_TOKEN_TYPE_DISTANT_PAST        4
+#define MSTE_TOKEN_TYPE_DISTANT_FUTURE      5
+#define MSTE_TOKEN_TYPE_EMPTY_DATA          6
+
+#define MSTE_TOKEN_TYPE_REFERENCED_OBJECT   9
+
 #define MSTE_TOKEN_TYPE_CHAR                10
 #define MSTE_TOKEN_TYPE_UNSIGNED_CHAR       11
 #define MSTE_TOKEN_TYPE_SHORT               12
@@ -65,20 +67,22 @@
 #define MSTE_TOKEN_TYPE_UNSIGNED_INT64      17
 #define MSTE_TOKEN_TYPE_FLOAT               18
 #define MSTE_TOKEN_TYPE_DOUBLE              19
-#define MSTE_TOKEN_TYPE_ARRAY               20
-#define MSTE_TOKEN_TYPE_NATURAL_ARRAY       21
-#define MSTE_TOKEN_TYPE_COUPLE              22
-#define MSTE_TOKEN_TYPE_BASE64_DATA         23
-#define MSTE_TOKEN_TYPE_DISTANT_PAST        24
-#define MSTE_TOKEN_TYPE_DISTANT_FUTURE      25
-#define MSTE_TOKEN_TYPE_EMPTY_STRING        26
-#define MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT   27
 
-#define MSTE_TOKEN_LAST_DEFINED_TYPE        MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT
+#define MSTE_TOKEN_TYPE_DECIMAL_VALUE       20
+#define MSTE_TOKEN_TYPE_STRING              21
+#define MSTE_TOKEN_TYPE_DATE                22
+
+#define MSTE_TOKEN_TYPE_COLOR               23
+#define MSTE_TOKEN_TYPE_BASE64_DATA         24
+#define MSTE_TOKEN_TYPE_NATURAL_ARRAY       25
+
+#define MSTE_TOKEN_TYPE_DICTIONARY          30
+#define MSTE_TOKEN_TYPE_ARRAY               31
+#define MSTE_TOKEN_TYPE_COUPLE              32
+
+#define MSTE_TOKEN_LAST_DEFINED_TYPE        MSTE_TOKEN_TYPE_COUPLE
 
 #define MSTE_TOKEN_TYPE_USER_CLASS        50
-#define MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT       MSTE_TOKEN_TYPE_USER_CLASS
-#define MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT         MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 1
 
 #import "MSTETypes.h"
 #import "MSColor.h"
@@ -124,7 +128,6 @@
 - (void)encodeDictionary:(NSDictionary *)aDictionary ;
 
 - (void)encodeObject:(id)anObject ;
-- (void)encodeObject:(id)anObject weaklyReferenced:(BOOL)weakRef ;
 
 - (NSMutableData *)encodeRootObject:(id)anObject ;
 

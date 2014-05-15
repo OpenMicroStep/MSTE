@@ -51,7 +51,6 @@ Jean-Michel Bertheas :  jean-michel.bertheas@club-internet.fr
 #import "Foundation/NSData.h"
 
 
-#define XIsDigit(X)	((X)>='0' && (X)<='9')
 #define MSRangeOK(X)    ((X).location != NSNotFound)
 #define MSBadRange      NSMakeRange(NSNotFound, 0)
 #define MSAfterRange(X) ({ NSRange __r = (X); (__r.location == NSNotFound ? NSNotFound : __r.location + __r.length) ; })
