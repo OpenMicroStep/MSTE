@@ -42,7 +42,6 @@ namespace MSTEClasses {
             res += System.Environment.NewLine + " mother : " + (this.mother != null ? this.mother.firstName.ToString() : "-");
             res += System.Environment.NewLine + " father : " + (this.father != null ? this.father.firstName.ToString() : "-");
             res += System.Environment.NewLine + "---------------- ";
-            res += System.Environment.NewLine;
             return res;
         }
 
@@ -50,7 +49,7 @@ namespace MSTEClasses {
         #region MSTEInterface Membres
 
         public void initWithDictionary(Dictionary<string, object> dict) { //<string, object> dict) {
-            string fn = dict.ContainsKey("firstname") ? (string)dict["firstname"] : "";
+            string fn = dict.ContainsKey("firstName") ? (string)dict["firstName"] : "";
             Person mt = dict.ContainsKey("maried-to") ? (Person)dict["maried-to"] : null;
             string n = dict.ContainsKey("name") ? (string)dict["name"] : "";
             DateTime bd = dict.ContainsKey("birthday") ? (DateTime)dict["birthday"] : DateTime.MinValue;
@@ -70,7 +69,7 @@ namespace MSTEClasses {
 
             MSCouple cp2 = new MSCouple();
             cp2.FirstMember = this.firstName;
-            dict["firstname"] = cp2;
+            dict["firstName"] = cp2;
 
             if (this.mariedTo != null) {
                 MSCouple cp4 = new MSCouple();
