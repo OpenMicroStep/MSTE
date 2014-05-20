@@ -473,14 +473,34 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
     NSMutableArray *objects = [[NSMutableArray alloc] initWithCapacity:[aDictionary count]] ;
     NSUInteger i, count ;
     
-    while ((key = [ek nextObject])) {
-        id object = [aDictionary objectForKey:key] ;
-        if ([object singleEncodingCode:self] != MSTE_TOKEN_TYPE_NULL) {
-            [keys addObject:[key toString]] ;
-            [objects addObject:object] ;
+    if (isSnapshot) {
+        while ((key = [ek nextObject])) {
+            id o = [aDictionary objectForKey:key] ;
+            id object = nil ;
+            
+            if (![o isKindOfClass:[MSCouple class]]) {
+                [NSException raise:NSGenericException format:@"encodeDictionary:isSnapshot: one object is not a MSCouple in a snapshot!"] ;
+            }
+            else {
+                object = [o firstMember] ;
+            }
+            
+            if ([object singleEncodingCode:self] != MSTE_TOKEN_TYPE_NULL) {
+                [keys addObject:[key toString]] ;
+                [objects addObject:o] ;
+            }
         }
     }
-    
+    else {
+        while ((key = [ek nextObject])) {
+            id object = [aDictionary objectForKey:key] ;
+            if ([object singleEncodingCode:self] != MSTE_TOKEN_TYPE_NULL) {
+                [keys addObject:[key toString]] ;
+                [objects addObject:object] ;
+            }
+        }
+    }
+            
     count = [keys count] ;
     [self encodeUnsignedLongLong:(MSULong)count withTokenType:NO] ;
     
@@ -492,18 +512,28 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
             NSMapInsertKnownAbsent(_keys, (const void *)stringKey, (const void *)keyReference) ;
             [_keysArray addObject:stringKey] ;
         }
-        
+                
         [self encodeUnsignedLongLong:(MSULong)(keyReference-1) withTokenType:NO] ;
-        [self encodeObject:[objects objectAtIndex:i]] ;
+        if (isSnapshot) {
+            MSCouple *o = [objects objectAtIndex:i] ;
+            id manageReference = [o secondMember] ;
+
+            if (manageReference) [self encodeObject:[o firstMember] withReferencing:YES] ;
+            else [self encodeObject:[o firstMember] withReferencing:NO] ;
+        }
+        else [self encodeObject:[objects objectAtIndex:i]] ;
     }
     [keys release] ;
     [objects release] ;
 }
 
-- (void)encodeObject:(id)anObject
+- (void)encodeObject:(id)anObject { [self encodeObject:anObject withReferencing:YES] ; }
+
+- (void)encodeObject:(id)anObject withReferencing:(BOOL)referencing
 {
     
     MSInt singleToken = [anObject singleEncodingCode:self] ;
+
     if (singleToken != MSTE_TOKEN_MUST_ENCODE) {
         [self _encodeTokenSeparator] ;
         [self _encodeTokenType:singleToken] ;
@@ -518,8 +548,8 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
             [self encodeUnsignedLongLong:(objectReference-1) withTokenType:NO] ;
         }
         else {
-            MSByte tokenType = [anObject tokenType] ;
-            if (tokenType == MSTE_TOKEN_TYPE_USER_CLASS) {
+            MSByte tokenType = [anObject tokenTypeWithReference:referencing] ;
+            if (tokenType >= MSTE_TOKEN_TYPE_USER_CLASS) {
                 Class objectClass ;
                 NSUInteger classIndex ;
                 NSDictionary *snapshot = [anObject MSTESnapshot] ;
@@ -541,14 +571,16 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
                 [self encodeDictionary:snapshot isSnapshot:YES] ;
             }
             else if (tokenType <= MSTE_TOKEN_LAST_DEFINED_TYPE) {
-                
-                objectReference = ++_lastReference ;
-                NSMapInsertKnownAbsent(_encodedObjects, (const void *)anObject, (const void *)objectReference) ;
+
+                if (referencing) {
+                    objectReference = ++_lastReference ;
+                    NSMapInsertKnownAbsent(_encodedObjects, (const void *)anObject, (const void *)objectReference) ;
+                }
                 
                 [self _encodeTokenSeparator] ;
                 
                 [self _encodeTokenType:tokenType] ;
-                 
+                
                 [anObject encodeWithMSTEncoder:self] ;
                
             }
@@ -739,7 +771,9 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
 
 @implementation NSObject (MSTEncoding)
 
-- (MSByte)tokenType { return MSTE_TOKEN_TYPE_USER_CLASS ; } //must be overriden by subclasse to be encoded
+- (MSByte)tokenType { return MSTE_TOKEN_TYPE_USER_CLASS ; } //must be overriden by subclasse to be encoded if tokenTypeWithReference: method is not overriden
+- (MSByte)tokenTypeWithReference:(BOOL)isReferenced { return [self tokenType] ; } //must be overriden by subclasse to be encoded if tokenType method is not overriden
+
 - (NSDictionary *)MSTESnapshot { [NSException raise:NSGenericException format:@"method not implemented"] ; return nil ; } //must be overriden by subclasse to be encoded as a dictionary. keys of snapshot are member names, values are MSCouple with the member in firstMember and in secondMember : nil if member is strongly referenced, or not nil if member is weakly referenced.
 
 - (MSInt)singleEncodingCode:(MSTEncoder *)encoder {return MSTE_TOKEN_MUST_ENCODE ; }
@@ -755,7 +789,7 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
 
 @implementation NSObject (MSTEncodingPrivate)
 
-- (void)encodeWithMSTEncoder:(MSTEncoder *)encoder { [NSException raise:NSGenericException format:@"method not implemented"] ;  } //must be overriden by subclasse to be encoded
+- (void)encodeWithMSTEncoder:(MSTEncoder *)encoder { [NSException raise:NSGenericException format:@"method not implemented"] ; } //must be overriden by subclasse to be encoded
 
 @end
 
@@ -797,69 +831,75 @@ static NSNumber *__aBool = nil ;
     return MSTE_TOKEN_MUST_ENCODE ;
 }
 
-- (MSByte)tokenType
+- (MSByte)tokenType { return MSTE_TOKEN_TYPE_DECIMAL_VALUE ; }
+- (MSByte)tokenTypeWithReference:(BOOL)isReferenced
 {
-    unsigned char type = *[self objCType] ;
-    switch (type) {
-        case 'c':
-        {
-            return MSTE_TOKEN_TYPE_CHAR ;
-            break ;
-        }
-        case 'C':
-        {
-            return MSTE_TOKEN_TYPE_UNSIGNED_CHAR ;
-            break ;
-        }
-        case 's':
-        {
-            return MSTE_TOKEN_TYPE_SHORT ;
-            break ;
-        }
-        case 'S':
-        {
-            return MSTE_TOKEN_TYPE_UNSIGNED_SHORT ;
-            break ;
-        }
-        case 'i':
-        case 'l':
-        {
-            return MSTE_TOKEN_TYPE_INT32 ;
-            break ;
-        }
-        case 'I':
-        case 'L':
-        {
-            return MSTE_TOKEN_TYPE_INSIGNED_INT32 ;
-            break ;
-        }
-        case 'q':
-        {
-            return MSTE_TOKEN_TYPE_INT64 ;
-            break ;
-        }
-        case 'Q':
-        {
-            return MSTE_TOKEN_TYPE_UNSIGNED_INT64 ;
-            break ;
-        }
-        case 'f':
-        {
-            return MSTE_TOKEN_TYPE_FLOAT ;
-            break ;
-        }
-        case 'd':
-        {
-            return MSTE_TOKEN_TYPE_DOUBLE ;
-            break ;
-        }
-#ifdef WO451
-        default:  [NSException raise:NSInvalidArgumentException format:@"Unknown number type '%s'", type] ; break;
-#else
-        default:  [NSException raise:NSInvalidArgumentException format:@"Unknown number type '%hhu'", type] ; break;
-#endif
+    if (isReferenced) {
+        return [self tokenType] ;
     }
-    return 0 ;
+    else {
+        unsigned char type = *[self objCType] ;
+        switch (type) {
+            case 'c':
+            {
+                return MSTE_TOKEN_TYPE_CHAR ;
+                break ;
+            }
+            case 'C':
+            {
+                return MSTE_TOKEN_TYPE_UNSIGNED_CHAR ;
+                break ;
+            }
+            case 's':
+            {
+                return MSTE_TOKEN_TYPE_SHORT ;
+                break ;
+            }
+            case 'S':
+            {
+                return MSTE_TOKEN_TYPE_UNSIGNED_SHORT ;
+                break ;
+            }
+            case 'i':
+            case 'l':
+            {
+                return MSTE_TOKEN_TYPE_INT32 ;
+                break ;
+            }
+            case 'I':
+            case 'L':
+            {
+                return MSTE_TOKEN_TYPE_INSIGNED_INT32 ;
+                break ;
+            }
+            case 'q':
+            {
+                return MSTE_TOKEN_TYPE_INT64 ;
+                break ;
+            }
+            case 'Q':
+            {
+                return MSTE_TOKEN_TYPE_UNSIGNED_INT64 ;
+                break ;
+            }
+            case 'f':
+            {
+                return MSTE_TOKEN_TYPE_FLOAT ;
+                break ;
+            }
+            case 'd':
+            {
+                return MSTE_TOKEN_TYPE_DOUBLE ;
+                break ;
+            }
+#ifdef WO451
+            default:  [NSException raise:NSInvalidArgumentException format:@"Unknown number type '%s'", type] ; break;
+#else
+            default:  [NSException raise:NSInvalidArgumentException format:@"Unknown number type '%hhu'", type] ; break;
+#endif
+        }
+        return 0 ;
+    }
 }
 @end
 

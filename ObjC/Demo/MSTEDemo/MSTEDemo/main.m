@@ -20,6 +20,9 @@
 	Person *_father ;
 	Person *_mother ;
 	
+    BOOL _aBool ;
+    int _aInt ;
+    NSNumber *_aNumber ;
 }
 
 + (id)personWithName:(NSString *)name firstName:(NSString *)firstName birthDay:(NSDate *)birthDay;
@@ -28,6 +31,10 @@
 - (void)setMariedTo:(Person *)person;
 - (void)setFather:(Person *)person;
 - (void)setMother:(Person *)person;
+
+- (void)setBool:(BOOL)value ;
+- (void)setInt:(int)value ;
+- (void)setNumber:(NSNumber *)value ;
 
 @end
 
@@ -59,6 +66,7 @@
 	[_maried_to release] ;
 	[_father release] ;
 	[_mother release] ;
+    [_aNumber release] ;
 	[super dealloc] ;
 }
 
@@ -77,19 +85,28 @@
 	_mother = [person retain] ;
 }
 
+- (void)setBool:(BOOL)value { _aBool = value ; }
+- (void)setInt:(int)value {_aInt = value ; }
+- (void)setNumber:(NSNumber *)value { _aNumber = [value retain] ; }
+
 - (NSString *)description
-{ return [NSString stringWithFormat:@"Person: %@ %@ %@", _name, _firstName, _birthday] ; }
+{ return [NSString stringWithFormat:@"Person: %@ %@ %@ %d %d %@", _name, _firstName, _birthday, _aBool, _aInt, _aNumber] ; }
 
 - (NSDictionary *)MSTESnapshot
 {
-	return [NSDictionary dictionaryWithObjectsAndKeys:
-		_name, @"name",
-		_firstName, @"firstName",
-		_birthday, @"birthday",
-		_maried_to, @"maried-to",
-		_father, @"father",
-		_mother, @"mother",
-		nil] ;
+    NSMutableDictionary *res = [NSMutableDictionary dictionary] ;
+
+    if (_name) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_name, YES) forKey:@"name"] ; }
+    if (_firstName) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_firstName, YES) forKey:@"firstName"] ; }
+    if (_birthday) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_birthday, YES) forKey:@"birthday"] ; }
+    if (_maried_to) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_maried_to, YES) forKey:@"maried-to"] ; }
+    if (_father) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_father, YES) forKey:@"father"] ; }
+    if (_mother) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_mother, YES) forKey:@"mother"] ; }
+    if (_aBool) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE([NSNumber numberWithBool:_aBool], NO) forKey:@"aBool"] ; }
+    if (_aInt) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE([NSNumber numberWithInt:_aInt], NO) forKey:@"aInt"] ; }
+    if (_aNumber) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_aNumber, YES) forKey:@"aNumber"] ; }
+    
+    return res ;
 }
 
 - (id)initWithDictionary:(NSDictionary *)values
@@ -100,6 +117,9 @@
 	_maried_to = [[values objectForKey:@"maried-to"] retain] ;
 	_father = [[values objectForKey:@"father"] retain] ;
 	_mother = [[values objectForKey:@"mother"] retain] ;
+    _aBool = [[values objectForKey:@"aBool"] boolValue] ;
+    _aInt = [[values objectForKey:@"aInt"] intValue] ;
+    _aNumber = [[values objectForKey:@"aNumber"] retain] ;
 	return self ;
 }
 
@@ -117,28 +137,6 @@ int main(int argc, const char * argv[])
 
     NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init] ;
     
-    //Encodage puis decodage    
-/*    NSString *aString = @"unechainemélodie^^";
-    NSNumber *aNumber = [NSNumber numberWithInt:12];
-    NSNumber *aBool = [NSNumber numberWithBool:YES];
-    NSArray *anArray = [NSArray arrayWithObjects:aString,aNumber,aBool,nil];
-    
-    NSData* aData=[anArray MSTEncodedBuffer];
-    id encodeDecode=[aData MSTDecodedObjectAndVerifyCRC:YES];
-    
-    
- 
-    //Test decodage d'une chaine
-    NSString *myString = @"[\"MSTE0101\",45,\"CRC00000000\",1,\"MSTETest\",7,\"Arraaaayy\",\"blabla\",\"Array\",\"color\",\"datata\",\"date\",\"string\",50,6,0,20,2,7,2200083711,8,1,1,6,1351586383,2,20,3,14,12,1,9,2,3,9,2,4,23,\"bcOpbG9kaWU=\",5,9,4,6,5,\"SomeT\\u00E9ext\"]";
-
-    
-    NSData *myData = [myString dataUsingEncoding:NSUTF8StringEncoding];
-    id decode=[myData MSTDecodedObject];    
-
-       
-    NSLog(@"decodage après encodage %@", encodeDecode);
-    NSLog(@"decodage autre chaine %@", decode);*/
-	
 	Person *pers1 = [Person personWithName:@"Durand ¥-$-€" firstName:@"Yves" birthDay:[NSDate dateWithTimeIntervalSince1970:-243820800]] ;
 	Person *pers2 = [Person personWithName:@"Durand" firstName:@"Claire" birthDay:[NSDate dateWithTimeIntervalSince1970:-207360000]] ;
 	Person2 *pers3 = [Person2 personWithName:@"Durand" firstName:@"Lou" birthDay:[NSDate dateWithTimeIntervalSince1970:552096000]] ;
@@ -148,6 +146,9 @@ int main(int argc, const char * argv[])
 	NSData *buffer = nil ;
 	
 	[pers1 setMariedTo:pers2] ;
+    [pers1 setBool:YES] ;
+    [pers1 setInt:3] ;
+    [pers1 setNumber:[NSNumber numberWithDouble:1.4568765435]] ;
 	[pers2 setMariedTo:pers1] ;
 	[pers3 setMother:pers2] ;
 	[pers3 setFather:pers1] ;
@@ -170,6 +171,12 @@ int main(int argc, const char * argv[])
         NSLog(@"DECODING ASCII 7 BITS FILE... ***************************");
         NSLog(@"DECODED ASCII 7 BITS FILE -> %@", [buffer MSTDecodedObject]);
     }
+
+/*    NSNumber *nb = [NSNumber numberWithInt:123] ;
+    NSArray *dict = [NSArray arrayWithObject:nb] ;
+    NSData *buffer = [dict MSTEncodedBuffer] ;
+    NSLog(@"ENCODED = %@", [NSString stringWithCString:[buffer bytes] encoding:NSUTF8StringEncoding]);
+	NSLog(@"DECODED = %@", [buffer MSTDecodedObject]);*/
 
     [pool release] ;
     return 0;

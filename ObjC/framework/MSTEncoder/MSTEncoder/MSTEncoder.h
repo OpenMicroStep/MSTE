@@ -90,6 +90,7 @@
 #import "MSTDecoder.h"
 
 
+#define CREATE_MSTE_SNAPSHOT_VALUE(value, mustBeReferenced) [MSCouple coupleWithFirstMember:value secondMember:(mustBeReferenced ? value : nil)] 
 
 
 @interface MSTEncoder : NSObject
@@ -134,7 +135,8 @@
 @end
 
 @interface NSObject (MSTEncoding)
-- (MSByte)tokenType ; //must be overriden by subclasse to be encoded
+- (MSByte)tokenType ; //must be overriden by subclasse to be encoded if tokenTypeWithReference: method is not overriden
+- (MSByte)tokenTypeWithReference:(BOOL)isReferenced ; //must be overriden by subclasse to be encoded if tokenType method is not overriden
 - (NSDictionary *)MSTESnapshot ; //must be overriden by subclasse to be encoded as a dictionary
 - (NSData *)MSTEncodedBuffer ; //returns a buffer containing the object encoded with MSTE protocol
 - (MSInt)singleEncodingCode:(MSTEncoder *)encoder ; // defaults returns MSTE_TOKEN_MUST_ENCODE

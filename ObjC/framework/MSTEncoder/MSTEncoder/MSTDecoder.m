@@ -873,6 +873,11 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
         case MSTE_TOKEN_TYPE_UNSIGNED_INT64 :
         case MSTE_TOKEN_TYPE_FLOAT :
         case MSTE_TOKEN_TYPE_DOUBLE :
+        {
+            _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
+            ret = _MSTDecodeNumber(&s, endPointer, tokenType, zone) ;
+            break ;
+        }
         case MSTE_TOKEN_TYPE_DECIMAL_VALUE :
         {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
@@ -1105,17 +1110,17 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
                     NS_DURING
                         decodedObjects = [[NSMutableArray alloc] initWithCapacity:32] ;
                         object = [_MSTDecodeObject(&s, end, @"root object", decodedObjects, decodedClasses, decodedKeys, &myTokenCount, allowsUnknownUserClasses, zone) retain] ;
-                    DESTROY(decodedClasses) ;
-                    DESTROY(decodedKeys) ;
-                    DESTROY(decodedObjects) ;
+                        DESTROY(decodedClasses) ;
+                        DESTROY(decodedKeys) ;
+                        DESTROY(decodedObjects) ;
                         state = MSTE_DECODING_ARRAY_END ;
                     NS_HANDLER
                         object = nil ;
-                    object = nil ;
-                    DESTROY(decodedClasses) ;
-                    DESTROY(decodedKeys) ;
-                    DESTROY(decodedObjects) ;
-                    [localException raise] ;
+                        object = nil ;
+                        DESTROY(decodedClasses) ;
+                        DESTROY(decodedKeys) ;
+                        DESTROY(decodedObjects) ;
+                        [localException raise] ;
                     NS_ENDHANDLER
                     break ;
                 }
