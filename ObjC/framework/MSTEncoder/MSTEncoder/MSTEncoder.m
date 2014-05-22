@@ -50,7 +50,7 @@
 #define MSTEncoderLastVersion	100
 
 static const char *__hexa = "0123456789ABCDEF" ;
-
+static NSDictionary *__decimalLocale = nil ;
 
 static inline MSByte _ShortValueToHexaCharacter(MSByte c)
 {
@@ -198,6 +198,11 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
 
 - (void)encodeString:(NSString *)s withTokenType:(BOOL)token // transforms a string in its UTF16 counterpart and encodes it
 {
+    [self encodeString:s withTokenType:token andDoubleQuotes:YES] ;
+}
+
+- (void)encodeString:(NSString *)s withTokenType:(BOOL)token andDoubleQuotes:(BOOL)doubleQuotes
+{
     if (s) {
         NSUInteger len = [s length] ;
         if (token) {
@@ -206,7 +211,9 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
         }
         
         [self _encodeTokenSeparator] ;
-        [_content appendBytes:(const void*)"\"" length:1];
+        if (doubleQuotes) {
+            [_content appendBytes:(const void*)"\"" length:1];
+        }
         
         if (len) {
             NSUInteger i ;
@@ -284,7 +291,9 @@ static inline MSByte _ShortValueToHexaCharacter(MSByte c)
                 }
             }
         }
-        [_content appendBytes:(const void*)"\"" length:1];
+        if (doubleQuotes) {
+            [_content appendBytes:(const void*)"\"" length:1];
+        }
     }
     else [NSException raise:NSGenericException format:@"encodeString:withTokenType: no string to encode!"] ;
 }
@@ -926,6 +935,14 @@ static NSNumber *__aBool = nil ;
         default:  [NSException raise:NSInvalidArgumentException format:@"Unknown number type '%hhu'", type] ; break;
 #endif
     }
+}
+@end
+
+@implementation NSDecimalNumber (MSTEncodingPrivate)
+- (void)encodeWithMSTEncoder:(MSTEncoder *)encoder
+{
+    if (!__decimalLocale) __decimalLocale = [[NSDictionary alloc] initWithObjectsAndKeys:@".", NSLocaleDecimalSeparator, nil];
+    [encoder encodeString:[self descriptionWithLocale:__decimalLocale] withTokenType:NO andDoubleQuotes:NO] ;
 }
 @end
 

@@ -22,7 +22,9 @@
 	
     BOOL _aBool ;
     int _aInt ;
-    NSNumber *_aNumber ;
+    NSNumber *_aNumber1 ;
+    NSNumber *_aNumber2 ;
+    NSNumber *_aNumber3 ;
 }
 
 + (id)personWithName:(NSString *)name firstName:(NSString *)firstName birthDay:(NSDate *)birthDay;
@@ -34,7 +36,9 @@
 
 - (void)setBool:(BOOL)value ;
 - (void)setInt:(int)value ;
-- (void)setNumber:(NSNumber *)value ;
+- (void)setNumber1:(NSNumber *)value ;
+- (void)setNumber2:(NSNumber *)value ;
+- (void)setNumber3:(NSNumber *)value ;
 
 @end
 
@@ -66,7 +70,9 @@
 	[_maried_to release] ;
 	[_father release] ;
 	[_mother release] ;
-    [_aNumber release] ;
+    [_aNumber1 release] ;
+    [_aNumber2 release] ;
+    [_aNumber3 release] ;
 	[super dealloc] ;
 }
 
@@ -87,10 +93,12 @@
 
 - (void)setBool:(BOOL)value { _aBool = value ; }
 - (void)setInt:(int)value {_aInt = value ; }
-- (void)setNumber:(NSNumber *)value { _aNumber = [value retain] ; }
+- (void)setNumber1:(NSNumber *)value { _aNumber1 = [value retain] ; }
+- (void)setNumber2:(NSNumber *)value { _aNumber2 = [value retain] ; }
+- (void)setNumber3:(NSNumber *)value { _aNumber3 = [value retain] ; }
 
 - (NSString *)description
-{ return [NSString stringWithFormat:@"Person: %@ %@ %@ %d %d %@", _name, _firstName, _birthday, _aBool, _aInt, _aNumber] ; }
+{ return [NSString stringWithFormat:@"Person: %@ %@ %@ %d %d %@ %@ %@", _name, _firstName, _birthday, _aBool, _aInt, _aNumber1, _aNumber2, _aNumber3] ; }
 
 - (NSDictionary *)MSTESnapshot
 {
@@ -104,7 +112,9 @@
     if (_mother) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_mother, YES) forKey:@"mother"] ; }
     if (_aBool) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE([NSNumber numberWithBool:_aBool], NO) forKey:@"aBool"] ; }
     if (_aInt) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE([NSNumber numberWithInt:_aInt], NO) forKey:@"aInt"] ; }
-    if (_aNumber) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_aNumber, YES) forKey:@"aNumber"] ; }
+    if (_aNumber1) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_aNumber1, YES) forKey:@"aNumber1"] ; }
+    if (_aNumber2) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_aNumber2, YES) forKey:@"aNumber2"] ; }
+    if (_aNumber3) { [res setObject:CREATE_MSTE_SNAPSHOT_VALUE(_aNumber3, YES) forKey:@"aNumber3"] ; }
     
     return res ;
 }
@@ -119,7 +129,9 @@
 	_mother = [[values objectForKey:@"mother"] retain] ;
     _aBool = [[values objectForKey:@"aBool"] boolValue] ;
     _aInt = [[values objectForKey:@"aInt"] intValue] ;
-    _aNumber = [[values objectForKey:@"aNumber"] retain] ;
+    _aNumber1 = [[values objectForKey:@"aNumber1"] retain] ;
+    _aNumber2 = [[values objectForKey:@"aNumber2"] retain] ;
+    _aNumber3 = [[values objectForKey:@"aNumber3"] retain] ;
 	return self ;
 }
 
@@ -148,7 +160,9 @@ int main(int argc, const char * argv[])
 	[pers1 setMariedTo:pers2] ;
     [pers1 setBool:YES] ;
     [pers1 setInt:3] ;
-    [pers1 setNumber:[NSNumber numberWithDouble:1.4568765435]] ;
+    [pers1 setNumber1:[NSNumber numberWithInt:1765435]] ;
+    [pers1 setNumber2:[NSNumber numberWithDouble:1.4568765435]] ;
+    [pers1 setNumber3:[[[NSDecimalNumber alloc] initWithMantissa:1313513135130000001 exponent:-112 isNegative:YES] autorelease]] ;
 	[pers2 setMariedTo:pers1] ;
 	[pers3 setMother:pers2] ;
 	[pers3 setFather:pers1] ;
@@ -171,14 +185,19 @@ int main(int argc, const char * argv[])
         NSLog(@"DECODING ASCII 7 BITS FILE... ***************************");
         NSLog(@"DECODED ASCII 7 BITS FILE -> %@", [buffer MSTDecodedObject]);
     }
-
-/*    NSNumber *nb = [NSNumber numberWithInt:123] ;
-    NSArray *dict = [NSArray arrayWithObject:nb] ;
-    NSData *buffer = [dict MSTEncodedBuffer] ;
-    NSLog(@"ENCODED = %@", [NSString stringWithCString:[buffer bytes] encoding:NSUTF8StringEncoding]);
-	NSLog(@"DECODED = %@", [buffer MSTDecodedObject]);*/
-
+   
+    buffer = [[[NSData alloc] initWithContentsOfFile:@"/Users/jm-bertheas/Developer/LOGITUD_Sources/MSTE/ObjC/Demo/MSTEDemo/MSTEDemo/MSTE_Example2-UTF8.txt"] autorelease];
+    if ([buffer length]) {
+        NSLog(@"DECODING UTF8 FILE2... ***************************");
+        NSLog(@"DECODED UTF8 FILE2 -> %@", [buffer MSTDecodedObject]);
+    }
+    
+    buffer = [[[NSData alloc] initWithContentsOfFile:@"/Users/jm-bertheas/Developer/LOGITUD_Sources/MSTE/ObjC/Demo/MSTEDemo/MSTEDemo/MSTE_Example3-UTF8.txt"] autorelease];
+    if ([buffer length]) {
+        NSLog(@"DECODING UTF8 FILE3... ***************************");
+        NSLog(@"DECODED UTF8 FILE3 -> %@", [buffer MSTDecodedObject]);
+    }
+    
     [pool release] ;
     return 0;
 }
-

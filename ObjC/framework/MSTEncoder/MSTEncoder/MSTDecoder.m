@@ -83,6 +83,7 @@
 static NSNull *__theNull = nil ;
 static NSDate *__theDistantPast = nil ;
 static NSDate *__theDistantFuture = nil ;
+static NSDictionary *__decimalLocale = nil ;
 
 void _MSTJumpToNextToken(unsigned char **pointer, unsigned char *endPointer, MSULong *tokenCount) ;
 
@@ -575,7 +576,24 @@ NSNumber *_MSTDecodeNumber(unsigned char **pointer, unsigned char *endPointer, M
 
     switch (tokenType) {
         case MSTE_TOKEN_TYPE_DECIMAL_VALUE : {
-            ret = [[NSDecimalNumber allocWithZone:zone] initWithDouble:_MSTDecodeDouble(&s, endPointer, @"_MSTDecodeNumber")] ;
+            unsigned char *startPointer = *pointer ;
+            NSUInteger strLen = 0 ;
+            
+            _MSTDecodeDouble(&s, endPointer, @"_MSTDecodeNumber") ;
+            strLen = (endPointer-startPointer) ;
+            
+            if (strLen) {
+                NSData *decimalData = nil ;
+                NSString *decimalString = nil ;
+                if (!__decimalLocale) __decimalLocale = [[NSDictionary alloc] initWithObjectsAndKeys:@".", NSLocaleDecimalSeparator, nil];
+                
+                decimalData = [NSData dataWithBytes:startPointer length:strLen] ;
+                decimalString = [[[NSString alloc] initWithData:decimalData encoding:NSASCIIStringEncoding] autorelease];
+                ret = [[NSDecimalNumber allocWithZone:zone] initWithString:decimalString locale:__decimalLocale] ;
+            }
+            else {
+                [NSException raise:NSGenericException format:@"_MSTDecodeNumber - decimal number has null length!"] ;
+            }
             break ;
         }
         case MSTE_TOKEN_TYPE_CHAR : {
