@@ -1,0 +1,10 @@
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\ResolveAssemblyReference.cache
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\MSTEDemo.csproj.GenerateResource.Cache
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\MSTEDemo.FTest.resources
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\bin\Debug\MSTEDemo.exe
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\bin\Debug\MSTEDemo.pdb
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\bin\Debug\MSTEFramework.dll
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\bin\Debug\MSTEFramework.pdb
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\MSTEDemo.exe
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\MSTEDemo.pdb
+Y:\Developer\MSTE\C#\Demo\MSTEDemo\obj\Debug\MSTEFramework.Properties.Resources.resources

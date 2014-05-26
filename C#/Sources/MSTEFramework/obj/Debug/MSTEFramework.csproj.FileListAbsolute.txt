@@ -1,0 +1,5 @@
+Y:\Developer\MSTE\C#\Sources\MSTEFramework\bin\Debug\MSTEFramework.dll
+Y:\Developer\MSTE\C#\Sources\MSTEFramework\bin\Debug\MSTEFramework.pdb
+Y:\Developer\MSTE\C#\Sources\MSTEFramework\obj\Debug\ResolveAssemblyReference.cache
+Y:\Developer\MSTE\C#\Sources\MSTEFramework\obj\Debug\MSTEFramework.dll
+Y:\Developer\MSTE\C#\Sources\MSTEFramework\obj\Debug\MSTEFramework.pdb
