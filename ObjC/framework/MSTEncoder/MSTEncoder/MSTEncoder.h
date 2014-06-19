@@ -51,9 +51,7 @@
 #define MSTE_TOKEN_TYPE_TRUE                1
 #define MSTE_TOKEN_TYPE_FALSE               2
 #define MSTE_TOKEN_TYPE_EMPTY_STRING        3
-#define MSTE_TOKEN_TYPE_DISTANT_PAST        4
-#define MSTE_TOKEN_TYPE_DISTANT_FUTURE      5
-#define MSTE_TOKEN_TYPE_EMPTY_DATA          6
+#define MSTE_TOKEN_TYPE_EMPTY_DATA          4
 
 #define MSTE_TOKEN_TYPE_REFERENCED_OBJECT   9
 
@@ -71,10 +69,11 @@
 #define MSTE_TOKEN_TYPE_DECIMAL_VALUE       20
 #define MSTE_TOKEN_TYPE_STRING              21
 #define MSTE_TOKEN_TYPE_DATE                22
+#define MSTE_TOKEN_TYPE_TIMESTAMP           23
 
-#define MSTE_TOKEN_TYPE_COLOR               23
-#define MSTE_TOKEN_TYPE_BASE64_DATA         24
-#define MSTE_TOKEN_TYPE_NATURAL_ARRAY       25
+#define MSTE_TOKEN_TYPE_COLOR               24
+#define MSTE_TOKEN_TYPE_BASE64_DATA         25
+#define MSTE_TOKEN_TYPE_NATURAL_ARRAY       26
 
 #define MSTE_TOKEN_TYPE_DICTIONARY          30
 #define MSTE_TOKEN_TYPE_ARRAY               31

@@ -81,8 +81,6 @@
 
 
 static NSNull *__theNull = nil ;
-static NSDate *__theDistantPast = nil ;
-static NSDate *__theDistantFuture = nil ;
 static NSDictionary *__decimalLocale = nil ;
 
 void _MSTJumpToNextToken(unsigned char **pointer, unsigned char *endPointer, MSULong *tokenCount) ;
@@ -861,14 +859,6 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
             ret = [NSString string] ;
             break ;
         }
-        case MSTE_TOKEN_TYPE_DISTANT_PAST : {
-            ret = __theDistantPast ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_DISTANT_FUTURE : {
-            ret = __theDistantFuture ;
-            break ;
-        }
         case MSTE_TOKEN_TYPE_EMPTY_DATA : {
             ret = [NSData data] ;
             break ;
@@ -918,6 +908,14 @@ id _MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, NSString
             ret = [[[NSDate allocWithZone:zone] initWithTimeIntervalSince1970:(NSTimeInterval)seconds] autorelease] ;
             [decodedObjects addObject:ret] ;
             break ;
+        }
+        case MSTE_TOKEN_TYPE_TIMESTAMP: {
+            double seconds ;
+            _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
+            seconds = _MSTDecodeDouble(&s, endPointer, @"_MSTDecodeObject") ;
+            ret = [[[NSCalendarDate allocWithZone:zone] initWithTimeIntervalSince1970:(NSTimeInterval)seconds] autorelease] ;
+            [decodedObjects addObject:ret] ;
+            break;
         }
         case MSTE_TOKEN_TYPE_COLOR : {
             _MSTJumpToNextToken(&s, endPointer, tokenCount) ;
@@ -986,9 +984,7 @@ id MSTDecodeRetainedObject(NSData *data, NSZone *zone, BOOL verifyCRC, BOOL allo
         NSMutableArray *decodedObjects = nil ;
         MSULong myTokenCount = 0 ;
         
-        if (!__theDistantPast) {
-            __theDistantPast = [[NSDate distantPast] retain] ;
-            __theDistantFuture = [[NSDate distantFuture] retain] ;
+        if (!__theNull) {
             __theNull = [[NSNull null] retain] ;
         }
 

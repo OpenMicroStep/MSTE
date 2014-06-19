@@ -962,21 +962,35 @@ static NSNumber *__aBool = nil ;
 - (void)encodeWithMSTEncoder:(MSTEncoder *)encoder { [encoder encodeArray:self] ; }
 @end
 
-
 @implementation NSDate (MSTEncoding)
-- (MSInt)singleEncodingCode:(MSTEncoder *)encoder
-{
-    if ([[NSDate distantPast] isEqual:self]) return MSTE_TOKEN_TYPE_DISTANT_PAST ;
-    else if ([[NSDate distantFuture] isEqual:self]) return MSTE_TOKEN_TYPE_DISTANT_FUTURE ;
-    else return MSTE_TOKEN_MUST_ENCODE ;
-}
 - (MSByte)tokenType { return MSTE_TOKEN_TYPE_DATE ; }
 @end
 
 @implementation NSDate (MSTEncodingPrivate)
 - (void)encodeWithMSTEncoder:(MSTEncoder *)encoder
 {
-    if (![[NSDate distantPast] isEqual:self] && ![[NSDate distantFuture] isEqual:self]) [encoder encodeLongLong:[self timeIntervalSince1970] withTokenType:NO] ;
+    if (![[NSDate distantPast] isEqual:self] && ![[NSDate distantFuture] isEqual:self]) {
+        [encoder encodeLongLong:[self timeIntervalSince1970] withTokenType:NO] ;
+    }
+    else {
+        [NSException raise:NSGenericException format:@"MSTE protocol does not allow to encode distant past and distant future for NSDate class!"] ;
+    }
+}
+@end
+
+@implementation NSCalendarDate (MSTEncoding)
+- (MSByte)tokenType { return MSTE_TOKEN_TYPE_TIMESTAMP ; }
+@end
+
+@implementation NSCalendarDate (MSTEncodingPrivate)
+- (void)encodeWithMSTEncoder:(MSTEncoder *)encoder
+{
+    if (![[NSCalendarDate distantPast] isEqual:self] && ![[NSCalendarDate distantFuture] isEqual:self]) {
+        [encoder encodeDouble:[self timeIntervalSince1970] withTokenType:NO] ;
+    }
+    else {
+        [NSException raise:NSGenericException format:@"MSTE protocol does not allow to encode distant past and distant future for NSCalendarDate class!"] ;
+    }
 }
 @end
 
