@@ -15,11 +15,16 @@ namespace MSTEDemo {
     public partial class FTest : Form {
 
         string projectPath = "";
-        public FTest() {
+        public FTest(string[] args) {
             InitializeComponent();
+            // Array.IndexOf(arr, var)
+            if (args.Contains("DEMO_MODE")){
+                btnTest.Visible = true;
+            }
         }
 
         private void processMSTE(string res) {
+
         }
 
 
@@ -183,6 +188,45 @@ namespace MSTEDemo {
             txtDecoded.Text = "";
             txtEncoded.Text = "";
             txtLog.Text = "";
+        }
+
+        private void btnTest_Click(object sender, EventArgs e) {
+            //DateTime dtLocal = DateTime.Now;
+            //DateTime dtUtc = DateTime.UtcNow;
+            //Console.WriteLine("Local : " + DateTime.Now);
+            //Console.WriteLine("UTC : " + DateTime.UtcNow);
+            //Console.WriteLine("Local Kind : " + dtLocal.Kind);
+            //Console.WriteLine("UTC Kind : " + dtUtc.Kind);
+            //Console.WriteLine("------ Local ");
+            //Console.WriteLine("Local time : " + dtLocal.ToLocalTime());
+            //Console.WriteLine("UTC time : " + dtLocal.ToUniversalTime());
+            //Console.WriteLine("------ UTC ");
+            //Console.WriteLine("Local time : " + dtUtc.ToLocalTime());
+            //Console.WriteLine("UTC time : " + dtUtc.ToUniversalTime());
+            //Console.WriteLine(UnixEpoch.getEpochTime(DateTime.Now));
+            //Console.WriteLine("------ EPOCH ");
+            //Console.WriteLine("UTC time : " + UnixEpoch.getEpochTime(new DateTime(2014, 6, 19, 16, 44, 13, DateTimeKind.Utc)));
+            //Console.WriteLine("Local time : " + UnixEpoch.getEpochTime(new DateTime(2014, 6, 19, 16, 44, 13, DateTimeKind.Local)));
+            //Console.WriteLine("None : " + UnixEpoch.getEpochTime(new DateTime(2014, 6, 19, 16, 44, 13, DateTimeKind.Unspecified)));
+            //Console.WriteLine("DT : " + UnixEpoch.getEpochTime(new DateTime(2014, 6, 19, 16, 44, 13)));
+
+            List<object> theObj = new List<object>();
+            theObj.Add(new DateTime(2014, 6, 19, 16, 44, 13).ToUniversalTime());
+            theObj.Add(new DateTime(2014, 6, 19, 16, 44, 13));
+            string eRes ="", eRes2="";
+            if (theObj != null) {
+                // encodage
+                eRes = MSTE.encode(theObj);
+                Console.WriteLine(eRes);
+            }
+            object theObjD= MSTE.decode(eRes, new Dictionary<string, object>() {});
+            Console.WriteLine(theObjD);
+
+            if (theObjD != null) {
+                // encodage
+                eRes2 = MSTE.encode(theObjD);
+                Console.WriteLine(eRes2);
+            }
         }
     }
     

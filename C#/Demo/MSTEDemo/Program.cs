@@ -9,10 +9,10 @@ namespace MSTEDemo {
         /// Point d'entrée principal de l'application.
         /// </summary>
         [STAThread]
-        static void Main() {
+        static void Main(string[] args) {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
-            Application.Run(new FTest());
+            Application.Run(new FTest(args));
         }
     }
 }

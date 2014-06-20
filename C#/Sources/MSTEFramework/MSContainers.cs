@@ -10,7 +10,7 @@ namespace MSTEFramework {
 	    public const string MSNATURALARRAY	= "MSNaturalArray";
 	    public const string MSDICT 			= "MSDict";
 	    public const string MSCOUPLE		= "MSCouple";
-	    public const string MSDATE 			= "MSDate";
+        //public const string MSDATE 			= "MSDate";
 	    public const string MSCOLOR 		= "MSColor";
 	    public const string MSDATA 			= "MSData";
         public const string MSSTRING        = "MSString";

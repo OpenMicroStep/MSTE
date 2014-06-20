@@ -396,7 +396,14 @@ namespace MSTEFramework {
             _encodeTokenSeparator();
             _encodeTokenType(MSTE_TOKEN_TYPE_DATE);
             _encodeTokenSeparator();
-            _content.Append(UnixEpoch.getEpochTim(d));
+            _content.Append(UnixEpoch.getEpochTime(d,DateTimeKind.Local));
+        }
+
+        private void encodeUTCDate(DateTime d) {
+            _encodeTokenSeparator();
+            _encodeTokenType(MSTE_TOKEN_TYPE_TIMESTAMP);
+            _encodeTokenSeparator();
+            _content.Append(UnixEpoch.getEpochTime(d, DateTimeKind.Utc));
         }
 
         private void encodeColor(MSColor c) {
@@ -902,7 +909,13 @@ namespace MSTEFramework {
                 dRes["referencing"] = 1;
             }
             else if (anObject is DateTime) {
-                dRes["tokenType"] = MSTE_TOKEN_TYPE_DATE;
+                DateTime tmpDate = (DateTime)anObject;
+                if (tmpDate.Kind == DateTimeKind.Utc) {
+                    dRes["tokenType"] = MSTE_TOKEN_TYPE_TIMESTAMP;
+                }
+                else {
+                    dRes["tokenType"] = MSTE_TOKEN_TYPE_DATE;
+                }
                 dRes["referencing"] = 1;
             }
             else if (anObject is MSColor) {
@@ -1002,6 +1015,9 @@ namespace MSTEFramework {
                     break;
                 case MSTE_TOKEN_TYPE_DATE:
                     encodeDate((DateTime)anObject);
+                    break;
+                case MSTE_TOKEN_TYPE_TIMESTAMP:
+                    encodeUTCDate((DateTime)anObject);
                     break;
                 case MSTE_TOKEN_TYPE_COLOR:
                     encodeColor((MSColor)anObject);

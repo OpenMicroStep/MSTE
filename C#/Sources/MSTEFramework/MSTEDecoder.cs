@@ -874,14 +874,14 @@ namespace MSTEFramework {
                         ret = "";
                         break;
                 }
-                case MSTE_TOKEN_TYPE_DISTANT_PAST: {
-                        ret = __theDistantPast;
-                        break;
-                }
-                case MSTE_TOKEN_TYPE_DISTANT_FUTURE: {
-                        ret = __theDistantFuture;
-                        break;
-                }
+                //case MSTE_TOKEN_TYPE_DISTANT_PAST: {
+                //        ret = __theDistantPast;
+                //        break;
+                //}
+                //case MSTE_TOKEN_TYPE_DISTANT_FUTURE: {
+                //        ret = __theDistantFuture;
+                //        break;
+                //}
                 case MSTE_TOKEN_TYPE_EMPTY_DATA: {
                         //byte[] aByte = new Byte[0];
                         //ret = aByte;
@@ -930,12 +930,22 @@ namespace MSTEFramework {
 					long? seconds = long.MinValue;
 					_MSTJumpToNextToken(data, pos, tokenCount);
 					seconds = _MSTDecodeLong(data, pos, "_MSTDecodeObject");
-                    DateTime? dt = UnixEpoch.getDateTime((long)seconds);
+                    DateTime? dt = UnixEpoch.getDateTime((long)seconds, DateTimeKind.Local);
                     ret = (dt == null ? this.__theDistantPast : dt);
                     //ret = null;
 					decodedObjects.Add(ret);
 					break;
 				}
+                case MSTE_TOKEN_TYPE_TIMESTAMP: {
+                    long? seconds = long.MinValue;
+                    _MSTJumpToNextToken(data, pos, tokenCount);
+                    seconds = _MSTDecodeLong(data, pos, "_MSTDecodeObject");
+                    DateTime? dt = UnixEpoch.getDateTime((long)seconds, DateTimeKind.Utc);
+                    ret = (dt == null ? this.__theDistantPast : dt);
+                    //ret = null;
+                    decodedObjects.Add(ret);
+                    break;
+                }
                 case MSTE_TOKEN_TYPE_COLOR: {
                         _MSTJumpToNextToken(data, pos, tokenCount);
                         ret = _MSTDecodeColor(data, pos, "_MSTDecodeObject");
