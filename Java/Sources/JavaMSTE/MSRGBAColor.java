@@ -46,7 +46,8 @@ public class MSRGBAColor implements MSColor {
 			_opacity = 255 - (int)((cssValue >> 24) & mask);
 			_red = (int)((cssValue >> 16) & mask);
 			_green = (int)((cssValue >> 8) & mask);
-			_blue = (int)(cssValue & mask);
+			_blue = (int)(cssValue & mask);	
+			_transparency = 255 - _opacity;		
 		}
 		else{
 			throw new MSTEException("initWithCSSValue: CSS value too big !");
@@ -77,12 +78,14 @@ public class MSRGBAColor implements MSColor {
 			throw new MSTEException("initWithRGB: blue value too big !");
 		}
 		_opacity=255;
+		_transparency = 255 - _opacity;	
 	}
 	
 	public void initWithRGBA(int r, int g, int b, int a) throws MSTEException{
 		initWithRGB(r,g,b);
 		if (a<256){
 			_opacity = a;
+			_transparency = 255 - _opacity;	
 		}
 		else{
 			throw new MSTEException("initWithRGBA: opacity value too big !");
@@ -122,7 +125,8 @@ public class MSRGBAColor implements MSColor {
 		_blue = Integer.valueOf(matcher.group(3),16);
 		if (_blue>255) {_blue=255;}
 		if (_blue<0) {_blue=0;}
-		_opacity = 255;		
+		_opacity = 255;
+		_transparency = 255 - _opacity;			
 	}
 	
 	public void initWithColor(MSColor aColor){
@@ -130,6 +134,7 @@ public class MSRGBAColor implements MSColor {
 		this._green = aColor.green();
 		this._blue = aColor.blue();
 		this._opacity = aColor.opacity();
+		this._transparency = 255 - _opacity;	
 	}
 	
 	
@@ -216,7 +221,7 @@ public class MSRGBAColor implements MSColor {
 		return ((long)_red<<24|(long)_green<<16|(long)_blue<<8|(long)_opacity);
 	}
 	
-	public long cssValue() {
+	public long cssValue() {		
 		return ((long)_transparency<<24|(long)_red<<16|(long)_green<<8|(long)_blue);
 	}
 

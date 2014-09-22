@@ -6,22 +6,23 @@ package org.openmicrostep.mste;
 //
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.math.BigDecimal;
 
 
 public class MSTDecoder {
 	
-	
+	final String MSTE_CURRENT_VERSION						="0102";
+
 	final int MSTE_TOKEN_MUST_ENCODE						= -1;
+
 	final int MSTE_TOKEN_TYPE_NULL 							= 0;
 	final int MSTE_TOKEN_TYPE_TRUE							= 1;
 	final int MSTE_TOKEN_TYPE_FALSE							= 2;
-	final int MSTE_TOKEN_TYPE_INTEGER_VALUE					= 3;
-	final int MSTE_TOKEN_TYPE_REAL_VALUE					= 4;
-	final int MSTE_TOKEN_TYPE_STRING						= 5;
-	final int MSTE_TOKEN_TYPE_DATE							= 6;
-	final int MSTE_TOKEN_TYPE_COLOR							= 7;
-	final int MSTE_TOKEN_TYPE_DICTIONARY					= 8;
-	final int MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT	= 9;
+	final int MSTE_TOKEN_TYPE_EMPTY_STRING        			= 3;
+	final int MSTE_TOKEN_TYPE_EMPTY_DATA        			= 4;
+
+	final int MSTE_TOKEN_TYPE_REFERENCED_OBJECT				= 9;
+
 	final int MSTE_TOKEN_TYPE_CHAR							= 10;
 	final int MSTE_TOKEN_TYPE_UNSIGNED_CHAR					= 11;
 	final int MSTE_TOKEN_TYPE_SHORT							= 12;
@@ -32,15 +33,23 @@ public class MSTDecoder {
 	final int MSTE_TOKEN_TYPE_UNSIGNED_INT64      			= 17;
 	final int MSTE_TOKEN_TYPE_FLOAT               			= 18;
 	final int MSTE_TOKEN_TYPE_DOUBLE              			= 19;
-	final int MSTE_TOKEN_TYPE_ARRAY               			= 20;
-	final int MSTE_TOKEN_TYPE_NATURAL_ARRAY       			= 21;
-	final int MSTE_TOKEN_TYPE_COUPLE              			= 22;
-	final int MSTE_TOKEN_TYPE_BASE64_DATA         			= 23;
-	final int MSTE_TOKEN_TYPE_DISTANT_PAST        			= 24;
-	final int MSTE_TOKEN_TYPE_DISTANT_FUTURE      			= 25;
-	final int MSTE_TOKEN_TYPE_EMPTY_STRING        			= 26;
-	final int MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT   	= 27;
+
+	final int MSTE_TOKEN_TYPE_DECIMAL_VALUE					= 20;
+	final int MSTE_TOKEN_TYPE_STRING						= 21;
+	final int MSTE_TOKEN_TYPE_DATE							= 22;
+	final int MSTE_TOKEN_TYPE_TIMESTAMP						= 23;
+
+	final int MSTE_TOKEN_TYPE_COLOR							= 24;
+	final int MSTE_TOKEN_TYPE_BASE64_DATA         			= 25;
+	final int MSTE_TOKEN_TYPE_NATURAL_ARRAY       			= 26;
+
+	final int MSTE_TOKEN_TYPE_DICTIONARY					= 30;
+	final int MSTE_TOKEN_TYPE_ARRAY               			= 31;
+	final int MSTE_TOKEN_TYPE_COUPLE              			= 32;
+
 	final int MSTE_TOKEN_TYPE_USER_CLASS        			= 50;
+
+	final int MSTE_TOKEN_LAST_DEFINED_TYPE = MSTE_TOKEN_TYPE_COUPLE;
 	
 	final int MSTE_DECODING_ARRAY_START               =0;
 	final int MSTE_DECODING_VERSION_START             =1;
@@ -90,8 +99,6 @@ public class MSTDecoder {
 	private ArrayList<String> decodedKeys;
 	private ArrayList<Object> decodedObjects;
 	
-	final java.util.Date __theDistantPast = new java.util.Date(Long.MIN_VALUE) ;
-	final java.util.Date __theDistantFuture = new java.util.Date(Long.MAX_VALUE)  ;
 
 	// ========= constructors and destructors =========
 	public MSTDecoder() {}
@@ -123,11 +130,10 @@ public class MSTDecoder {
 		Object ret = null;
 		
 		switch(tokenType){
-			case MSTE_TOKEN_TYPE_INTEGER_VALUE : {
-				ret = _MSTDecodeLong(data, pos, "_MSTDecodeNumber");
+			case MSTE_TOKEN_TYPE_DECIMAL_VALUE :{
+				ret = _MSTDecodeDecimal(data, pos, "_MSTDecodeNumber");
 				break;
-			}
-			case MSTE_TOKEN_TYPE_REAL_VALUE :
+			}			
 			case MSTE_TOKEN_TYPE_DOUBLE:{
 				ret = _MSTDecodeDouble(data, pos, "_MSTDecodeNumber");
 				break;
@@ -272,6 +278,28 @@ public class MSTDecoder {
 		return value;
 	}
 
+	private BigDecimal _MSTDecodeDecimal(byte[] data, int[] pos, String operation) throws MSTEException {
+		BigDecimal value = null;
+		int len = data.length;
+
+		StringBuffer sb = new StringBuffer();
+		while (pos[0]<len){
+			if ((char)data[pos[0]] != ','){
+				if ((Character.isDigit((char)data[pos[0]])) || ((char)data[pos[0]] == '-') || ((char)data[pos[0]] == '.')) {
+					sb.append((char)data[pos[0]]);
+				}
+				else{ break;}
+			}else {break;}
+			pos[0]++;
+		}
+		if (pos[0]==len){	throw new MSTEException("_MSTDecodeDecimal:" + operation + " (no termination) ");}
+
+		if (sb.length()>0) {
+			value = new BigDecimal(sb.toString());
+		}
+		return value;
+	}
+
 
 	private Long _MSTDecodeUnsignedInt(byte[] data, int[] pos, String operation) throws MSTEException {
 		Long value = null;
@@ -342,8 +370,8 @@ public class MSTDecoder {
 		}
 		if (pos[0]==len){	throw new MSTEException("_MSTDecodeLong - " + operation + " (no termination) ");}
 	
-		if (sb.length()>0) {
-			value = Long.parseLong(sb.toString());
+		if (sb.length()>0) {			
+			value = Long.parseLong(sb.toString());		
 		}
 		return value;
 	}
@@ -468,8 +496,7 @@ public class MSTDecoder {
 	private byte[] _MSTDecodeBufferBase64String(byte[] data, int[] pos, String operation) throws MSTEException{
 		byte[] ret = null;
 		String base64String = _MSTDecodeString (data, pos, operation);
-		if (base64String.length()>0){ret = decodeFromBase64(base64String);}
-		
+		if (base64String.length()>0){ret = decodeFromBase64(base64String);}	
 		return ret; 
 	}
 	
@@ -494,7 +521,8 @@ public class MSTDecoder {
 
 	private Object _MSTDecodeUserDefinedObject(byte[] data, int[] pos, String operation, int tokenType, ArrayList<Object> decodedObjects, ArrayList<String> classes, ArrayList<String> keys, int[] tokenCount, Boolean allowsUnknownUserClasses, HashMap<String,String>nameSpace) throws MSTEException{
 		Object ret = null;
-		int classIndex = (tokenType - MSTE_TOKEN_TYPE_USER_CLASS) / 2;
+		//int classIndex = (tokenType - MSTE_TOKEN_TYPE_USER_CLASS) / 2;
+		int classIndex = tokenType - MSTE_TOKEN_TYPE_USER_CLASS;
 		if (classIndex >= 0 && classIndex < classes.size()){
 			String className = classes.get(classIndex);	
 			if (nameSpace.containsKey(className)){
@@ -549,8 +577,39 @@ public class MSTDecoder {
 				case MSTE_DECODING_STRING : {
 					if ((char)data[pos[0]] == '\\') {pos[0]++; state = MSTE_DECODING_STRING_ESCAPED_CAR; break;}
 					if ((char)data[pos[0]] == '"') {pos[0]++; state = MSTE_DECODING_STRING_STOP; endStringFound = true;  break;}
-					sb.append((char)data[pos[0]]);
-					pos[0]++;
+					
+					if ((char)data[pos[0]] <= 0x7F) {
+						sb.append((char)data[pos[0]]);
+						pos[0]++;						
+					}
+					else{
+						int lenChar = 0;
+						if (((char)data[pos[0]] >= 0xC2) && ((char)data[pos[0]] <= 0xDF)){
+							lenChar = 2;
+						}
+						else if (((char)data[pos[0]] >= 0xE0) && ((char)data[pos[0]] <= 0xEF)){
+							lenChar = 3;
+						}
+						else if (((char)data[pos[0]] >= 0xF0) && ((char)data[pos[0]] <= 0xF4)){
+							lenChar = 4;
+						}
+						if (lenChar>0){
+							byte[] dataChar = new byte[lenChar];
+							for (int i=0; i<lenChar; i++){
+								dataChar[i]=(byte)data[pos[0]];
+							}	
+							try{						
+								sb.append(new String(dataChar,"UTF-8"));
+							}
+							catch (java.io.UnsupportedEncodingException e){
+								throw new MSTEException("_MSTDecodeString ERROR UnsupportedEncodingException:" + e.getMessage());
+							}
+							pos[0]=pos[0] + lenChar;													
+						}
+						else{
+							throw new MSTEException("_MSTDecodeString -Bad first byte value on a supposed UTF-8 character: " + (char)data[pos[0]]);
+						}						
+					}
 					break;
 				}
 				case MSTE_DECODING_STRING_ESCAPED_CAR : {
@@ -669,13 +728,21 @@ public class MSTDecoder {
 				ret = new Boolean(false);
 				break;
 			}
+			case MSTE_TOKEN_TYPE_DECIMAL_VALUE :{
+				_MSTJumpToNextToken(data,pos,tokenCount);
+				ret = _MSTDecodeNumber(data, pos, tokenType);
+				break;
+			}
+
+/*			
 			case MSTE_TOKEN_TYPE_INTEGER_VALUE :
 			case MSTE_TOKEN_TYPE_REAL_VALUE : {
 				_MSTJumpToNextToken(data,pos,tokenCount);
 				ret = _MSTDecodeNumber(data, pos, tokenType);
 				decodedObjects.add(ret);
 				break;
-			}         
+			}
+*/			         
 			case MSTE_TOKEN_TYPE_CHAR :
 	        case MSTE_TOKEN_TYPE_UNSIGNED_CHAR :
 	        case MSTE_TOKEN_TYPE_SHORT :
@@ -700,16 +767,26 @@ public class MSTDecoder {
 				Long seconds = Long.MIN_VALUE;
 				_MSTJumpToNextToken(data, pos, tokenCount);
 				seconds = _MSTDecodeLong (data, pos, "_MSTDecodeObject");	
-				ret = new  java.util.Date(seconds * 1000);
+				ret = new MSDate(seconds * 1000);
 				decodedObjects.add(ret);	
 				break;
 			}
+			case MSTE_TOKEN_TYPE_TIMESTAMP :{
+				Long seconds = Long.MIN_VALUE;
+				_MSTJumpToNextToken(data, pos, tokenCount);
+				//seconds = _MSTDecodeLong (data, pos, "_MSTDecodeObject");
+				double s = (Double)_MSTDecodeNumber(data, pos, MSTE_TOKEN_TYPE_DOUBLE);	
+				seconds = Math.round(s);
+				ret = new java.util.Date(seconds * 1000);
+				decodedObjects.add(ret);	
+				break;
+			}			
 			case MSTE_TOKEN_TYPE_DICTIONARY :{
 				_MSTJumpToNextToken(data, pos, tokenCount);
 				ret = _MSTDecodeDictionary(data, pos, "_MSTDecodeObject", decodedObjects, classes, keys, tokenCount, true, false ,allowsUnknownUserClasses,nameSpace);
 				break;
 			}
-			case MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT : {
+			case MSTE_TOKEN_TYPE_REFERENCED_OBJECT : {
 				Integer objectReference;
 				_MSTJumpToNextToken(data, pos, tokenCount);
 				objectReference=_MSTDecodeInt (data, pos, "_MSTDecodeObject");
@@ -744,31 +821,19 @@ public class MSTDecoder {
 				decodedObjects.add(ret);
 				break;
 			}
-			case MSTE_TOKEN_TYPE_DISTANT_PAST : {
-	            ret = __theDistantPast ;
-	            break ;
-	        }
-	        case MSTE_TOKEN_TYPE_DISTANT_FUTURE : {
-	            ret = __theDistantFuture ;
-	            break ;
-	        }
 	        case MSTE_TOKEN_TYPE_EMPTY_STRING : {
 	            ret = "";
 	            break ;
 	        }
-			case MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT : {
-				//Decoded like Strongly référenced
-				Integer objectReference;
-				_MSTJumpToNextToken(data, pos, tokenCount);
-				objectReference=_MSTDecodeInt (data, pos, "_MSTDecodeObject");
-				ret = decodedObjects.get(objectReference);
-				break;				
-			}
+	        case MSTE_TOKEN_TYPE_EMPTY_DATA : {
+	            ret = new byte[0];
+	            break ;
+	        }
 			default :{
 				if (tokenType >= MSTE_TOKEN_TYPE_USER_CLASS) {
 					_MSTJumpToNextToken(data, pos, tokenCount);
 					ret = _MSTDecodeUserDefinedObject(data, pos, operation, tokenType, decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses,nameSpace);
-					if (((tokenType - MSTE_TOKEN_TYPE_USER_CLASS)%2)>0){ isWeaklyReferenced = true;}else{ isWeaklyReferenced = false;}
+					isWeaklyReferenced = false;
 				}
 				else {
 					throw new MSTEException("_MSTDecodeObject - unknown tokenType : " + tokenType);
@@ -846,7 +911,7 @@ public class MSTDecoder {
 						break ;
 					}
 					case MSTE_DECODING_VERSION_VALUE : {						
-						if (((pos[0]+4)>len) || (!Character.isDigit((char)data[pos[0]])) || (!Character.isDigit((char)data[pos[0]+1])) || (!Character.isDigit((char)data[pos[0]+2])) || (!Character.isDigit((char)data[pos[0]+3]))){
+						if (((pos[0]+4)>len)  || ((char)data[pos[0]] != MSTE_CURRENT_VERSION.charAt(0)) || ((char)data[pos[0]+1] != MSTE_CURRENT_VERSION.charAt(1)) || ((char)data[pos[0]+2] != MSTE_CURRENT_VERSION.charAt(2)) || ((char)data[pos[0]+3] != MSTE_CURRENT_VERSION.charAt(3))){
 							throw new MSTEException("decodeObject: Bad header version !");
 						}
 						pos[0] = pos[0]+4;
@@ -1002,29 +1067,10 @@ public class MSTDecoder {
 
 	}
 	
-	private static int[]  toInt   = new int[128];
-	
 	private static byte[] decodeFromBase64(String s){
-        int delta = s.endsWith( "==" ) ? 2 : s.endsWith( "=" ) ? 1 : 0;
-        byte[] buffer = new byte[s.length()*3/4 - delta];
-        int mask = 0xFF;
-        int index = 0;
-        for(int i=0; i< s.length(); i+=4){
-            int c0 = toInt[s.charAt( i )];
-            int c1 = toInt[s.charAt( i + 1)];
-            buffer[index++]= (byte)(((c0 << 2) | (c1 >> 4)) & mask);
-            if(index >= buffer.length){
-                return buffer;
-            }
-            int c2 = toInt[s.charAt( i + 2)];
-            buffer[index++]= (byte)(((c1 << 4) | (c2 >> 2)) & mask);
-            if(index >= buffer.length){
-                return buffer;
-            }
-            int c3 = toInt[s.charAt( i + 3 )];
-            buffer[index++]= (byte)(((c2 << 6) | c3) & mask);
-        }
-        return buffer;
+
+		return Base64Coder.decode (s);
+
     } 
     
 }

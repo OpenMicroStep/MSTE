@@ -9,8 +9,11 @@ import java.util.Iterator;
 import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Set;
-//import java.lang.reflect.*;
 import java.util.Locale;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+
+
 
 public class MSTEncoder {
 
@@ -26,17 +29,18 @@ private Hashtable<String,MSNode> _encodedObjects;
 private HashMap<String,Integer> _classes;
 private ArrayList<String> _classesArray;
 
+final String MSTE_CURRENT_VERSION						="0102";
+
 final int MSTE_TOKEN_MUST_ENCODE						= -1;
+
 final int MSTE_TOKEN_TYPE_NULL 							= 0;
 final int MSTE_TOKEN_TYPE_TRUE							= 1;
 final int MSTE_TOKEN_TYPE_FALSE							= 2;
-final int MSTE_TOKEN_TYPE_INTEGER_VALUE					= 3;
-final int MSTE_TOKEN_TYPE_REAL_VALUE					= 4;
-final int MSTE_TOKEN_TYPE_STRING						= 5;
-final int MSTE_TOKEN_TYPE_DATE							= 6;
-final int MSTE_TOKEN_TYPE_COLOR							= 7;
-final int MSTE_TOKEN_TYPE_DICTIONARY					= 8;
-final int MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT	= 9;
+final int MSTE_TOKEN_TYPE_EMPTY_STRING        			= 3;
+final int MSTE_TOKEN_TYPE_EMPTY_DATA        			= 4;
+
+final int MSTE_TOKEN_TYPE_REFERENCED_OBJECT				= 9;
+
 final int MSTE_TOKEN_TYPE_CHAR							= 10;
 final int MSTE_TOKEN_TYPE_UNSIGNED_CHAR					= 11;
 final int MSTE_TOKEN_TYPE_SHORT							= 12;
@@ -47,17 +51,23 @@ final int MSTE_TOKEN_TYPE_INT64               			= 16;
 final int MSTE_TOKEN_TYPE_UNSIGNED_INT64      			= 17;
 final int MSTE_TOKEN_TYPE_FLOAT               			= 18;
 final int MSTE_TOKEN_TYPE_DOUBLE              			= 19;
-final int MSTE_TOKEN_TYPE_ARRAY               			= 20;
-final int MSTE_TOKEN_TYPE_NATURAL_ARRAY       			= 21;
-final int MSTE_TOKEN_TYPE_COUPLE              			= 22;
-final int MSTE_TOKEN_TYPE_BASE64_DATA         			= 23;
-final int MSTE_TOKEN_TYPE_DISTANT_PAST        			= 24;
-final int MSTE_TOKEN_TYPE_DISTANT_FUTURE      			= 25;
-final int MSTE_TOKEN_TYPE_EMPTY_STRING        			= 26;
-final int MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT   	= 27;
+
+final int MSTE_TOKEN_TYPE_DECIMAL_VALUE					= 20;
+final int MSTE_TOKEN_TYPE_STRING						= 21;
+final int MSTE_TOKEN_TYPE_DATE							= 22;
+final int MSTE_TOKEN_TYPE_TIMESTAMP						= 23;
+
+final int MSTE_TOKEN_TYPE_COLOR							= 24;
+final int MSTE_TOKEN_TYPE_BASE64_DATA         			= 25;
+final int MSTE_TOKEN_TYPE_NATURAL_ARRAY       			= 26;
+
+final int MSTE_TOKEN_TYPE_DICTIONARY					= 30;
+final int MSTE_TOKEN_TYPE_ARRAY               			= 31;
+final int MSTE_TOKEN_TYPE_COUPLE              			= 32;
+
 final int MSTE_TOKEN_TYPE_USER_CLASS        			= 50;
 
-final int MSTE_TOKEN_LAST_DEFINED_TYPE = MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT;
+final int MSTE_TOKEN_LAST_DEFINED_TYPE = MSTE_TOKEN_TYPE_COUPLE;
 
 
 // ========= constructors and destructors =========
@@ -295,10 +305,24 @@ private void encodeDouble(Double d, Boolean token){
 	_content.append(String.format(Locale.US,"%.15f", d));	
 }
 
+private void encodeDecimal(Object d, Boolean token){
+	if (token) {
+		_encodeTokenSeparator();
+		_encodeTokenType(MSTE_TOKEN_TYPE_DECIMAL_VALUE);	
+	}
+	_encodeTokenSeparator();
+	if ((d instanceof Double) || (d instanceof Float) || (d instanceof BigDecimal)) { 
+		_content.append(String.format(Locale.US,"%.15f", d));	
+	}
+	else{
+		_content.append(String.format("%d", d));
+	}
+}
+
 private void encodeIntValue(Object anObject, Boolean token) throws MSTEException{
 	if (token) {
 		_encodeTokenSeparator();
-		_encodeTokenType(MSTE_TOKEN_TYPE_INTEGER_VALUE);	
+		_encodeTokenType(MSTE_TOKEN_TYPE_INT32);	
 	}
 	int tokenOrigin = getTokenType(anObject,true);
 	Long l = new Long(0);
@@ -324,7 +348,7 @@ private void encodeIntValue(Object anObject, Boolean token) throws MSTEException
 			l = (Long)anObject;
 			break;
 		default:
-			throw new MSTEException("encodeIntValue: not integer value for type MSTE_TOKEN_TYPE_INTEGER_VALUE !");
+			throw new MSTEException("encodeIntValue: not integer value for type MSTE_TOKEN_TYPE_INT32 !");
 	}			
 	_encodeTokenSeparator();
 	_content.append(String.format("%d", l));	
@@ -333,7 +357,7 @@ private void encodeIntValue(Object anObject, Boolean token) throws MSTEException
 private void encodeFloatValue(Object anObject, Boolean token) throws MSTEException{
 	if (token) {
 		_encodeTokenSeparator();
-		_encodeTokenType(MSTE_TOKEN_TYPE_REAL_VALUE);	
+		_encodeTokenType(MSTE_TOKEN_TYPE_FLOAT);	
 	}
 	int tokenOrigin = getTokenType(anObject,true);
 	Double d = new Double(0);
@@ -346,7 +370,7 @@ private void encodeFloatValue(Object anObject, Boolean token) throws MSTEExcepti
 			d = (Double)anObject;
 			break;
 		default:
-			throw new MSTEException("encodeFloatValue: not float value for type MSTE_TOKEN_TYPE_REAL_VALUE !");
+			throw new MSTEException("encodeFloatValue: not float value for type MSTE_TOKEN_TYPE_FLOAT !");
 	}			
 	_encodeTokenSeparator();
 	_content.append(String.format(Locale.US,"%.15f", d));		
@@ -365,7 +389,15 @@ private void encodeArray(ArrayList anArray) throws MSTEException{
 }
 
 private void encodeDate(java.util.Date d) {
-	long t = d.getTime()/ 1000;	
+	double t = d.getTime() / 1000;	
+	_encodeTokenSeparator();
+	_encodeTokenType(MSTE_TOKEN_TYPE_TIMESTAMP);
+	_encodeTokenSeparator();	
+	_content.append(String.format(Locale.US,"%.15f", t)); 
+}
+
+private void encodeMSDate(MSDate d) {
+	long t = d.getTime() / 1000;	
 	_encodeTokenSeparator();
 	_encodeTokenType(MSTE_TOKEN_TYPE_DATE);
 	_encodeTokenSeparator();
@@ -432,13 +464,7 @@ private void encodeDictionary(HashMap aDictionary,Boolean isSnapshot) throws MST
 		encodeInt(keyReference-1,false);
 		if (isSnapshot){
 			MSCouple o = (MSCouple) objects.get(i);
-			Object weakReferenced = o.getSecondMember();
-			if (weakReferenced!=null){
-				encodeObject(o.getFirstMember(),isSnapshot);
-			}
-			else{
-				encodeObject(o.getFirstMember(),isSnapshot);
-			}
+			encodeObject(o.getFirstMember(),isSnapshot);			
 		}
 		else{
 			encodeObject(objects.get(i),isSnapshot);
@@ -470,38 +496,19 @@ private void encodeObject(Object anObject, Boolean isSnapshot) throws MSTEExcept
 		objectReference = getObjectReference(anObject);
 		if (objectReference>0){
 			_encodeTokenSeparator();
-			_encodeTokenType(MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_OBJECT);
-			encodeInt(objectReference-1,false);				
+			_encodeTokenType(MSTE_TOKEN_TYPE_REFERENCED_OBJECT);
+			//encodeInt(objectReference-1,false);
+			encodeInt(objectReference,false);				
 		}
 		else{
-			
-			//HashMap dictSnapshot = anObject.getSnapshot();
+
 			HashMap dictSnapshot = null;
 			if (anObject instanceof MSTEEncoderInterface){
-/*				
-				java.lang.reflect.Method method;
-				try {
-					method = anObject.getClass().getMethod("getSnapshot");					
-				} catch (SecurityException e) {
-					  throw new MSTEException("encodeObject:unknow SecurityException : " + e.toString());
-				} catch (NoSuchMethodException e) {
-					  throw new MSTEException("encodeObject:unknow NoSuchMethodException : " + e.toString());
-				}
-				
-				try {
-					dictSnapshot = (HashMap)method.invoke(anObject);
-				} catch (IllegalArgumentException e) {
-					throw new MSTEException("encodeObject:unknow IllegalArgumentException : " + e.toString());
-				} catch (IllegalAccessException e) {
-					throw new MSTEException("encodeObject:unknow IllegalAccessException : " + e.toString());
-				} catch (InvocationTargetException e) {
-					throw new MSTEException("encodeObject:unknow InvocationTargetException : " + e.toString());
-				}
-*/				
 				dictSnapshot=(HashMap)((MSTEEncoderInterface)anObject).getSnapshot();
 			}
 
-			String aClassName = anObject.getClass().getName();
+			//String aClassName = anObject.getClass().getName();
+			String aClassName = anObject.getClass().getSimpleName();
 			classIndex = _classes.get(aClassName);
 			if (_classes.containsKey(aClassName)){
 				classIndex = _classes.get(aClassName);
@@ -514,7 +521,8 @@ private void encodeObject(Object anObject, Boolean isSnapshot) throws MSTEExcept
 			objectReference = ++_lastReference ;
 			addObjectReference(anObject,objectReference);
 			_encodeTokenSeparator();
-			_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + 2*(classIndex-1));
+			//_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + 2*(classIndex-1));
+			_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + (classIndex-1));
 			encodeDictionary(dictSnapshot,true);
 						
 		}	
@@ -540,7 +548,10 @@ public byte[] encodeRootObject(Object anObject) throws MSTEException  {
 	encodeObject(anObject,false);
 	
 	//MSTE header
-	_global.append("[\"MSTE0101\",");
+	//_global.append("[\"MSTE0101\",");
+	_global.append("[\"MSTE");
+	_global.append(MSTE_CURRENT_VERSION);
+	_global.append("\",");	
 	_global.append(5 + _lastKeyIndex + _lastClassIndex + _tokenCount);
 	_global.append(",\"CRC");
 	_global.append("00000000\",");
@@ -633,7 +644,15 @@ private int getTokenType(Object anObject, Boolean isSnapshot){
 	if (anObject instanceof Boolean) {
 		if ((Boolean)anObject) {return MSTE_TOKEN_TYPE_TRUE;}else{return MSTE_TOKEN_TYPE_FALSE;}
 	}
-	if (anObject instanceof byte[]) {return MSTE_TOKEN_TYPE_BASE64_DATA;}
+	if (anObject instanceof byte[]) {
+		int length = Array.getLength(anObject);
+		if (length==0){
+			return MSTE_TOKEN_TYPE_EMPTY_DATA;
+		}
+		else{
+			return MSTE_TOKEN_TYPE_BASE64_DATA;
+		}
+	}		
 	if (anObject instanceof String) {
 		String str = anObject.toString() ;
 		if (str.length()>0) {
@@ -645,35 +664,40 @@ private int getTokenType(Object anObject, Boolean isSnapshot){
 	}
 	if (anObject instanceof Byte){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_CHAR;}
-			else {return MSTE_TOKEN_TYPE_INTEGER_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}
 	if (anObject instanceof Character){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_UNSIGNED_SHORT;}
-			else {return MSTE_TOKEN_TYPE_INTEGER_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}
 	if (anObject instanceof Short){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_SHORT;}
-			else {return MSTE_TOKEN_TYPE_INTEGER_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}
 	if (anObject instanceof Integer){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_INT32;}
-			else {return MSTE_TOKEN_TYPE_INTEGER_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}
 	if (anObject instanceof Long){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_INT64;}
-			else {return MSTE_TOKEN_TYPE_INTEGER_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}			
 	if (anObject instanceof Float){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_FLOAT;}
-			else {return MSTE_TOKEN_TYPE_REAL_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}
 	if (anObject instanceof Double){
 		if (isSnapshot) {return MSTE_TOKEN_TYPE_DOUBLE;}
-			else {return MSTE_TOKEN_TYPE_REAL_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
+	}			
+	if (anObject instanceof BigDecimal){
+		if (isSnapshot) {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
+			else {return MSTE_TOKEN_TYPE_DECIMAL_VALUE;}
 	}		
 		
-	if (anObject instanceof java.util.AbstractCollection){return MSTE_TOKEN_TYPE_ARRAY;}
-	if (anObject instanceof java.util.Date){return MSTE_TOKEN_TYPE_DATE;}
+	if (anObject instanceof java.util.AbstractCollection){return MSTE_TOKEN_TYPE_ARRAY;}	
+	if (anObject instanceof MSDate){return MSTE_TOKEN_TYPE_DATE;}
+	if (anObject instanceof java.util.Date){return MSTE_TOKEN_TYPE_TIMESTAMP;}
 	if (anObject instanceof MSColor){return MSTE_TOKEN_TYPE_COLOR;}
 	if (anObject instanceof java.util.Map){return MSTE_TOKEN_TYPE_DICTIONARY;}
 	if (anObject instanceof MSCouple){return MSTE_TOKEN_TYPE_COUPLE;}
@@ -707,6 +731,10 @@ private void encodeWithTokenType(Object anObject, int tokenType) throws MSTEExce
 			_encodeTokenSeparator();
 			_encodeTokenType(tokenType);
 			break;
+		case MSTE_TOKEN_TYPE_EMPTY_DATA:
+			_encodeTokenSeparator();
+			_encodeTokenType(tokenType);
+			break;
 		case MSTE_TOKEN_TYPE_CHAR:
 			encodeChar((Byte) anObject, true);
 			break;
@@ -722,11 +750,8 @@ private void encodeWithTokenType(Object anObject, int tokenType) throws MSTEExce
 		case MSTE_TOKEN_TYPE_INT64:
 			encodeLongLong((Long) anObject, true);
 			break;
-		case MSTE_TOKEN_TYPE_INTEGER_VALUE:
-			encodeIntValue(anObject,true);
-			break;
-		case MSTE_TOKEN_TYPE_REAL_VALUE:
-			encodeFloatValue(anObject,true);
+		case MSTE_TOKEN_TYPE_DECIMAL_VALUE:
+			encodeDecimal(anObject, true);			
 			break;
 		case MSTE_TOKEN_TYPE_FLOAT:
 			encodeFloat((Float) anObject, true);
@@ -738,6 +763,9 @@ private void encodeWithTokenType(Object anObject, int tokenType) throws MSTEExce
 			encodeArray((ArrayList) anObject);
 			break;
 		case MSTE_TOKEN_TYPE_DATE:
+			encodeMSDate((MSDate) anObject);
+			break;
+		case MSTE_TOKEN_TYPE_TIMESTAMP:
 			encodeDate((java.util.Date) anObject);
 			break;
 		case MSTE_TOKEN_TYPE_COLOR:
@@ -779,34 +807,12 @@ private void addObjectReference(Object anObject, int ref){
 	
 }
 
-private static final String base64code = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-            + "abcdefghijklmnopqrstuvwxyz" + "0123456789" + "+/";
-
-private static byte[] zeroPad(int length, byte[] bytes) {
-	        byte[] padded = new byte[length]; // initialized to zero by JVM
-	        System.arraycopy(bytes, 0, padded, 0, bytes.length);
-	        return padded;
-	    }
-
-private String encodeBase64(byte[] bArray){
-	String encoded = "";
-	
-	int paddingCount = (3 - (bArray.length % 3)) % 3;
-	       
-	bArray = zeroPad(bArray.length + paddingCount, bArray);
-
-	for (int i = 0; i < bArray.length; i += 3) {
-		int j = ((bArray[i] & 0xff) << 16) +
-	           	((bArray[i + 1] & 0xff) << 8) + 
-	            (bArray[i + 2] & 0xff);
-	     encoded = encoded + base64code.charAt((j >> 18) & 0x3f) +
-	        	base64code.charAt((j >> 12) & 0x3f) +
-	            base64code.charAt((j >> 6) & 0x3f) +
-	            base64code.charAt(j & 0x3f);
-	}
-
-	return encoded;
+public String encodeBase64(byte[] buf){
+		
+	return new String(Base64Coder.encode (buf));
 
 }
+
+
 
 }
