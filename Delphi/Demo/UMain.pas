@@ -22,6 +22,7 @@ type
     procedure Button3Click(Sender: TObject);
   private
     xDecoder: TMSTEDecoder;
+    xEncoder: TMSTEEncoder;
     { Déclarations privées }
   public
     { Déclarations publiques }
@@ -42,29 +43,89 @@ var
   root: TObject;
 
 begin
-
-  s := ' ["MSTE0101",59,"CRC2CFCF8AC",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",20,3,50,4,0,5,'
+{ //Sample for MSTE V.0101
+  s := '["MSTE0102",59,"CRC2CFCF8AC",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",20,3,50,4,0,5,'
     + '"Durand",1,5,"Yves",2,6,-1222131600,3,50,4,0,9,2,1,5,"Claire",2,6,-1185667200,3,9,1,9,5,50,5,0,9,2,1,5,'
     + '"Lou",2,6,-426214800,4,9,1,5,9,5]';
 
-  s := ' ["MSTE0101",59,"CRCC41DBEF3",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",'
+  s := ' ["MSTE0102",59,"CRCC41DBEF3",1,"Person",6,"name","firstName","birthday","maried-to","father","mother",'
     + '20,3,50,4,0,5,"Durand",1,5,"Yves",2,6,-1222131600,3,51,4, 0,9,2,1,5,"Claire",2,6,-1185667200,'
     + '3,27,1,9,5,50,5,0,9,2,1,5,"Lou",2,6,-426214800,4,9,1,5,9,5]';
 
-  s := '["MSTE0101",60,"CRC81B787F3",2,"MSParent","MSSon",6,"firstName","sex","name","son","father","mother",20,3,50,4,0,5,'
+  s := '["MSTE0102",60,"CRC81B787F3",2,"MSParent","MSSon",6,"firstName","sex","name","son","father","mother",20,3,50,4,0,5,'
     + '"Jean",1,3,0,2,5,"DUPOND",3,53,5,0,5,"Marc",1,9,3,2,9,4,4,9,1,5,50,4,0,5,"Ginette",1,3,1,2,5,"DURAND",3,27,5,9,7,9,5]';
+}
+
+{
+  //10-->19         Ok
+  s := '["MSTE0102",94,"CRC1BB6B687",1,"SimpleTypesContainer",22,"_char","_float","_byte","_byteNumber","_shortNumber",'
+    +'"_charNumber","_floatNumber","_longNumber","_ushort","_ushortNumber","_int","_ulong","_uint","_intNumber","'
+    +'_short","_double","_bool","_uintNumber","_long","_ulongNumber","_doubleNumber","_boolNumber",50,22,0,10,-1,1,18,'
+    +'12.340000,2,12,1,3,20,10,4,20,-20,5,20,-10,6,20,-120.500000,7,20,-40,8,14,2,9,20,20,10,14,-3,11,16,4,12,16,3,13,20,-30,14,12,-2,15'
+    +',19,125.750000000000000,16,1,17,20,30,18,16,-4,19,20,40,20,20,1230.500000000000000,21,2]';
+  //20      Ok
+  s := '["MSTE0102",7,"CRCBF421375",0,0,20,12.34]';
+
+  //21    Ok
+  s := '["MSTE0102",7,"CRC09065CB6",0,0,21,"My beautiful string \u00E9\u00E8"]';
+
+  //21   Ok
+  s := '["MSTE0102",7,"CRC4A08AB7A",0,0,21,"Json \\a\/b\"c\u00C6"]';
+
+  //22    Ok
+  s := '["MSTE0102",7,"CRC093D5173",0,0,22,978307200]';
+
+  //23
+  s := '["MSTE0102",7,"CRC5EC4E889",0,0,23,978307200.000000000000000]';
+
+  //24
+  s := '["MSTE0102",7,"CRCAB284946",0,0,24,4034942921]';
+
+  //25
+  s:= '["MSTE0102",7,"CRC4964EA3B",0,0,25,"YTF6MmUzcjR0NA=="]';
+
+  //26     Ok
+  s:='["MSTE0102",8,"CRCD6330919",0,0,26,1,256]';
+
+  //30         Ok
+  s:='["MSTE0102",15,"CRC891261B3",0,2,"key1","key2",30,2,0,21,"First object",1,21,"Second object"]';
+
+  //31      Ok
+  s := '["MSTE0102",11,"CRC1258D06E",0,0,31,2,21,"First object",21,"Second object"]';
+
+  //32        OK
+  s := '["MSTE0102",10,"CRCF8392337",0,0,32,21,"First member",21,"Second member"]';
+
+  //50        OK
+  s := '["MSTE0102",59,"CRCBB46D817",1,"Person",6,"firstName","maried-to","name","birthday","mother","father",'
+      +'31,3,50,4,0,21,"Yves",1,50,4,0,21,"Claire",1,9,1,2,21,"Durand",3,23,-207360000.000000000000000,2,9,5,3,'
+      +'23,-243820800.000000000000000,9,3,50,5,0,21,"Lou",4,9,3,2,9,5,3,23,552096000.000000000000000,5,9,1]';
+
+  //>=50        OK
+  s := '["MSTE0102",34,"CRC7403EC23",2,"Person","SubPerson",3,"name","firstName","birthday",31,2,50,3,0,21,"Durand",'
+      +'1,21,"Yves",2,23,-243820800.000000000000000,51,3,0,21,"Dupond",1,21,"Ginette",2,23,-207360000.000000000000000]';
+
+  //9   OK
+  s := '["MSTE0102",11,"CRC32766EEF",0,0,31,2,21,"multiple referenced object",9,1]';
+
+}
+  s := '["MSTE0102",94,"CRC1BB6B687",1,"SimpleTypesContainer",22,"_char","_float","_byte","_byteNumber","_shortNumber",'
+    +'"_charNumber","_floatNumber","_longNumber","_ushort","_ushortNumber","_int","_ulong","_uint","_intNumber","'
+    +'_short","_double","_bool","_uintNumber","_long","_ulongNumber","_doubleNumber","_boolNumber",50,22,0,10,-1,1,18,'
+    +'12.340000,2,12,1,3,20,10,4,20,-20,5,20,-10,6,20,-120.500000,7,20,-40,8,14,2,9,20,20,10,14,-3,11,16,4,12,16,3,13,20,-30,14,12,-2,15'
+    +',19,125.750000000000000,16,1,17,20,30,18,16,-4,19,20,40,20,20,1230.500000000000000,21,2]';
 
   Memo1.Text := s;
 
   StrToFloat('136,10');
 
-  bCrc := True; // false;
+  bCrc := true; // false;
 
   s := StringReplace(s, #13#10, '', [rfReplaceAll]);
   xDecoder := TMSTEDecoder.Create;
   ms := TMemoryStream.Create;
-  ms.LoadFromFile('MSTE.TXT');
-//  ms.Write(s[1], Length(s));
+  //ms.LoadFromFile('MSTE.TXT');
+  ms.Write(s[1], Length(s));
   ms.Seek(0, soFromBeginning);
   root := xDecoder.Decode(ms, bCrc);
 
@@ -97,9 +158,28 @@ begin
 
   Memo2.Lines.Add(
     root.ToString
-    );
+  );
 
   Memo2.Lines.Add('--------------------------------------------------------');
+
+  xEncoder := TMSTEEncoder.Create;
+  Memo2.Lines.Add('Encoding...');
+  s:= xEncoder.EncodeRootObject(root);
+  Memo2.Lines.Add(s);
+
+  Memo2.Lines.Add('--------------------------------------------------------');
+  Memo2.Lines.Add('Decoding...');
+
+  xDecoder.Free;
+  ms := TMemoryStream.Create;
+  ms.Write(s[1], Length(s));
+  ms.Seek(0, soFromBeginning);
+  xDecoder := TMSTEDecoder.Create;
+  root := xDecoder.Decode(ms, bCrc);
+  ms.Free;
+  Memo2.Lines.Add(root.ToString);
+
+  //Encode object
 
 //  a := root as TMSArray;
 //  d2 := a[2] as TMSDictionary;
@@ -117,7 +197,7 @@ procedure TForm9.FormCreate(Sender: TObject);
 begin
 //  Button1.Click;
 //  Button2.Click;
-  Button3.Click;
+//  Button3.Click;
 end;
 
 procedure TForm9.Button2Click(Sender: TObject);

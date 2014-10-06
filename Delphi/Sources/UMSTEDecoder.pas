@@ -83,7 +83,8 @@ type
     function DecodeNaturalArray(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSNaturalArray;
 
     function DecodeDictionary(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDictionary;
-    function DecodeDate(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDate;
+    function DecodeDateLocale(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDateLocale;
+    function DecodeTimeStamp(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSTimeStamp;
     function DecodeColor(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSColor;
     function DecodeCouple(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSCouple;
     function DecodeBufferBase64String(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSData;
@@ -100,6 +101,7 @@ type
     function _DecodeLong(ptr: PPChar; endPointer: PChar; operation: string): MSLong;
     function _DecodeFloat(ptr: PPChar; endPointer: PChar; operation: string): Single;
     function _DecodeDouble(ptr: PPChar; endPointer: PChar; operation: string): Double;
+    function _DecodeDecimal(ptr: PPChar; endPointer: PChar; operation: string): Extended;
 
 //    function DecodeUnsignedLong(ptr: PPChar; endPointer: PChar; operation: string): UInt64;
 //    function DecodeLong(ptr: PPChar; endPointer: PChar; operation: string): Int64;
@@ -218,18 +220,36 @@ end;
 
 //------------------------------------------------------------------------------
 
-function TMSTEDecoder.DecodeDate(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDate;
+function TMSTEDecoder.DecodeDateLocale(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDateLocale;
 var
   s: PChar;
   seconds: Int64;
-  xDate: TDateTime;
+  //xDate: TDateTime;
 begin
   s := Ptr^;
   seconds := _DecodeLong(@s, endPointer, 'DecodeObject');
-  xDate := UnixToDateTime(seconds);
-  Result := TMSDate.Create(xDate);
+  //xDate := UnixToDateTime(seconds);
+  //Result := TMSDateLocale.Create(xDate);
+  Result := TMSDateLocale.Create(seconds);
   ptr^ := s;
 end;
+
+
+//------------------------------------------------------------------------------
+function TMSTEDecoder.DecodeTimeStamp(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSTimeStamp;
+var
+  s: PChar;
+  seconds: Int64;
+
+  xDate: TDateTime;
+begin
+  s := Ptr^;
+  seconds :=Round(_DecodeDouble(@s, endPointer, 'DecodeObject'));
+  xDate := UnixToDateTime(seconds);
+  Result := TMSTimeStamp.Create(xDate);
+  ptr^ := s;
+end;
+
 //------------------------------------------------------------------------------
 
 function TMSTEDecoder.DecodeDictionary(ptr: PPChar; endPointer: PChar; operation: string; var tokenCount: integer): TMSDictionary;
@@ -425,8 +445,8 @@ var
   s: PChar;
   character: Char;
   res: WideString;
-
   hex: string;
+  lenChar:Integer;
 
 begin
   res := '';
@@ -446,9 +466,33 @@ begin
           if CompareCharAsWide(character, '\') then begin inc(s); state := sds_STRING_ESCAPED_CAR; continue; end;
           if CompareCharAsWide(character, '"') then begin inc(s); state := sds_STRING_STOP; endStringFound := True; continue; end;
 
-          res := res + WideChar(character);
-          inc(s); //pass to next character
-
+          if Ord(character) <= StrToInt('$7F')then
+          begin
+            res := res + WideChar(character);
+            inc(s); //pass to next character
+          end
+          else
+          begin
+            lenChar := 0;
+            if (Ord(character) >= StrToInt('$C2')) and (Ord(character) <= StrToInt('$DF')) then
+            begin
+              lenChar:=2;
+            end
+            else if (Ord(character) >= StrToInt('$E0')) and (Ord(character) <= StrToInt('$EF')) then
+            begin
+              lenChar:=3;
+            end
+            else if (Ord(character) >= StrToInt('$F0')) and (Ord(character) <= StrToInt('$F4')) then
+            begin
+              lenChar:=4;
+            end;
+            if (lenChar>0 )then
+            begin
+              Hex := Copy(s, 1, lenChar);
+              res := res + WideChar(StrToInt('$' + Hex));
+              inc(s, lenChar);
+            end;
+          end;
         end;
       sds_STRING_ESCAPED_CAR: begin
           if CompareCharAsWide(character, 'r') then begin res := res + #$000D; inc(s); state := sds_STRING; end
@@ -542,8 +586,10 @@ begin
           end;
         ds_VERSION_VALUE: begin
             FVersion := FVersion + Copy(ps, 1, 4);
-            if (((pend - ps) < 4) or (not CharIsDigit(ps[0])) or (not CharIsDigit(ps[1])) or
-              (not CharIsDigit(ps[2])) or (not CharIsDigit(ps[3]))) then begin
+            //if (((pend - ps) < 4) or (not CharIsDigit(ps[0])) or (not CharIsDigit(ps[1])) or
+            //  (not CharIsDigit(ps[2])) or (not CharIsDigit(ps[3]))) then begin
+            if (((pend - ps) < 4) or (ps[0]<>tt_CURRENT_VERSION[1]) or (ps[1]<>tt_CURRENT_VERSION[2]) or
+            (ps[2]<>tt_CURRENT_VERSION[3]) or (ps[3]<>tt_CURRENT_VERSION[4])) then begin
               MSRaise(Exception, 'Decode - Bad header version');
             end;
             Inc(ps, 4);
@@ -744,7 +790,7 @@ begin
 
   case tokenType of
 
-    tt_REAL_VALUE, tt_DOUBLE: res.Double := _DecodeDouble(ptr, endPointer, operation);
+    tt_DOUBLE: res.Double := _DecodeDouble(ptr, endPointer, operation);
     tt_FLOAT: res.Float := _DecodeFloat(ptr, endPointer, operation);
 
     tt_CHAR: res.Char := _DecodeChar(ptr, endPointer, operation);
@@ -756,8 +802,10 @@ begin
     tt_INT32: res.Int := _DecodeInt(ptr, endPointer, operation);
     tt_UNSIGNED_INT32: res.Uint := _DecodeUnsignedInt(ptr, endPointer, operation);
 
-    tt_INTEGER_VALUE, tt_INT64: res.Long := _DecodeLong(ptr, endPointer, operation);
+    tt_INT64: res.Long := _DecodeLong(ptr, endPointer, operation);
     tt_UNSIGNED_INT64: res.ULong := _DecodeUnsignedLong(ptr, endPointer, operation);
+
+    tt_DECIMAL_VALUE: res.Extended := _DecodeDecimal(ptr, endPointer, operation);
 
   else begin
       FreeAndNil(res);
@@ -773,6 +821,29 @@ begin
 
 end;
 //------------------------------------------------------------------------------
+
+function TMSTEDecoder._DecodeDecimal(ptr: PPChar; endPointer: PChar; operation: string): Extended;
+var
+  str: string;
+  ods: Char;
+  r: Extended;
+begin
+  ods := DecimalSeparator;
+  DecimalSeparator := '.';
+
+  Result := 0;
+  str := _FindDoubleNumber(ptr, endPointer, '_DecodeDecimal', operation);
+
+  if TextToFloat(PChar(str), r, fvExtended) then
+    Result := r
+  else
+    MSRaise(Exception, '_DecodeDecimal - unable to decode number (Decimal)');
+
+  DecimalSeparator := ods;
+
+end;
+//------------------------------------------------------------------------------
+
 
 function TMSTEDecoder._DecodeDouble(ptr: PPChar; endPointer: PChar; operation: string): Double;
 var
@@ -953,8 +1024,7 @@ begin
     tt_FALSE: begin
         Result := __MSFalse;
       end;
-//10 -> 19
-//3 -> 4
+//10 -> 20
     tt_CHAR,
       tt_UNSIGNED_CHAR,
       tt_SHORT,
@@ -965,42 +1035,52 @@ begin
       tt_UNSIGNED_INT64,
       tt_FLOAT,
       tt_DOUBLE,
-      tt_INTEGER_VALUE,
-      tt_REAL_VALUE:
+      tt_DECIMAL_VALUE:
+      //tt_INTEGER_VALUE,
+      //tt_REAL_VALUE:
       begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeNumber(@s, endPointer, 'DecodeObject', TMSTETokenType(tokenType));
-
-        if TMSTETokenType(tokenType) in [tt_INTEGER_VALUE, tt_REAL_VALUE] then
+        //if TMSTETokenType(tokenType) in [tt_INTEGER_VALUE, tt_REAL_VALUE] then
+        //  _AddObject(Result);
+        if TMSTETokenType(tokenType) in [tt_DECIMAL_VALUE] then
           _AddObject(Result);
       end;
-//5
+//21
     tt_STRING: begin
         Result := TMSString.Create;
         JumpToNextToken(@s, endPointer, tokenCount);
         TMSString(Result).Value := DecodeString(@s, endPointer, 'DecodeObject');
         _AddObject(Result);
       end;
-//6
+//22
     tt_DATE: begin
         JumpToNextToken(@s, endPointer, tokenCount);
-        Result := DecodeDate(@s, endPointer, 'DecodeObject', tokenCount);
+        Result := DecodeDateLocale(@s, endPointer, 'DecodeObject', tokenCount);
         _AddObject(Result);
       end;
-//7
+//23
+    tt_TIMESTAMP: begin
+        JumpToNextToken(@s, endPointer, tokenCount);
+        Result := DecodeTimeStamp(@s, endPointer, 'DecodeObject', tokenCount);
+        _AddObject(Result);
+      end;
+
+//24
     tt_COLOR: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeColor(@s, endPointer, 'DecodeObject', tokenCount);
         _AddObject(Result);
       end;
 
-//8
+//30
     tt_DICTIONARY: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeDictionary(@s, endPointer, 'DecodeObject', tokenCount);
       end;
-//9 , 27
-    tt_STRONG_REFERENCED_OBJECT, tt_WEAK_REFERENCED_OBJECT: begin
+//9
+    //tt_STRONG_REFERENCED_OBJECT, tt_WEAK_REFERENCED_OBJECT: begin
+    tt_REFERENCED_OBJECT: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Ref := _DecodeLong(@s, endPointer, 'DecodeObject');
         if Ref >= FObjects.Count then
@@ -1009,25 +1089,25 @@ begin
         Result := TObject(FObjects.Items[Ref]);
       end;
 
-//20
+//31
     tt_ARRAY: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeArray(@s, endPointer, 'DecodeObject', tokenCount);
       end;
 
-//21
+//26
     tt_NATURAL_ARRAY: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeNaturalArray(@s, endPointer, 'DecodeObject', tokenCount);
       end;
 
-//22
+//32
     tt_COUPLE: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeCouple(@s, endPointer, 'DecodeObject', tokenCount);
       end;
 
-//    tt_BASE64_DATA = 23,
+//25
     tt_BASE64_DATA: begin
         JumpToNextToken(@s, endPointer, tokenCount);
         Result := DecodeBufferBase64String(@s, endPointer, 'DecodeObject', tokenCount);
@@ -1035,17 +1115,23 @@ begin
       end;
 
 //    tt_DISTANT_PAST = 24,
-    tt_DISTANT_PAST: begin
+{    tt_DISTANT_PAST: begin
         result := __theDistantPast;
       end;
+}
 //    tt_DISTANT_FUTURE = 25,
-    tt_DISTANT_FUTURE: begin
+{    tt_DISTANT_FUTURE: begin
         result := __theDistantFuture;
       end;
-
-//26
+ }
+//3
     tt_EMPTY_STRING: begin
         Result := __MSEmptyString;
+      end;
+
+//4
+    tt_EMPTY_DATA: begin
+        Result := __MSEmptyData;
       end
 
   else begin
@@ -1068,7 +1154,7 @@ function TMSTEDecoder._CalculateCrc(AStream: TMemoryStream): Cardinal;
 var
   xCrc: Cardinal;
 begin
-  AStream.SaveToFile('CRC.TXT');
+  //AStream.SaveToFile('CRC.TXT');
   MSCRC32(AStream.Memory, AStream.Size, xCrc);
   Result := xCrc;
 end;

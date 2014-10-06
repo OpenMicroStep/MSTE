@@ -2,7 +2,7 @@ unit UMSFoundation;
 
 interface
 
-uses Windows, Messages, SysUtils, Classes, Contnrs;
+uses Windows, Messages, SysUtils, Classes, Contnrs, Math;
 
 const
 
@@ -18,6 +18,9 @@ const
   MSLongMax = 9223372036854775807;
   MSLongMin = (-MSLongMax - 1);
   MSULongMax = 18446744073709551615;
+  MSDecimalMax = MaxExtended;
+  MSDecimalMin = MinExtended;
+
 
 type
 
@@ -30,6 +33,7 @@ type
   MSULong = UInt64;
   MSLong = Int64;
   float = single;
+  MSDecimal = Extended;
 
 procedure MSRaise(AExceptClass: ExceptClass; AText: string); overload;
 procedure MSRaise(AExceptClass: ExceptClass; AText: string; AParam: array of const); overload;

@@ -10,16 +10,15 @@ type
   TMSTETokenType
     = (
     tt_MUST_ENCODE = -1,
+
     tt_NULL = 0,
     tt_TRUE = 1,
     tt_FALSE = 2,
-    tt_INTEGER_VALUE = 3,
-    tt_REAL_VALUE = 4,
-    tt_STRING = 5,
-    tt_DATE = 6,
-    tt_COLOR = 7,
-    tt_DICTIONARY = 8,
-    tt_STRONG_REFERENCED_OBJECT = 9,
+    tt_EMPTY_STRING = 3,
+    tt_EMPTY_DATA = 4,
+
+    tt_REFERENCED_OBJECT = 9,
+
     tt_CHAR = 10,
     tt_UNSIGNED_CHAR = 11,
     tt_SHORT = 12,
@@ -30,14 +29,19 @@ type
     tt_UNSIGNED_INT64 = 17,
     tt_FLOAT = 18,
     tt_DOUBLE = 19,
-    tt_ARRAY = 20,
-    tt_NATURAL_ARRAY = 21,
-    tt_COUPLE = 22,
-    tt_BASE64_DATA = 23,
-    tt_DISTANT_PAST = 24,
-    tt_DISTANT_FUTURE = 25,
-    tt_EMPTY_STRING = 26,
-    tt_WEAK_REFERENCED_OBJECT = 27,
+
+    tt_DECIMAL_VALUE = 20,
+    tt_STRING = 21,
+    tt_DATE = 22,
+    tt_TIMESTAMP = 23,
+
+    tt_COLOR = 24,
+    tt_BASE64_DATA = 25,
+    tt_NATURAL_ARRAY = 26,
+
+    tt_DICTIONARY = 30,
+    tt_ARRAY = 31,
+    tt_COUPLE = 32,
 
     tt_USER_CLASS = 50
 
@@ -45,9 +49,9 @@ type
 
 const
   RecursiveToString = False;
-  MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT = integer(tt_USER_CLASS);
-  MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT = MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 1;
-
+  //MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT = integer(tt_USER_CLASS);
+  //MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT = MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 1;
+  tt_CURRENT_VERSION = '0102';
   MaxCapacity = 303;
   PrimeNumber: array[0..MaxCapacity - 1] of integer =
   (2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47, 53, 59, 61, 67, 71, 73, 79, 83, 89, 97,
@@ -146,13 +150,46 @@ type
     procedure Assign(AObject: TObject); override;
     function TokenType: TMSTETokenType; override;
     function SingleEncodingCode: TMSTETokenType; override;
-    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
+    procedure EncodeWithMSTEncoder(Encoder: TObject);override;
     function ToString: string; override;
 
     property Value: string read FValue write FValue;
   end;
 //------------------------------------------------------------------------------
   TMSDate = class(TObject)
+  private
+    FValue: TDateTime;
+  public
+    //constructor Create(AValue: TDateTime = 0);
+    procedure Assign(AObject: TObject); override;
+    function TokenType: TMSTETokenType; override;
+    function SingleEncodingCode: TMSTETokenType; override;
+    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
+    function ToString: string; override;
+
+    property Value: TDateTime read FValue write FValue;
+  end;
+
+  //------------------------------------------------------------------------------
+  //Nb seconds since 01/01/1970 with no TZ
+  TMSDateLocale = class(TMSDate)
+  private
+    FValue: MSLong;
+  public
+    constructor Create(AValue: MSLong = 0);
+
+    procedure Assign(AObject: TObject); override;
+    function TokenType: TMSTETokenType; override;
+    function SingleEncodingCode: TMSTETokenType; override;
+    procedure EncodeWithMSTEncoder(Encoder: TObject); override;
+    function ToString: string; override;
+
+    property Value: MSLong read FValue write FValue;
+  end;
+
+  //------------------------------------------------------------------------------
+  //Nb seconds since 01/01/1970 in UTC
+  TMSTimeStamp = class(TMSDate)
   private
     FValue: TDateTime;
   public
@@ -166,7 +203,8 @@ type
 
     property Value: TDateTime read FValue write FValue;
   end;
-//------------------------------------------------------------------------------
+
+  //------------------------------------------------------------------------------
   TMSDictionary = class(TObject)
   private
     FOwnObject: Boolean;
@@ -238,6 +276,7 @@ type
       7: (v7: MSULong); //Unsigned int64
       8: (v8: Single); //Valeur flotante
       9: (v9: Double); //Valeur double
+      10: (v10: Extended); //Valeur Decimal
   end;
 
   TMSNumber = class(TObject)
@@ -253,6 +292,7 @@ type
     procedure SetAsDouble(const Value: Double);
     procedure SetAsFloat(const Value: Single);
     procedure SetAsULong(const Value: MSULong);
+    procedure SetAsDecimal(const Value: MSDecimal);
     function GetAsFloat: Single;
     function GetAsDouble: Double;
     function GetAsInt: MSInt;
@@ -263,6 +303,7 @@ type
     function GetAsUInt: MSUInt;
     function GetAsLong: MSLong;
     function GetULong: MSULong;
+    function GetAsDecimal: MSDecimal;
   public
 
     procedure Assign(AObject: TObject); override;
@@ -280,6 +321,7 @@ type
     property ULong: MSULong read GetULong write SetAsULong;
     property Float: Single read GetAsFloat write SetAsFloat;
     property Double: Double read GetAsDouble write SetAsDouble;
+    property Extended: MSDecimal read GetAsDecimal write SetAsDecimal;
   end;
 //------------------------------------------------------------------------------
   TMSColor = class(TObject)
@@ -347,8 +389,9 @@ var
   __MSTrue: TMSBool;
   __MSFalse: TMSBool;
   __MSEmptyString: TMSString;
-  __theDistantPast: TMSDate;
-  __theDistantFuture: TMSDate;
+  __MSEmptyData:TMSData;
+//  __theDistantPast: TMSDate;
+//  __theDistantFuture: TMSDate;
 
 implementation
 uses Dialogs, Math, StrUtils, DateUtils, EncdDecd, UMSTEEncoder;
@@ -910,47 +953,122 @@ end;
 
 procedure TMSDate.Assign(AObject: TObject);
 begin
-  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
-  else
-    FValue := TMSDate(AObject).Value;
+  MSRaise(Exception, '%s : Assign method must be overritten', [ClassName]);
 end;
-//------------------------------------------------------------------------------
 
-constructor TMSDate.Create(AValue: TDateTime);
-begin
-  inherited Create;
-  FValue := AValue;
-end;
 //------------------------------------------------------------------------------
 
 procedure TMSDate.EncodeWithMSTEncoder(Encoder: TObject);
 begin
-  if not (
-    SameDateTime(FValue, __theDistantPast.Value)
-    or
-    SameDateTime(FValue, __theDistantFuture.Value)
-    ) then
-    TMSTEEncoder(Encoder).EncodeLongLong(DateTimeToUnix(FValue), False);
-
+  TMSTEEncoder(Encoder).EncodeObject(Self);
 end;
 //------------------------------------------------------------------------------
 
 function TMSDate.SingleEncodingCode: TMSTETokenType;
 begin
-  if SameDateTime(FValue, __theDistantPast.Value) then Result := tt_DISTANT_PAST
-  else if SameDateTime(FValue, __theDistantFuture.Value) then Result := tt_DISTANT_FUTURE
-  else Result := tt_MUST_ENCODE;
+  Result := tt_MUST_ENCODE;
 end;
 
 //------------------------------------------------------------------------------
 
 function TMSDate.TokenType: TMSTETokenType;
 begin
-  Result := tt_DATE;
+  Result := tt_MUST_ENCODE;
 end;
 //------------------------------------------------------------------------------
 
 function TMSDate.ToString: string;
+begin
+  MSRaise(Exception, '%s : ToString method must be overritten', [ClassName]);
+end;
+{$ENDREGION}
+
+//------------------------------------------------------------------------------
+{ TMSDateLocale }
+//------------------------------------------------------------------------------
+
+{$REGION 'TMSDateLocale'}
+
+procedure TMSDateLocale.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue := TMSDateLocale(AObject).Value;
+end;
+//------------------------------------------------------------------------------
+
+constructor TMSDateLocale.Create(AValue: MSLong);
+begin
+  inherited Create;
+  FValue := AValue;
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSDateLocale.EncodeWithMSTEncoder(Encoder: TObject);
+begin
+  TMSTEEncoder(Encoder).EncodeLongLong(FValue, False);
+end;
+//------------------------------------------------------------------------------
+
+function TMSDateLocale.SingleEncodingCode: TMSTETokenType;
+begin
+  Result := tt_MUST_ENCODE;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSDateLocale.TokenType: TMSTETokenType;
+begin
+  Result := tt_DATE;
+end;
+//------------------------------------------------------------------------------
+
+function TMSDateLocale.ToString: string;
+begin
+  Result := FormatDateTime('dd/mm/yyyy', UnixToDateTime(FValue))
+end;
+{$ENDREGION}
+
+//------------------------------------------------------------------------------
+{ TMSTimeStamp}
+//------------------------------------------------------------------------------
+{$REGION 'TMSTimeStamp'}
+
+procedure TMSTimeStamp.Assign(AObject: TObject);
+begin
+  if (AObject.ClassType <> ClassType) then MSRaise(Exception, '%s : wrong source class  for assignment, expected %s', [AObject.ClassName, ClassName])
+  else
+    FValue := TMSTimeStamp(AObject).Value;
+end;
+//------------------------------------------------------------------------------
+
+constructor TMSTimeStamp.Create(AValue: TDateTime);
+begin
+  inherited Create;
+  FValue := AValue;
+end;
+//------------------------------------------------------------------------------
+
+procedure TMSTimeStamp.EncodeWithMSTEncoder(Encoder: TObject);
+begin
+  TMSTEEncoder(Encoder).EncodeDouble(DateTimeToUnix(FValue), False);
+end;
+//------------------------------------------------------------------------------
+
+function TMSTimeStamp.SingleEncodingCode: TMSTETokenType;
+begin
+  Result := tt_MUST_ENCODE;
+end;
+
+//------------------------------------------------------------------------------
+
+function TMSTimeStamp.TokenType: TMSTETokenType;
+begin
+  Result := tt_TIMESTAMP;
+end;
+//------------------------------------------------------------------------------
+
+function TMSTimeStamp.ToString: string;
 begin
   Result := FormatDateTime('dd/mm/yyyy', FValue)
 end;
@@ -1011,7 +1129,8 @@ end;
 
 function TMSColor.GetTRGBValue: MSUInt;
 begin
-  Result := ColorToRGB(FValue) + (FTransparency shl 24);
+  //Result := ColorToRGB(FValue) + (FTransparency shl 24);
+  Result := (FTransparency shl 24) or (R shl 16) or (G shl 8) or (B);
 end;
 //------------------------------------------------------------------------------
 
@@ -1020,7 +1139,8 @@ var
   R, G, B, T: Byte;
 begin
 
-  T := 255 - ((Value shr 24) and $FF);
+  //T := 255 - ((Value shr 24) and $FF);
+  T := ((Value shr 24) and $FF);
   R := ((Value shr 16) and $FF);
   G := ((Value shr 8) and $FF);
   B := (Value and $FF);
@@ -1041,8 +1161,12 @@ end;
 function TMSColor.ToString: string;
 var
   rgb: Integer;
+  a,b,c:Byte;
 begin
   rgb := ColorToRGB(FValue);
+  a:= GetRValue(rgb);
+  b:= GetGValue(rgb);
+  c:= GetBValue(rgb);
   Result := Format('#%.2x%.2x%.2x%.2x',
     [FTransparency, GetRValue(rgb), GetGValue(rgb), GetBValue(rgb)]);
 
@@ -1053,7 +1177,7 @@ end;
 { TMSCouple }
 //------------------------------------------------------------------------------
 
-{$REGION 'TMSColor'}
+{$REGION 'TMSCouple'}
 
 procedure TMSCouple.Assign(AObject: TObject);
 begin
@@ -1109,7 +1233,7 @@ end;
 { TMSData }
 //------------------------------------------------------------------------------
 
-{$REGION 'TMSColor'}
+{$REGION 'TMSData'}
 
 procedure TMSData.Assign(AObject: TObject);
 begin
@@ -1179,9 +1303,11 @@ end;
 function TMSData.ToString: string;
 begin
   if FValue.Size = 0 then
-    Result := 'TMSData = Empty'
+    //Result := 'TMSData = Empty'
+    Result := ''
   else
-    BinToHex(FValue.Memory, PAnsiChar(Result), FValue.Size);
+    Result := 'TMSData size=' + inttostr(FValue.Size);
+    //BinToHex(FValue.Memory, PAnsiChar(Result), FValue.Size);
 end;
 
 {$ENDREGION}
@@ -1214,6 +1340,7 @@ begin
     7: TMSTEEncoder(Encoder).EncodeUnsignedLongLong(FValue.v7, False);
     8: TMSTEEncoder(Encoder).EncodeFloat(FValue.v8, False);
     9: TMSTEEncoder(Encoder).EncodeDouble(FValue.v9, False);
+    10: TMSTEEncoder(Encoder).EncodeDecimal(FValue.v10, False);
   else
     MSRaise(Exception, 'Unknow Number Type');
   end;
@@ -1312,6 +1439,15 @@ end;
 
 //------------------------------------------------------------------------------
 
+function TMSNumber.GetAsDecimal: Extended;
+begin
+  if FValue.NType = 8 then Result := FValue.v8
+  else if FValue.NType = 9 then Result := FValue.v9
+  else Result := FValue.v10;
+end;
+
+//------------------------------------------------------------------------------
+
 procedure TMSNumber.SetAsByte(const Value: MSByte);
 begin
   FValue.NType := 1;
@@ -1378,9 +1514,19 @@ end;
 
 //------------------------------------------------------------------------------
 
+procedure TMSNumber.SetAsDecimal(const Value: Extended);
+begin
+  FValue.NType := 10;
+  FValue.v10 := Value;
+end;
+
+
+//------------------------------------------------------------------------------
+
 function TMSNumber.TokenType: TMSTETokenType;
 begin
-  Result := tt_INTEGER_VALUE;
+  //Result := tt_INTEGER_VALUE;
+  Result := tt_DECIMAL_VALUE;
 end;
 //------------------------------------------------------------------------------
 
@@ -1397,6 +1543,7 @@ begin
     7: result := IntToStr(FValue.v7);
     8: result := FloatToStr(FValue.v8);
     9: Result := FloatToStr(FValue.v9);
+    10: Result := FloatToStr(FValue.v10);
   else result := '';
   end;
 
@@ -1642,13 +1789,13 @@ initialization
   __MSTrue := TMSBool.Create(True);
   __MSFalse := TMSBool.Create(False);
   __MSEmptyString := TMSString.Create('');
-
-  __theDistantPast := TMSDate.Create(MSLongMin);
-  __theDistantFuture := TMSDate.Create(MSLongMax);
+  __MSEmptyData := TMSData.Create();
+//  __theDistantPast := TMSDate.Create(MSLongMin);
+//  __theDistantFuture := TMSDate.Create(MSLongMax);
 
 finalization
-  FreeAndNil(__theDistantPast);
-  FreeAndNil(__theDistantFuture);
+//  FreeAndNil(__theDistantPast);
+//  FreeAndNil(__theDistantFuture);
   FreeAndNil(__MSEmptyString);
   FreeAndNil(__MSTrue);
   FreeAndNil(__MSFalse);

@@ -30,38 +30,6 @@
       
       
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Composants Microsoft Office 2000 Sample Automation Server Wrapper</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Composants Microsoft Office XP Sample Automation Server Wrapper</Excluded_Packages>
     </Excluded_Packages><Source><Source Name="MainSource">MSTE.dpr</Source></Source></Delphi.Personality></BorlandProject></BorlandProject>
@@ -72,6 +40,7 @@
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
     <DCCReference Include="..\Sources\crc32.pas" />
+    <DCCReference Include="..\Sources\UDictionary.pas" />
     <DCCReference Include="..\Sources\UMSFoundation.pas" />
     <DCCReference Include="..\Sources\UMSTEClasses.pas" />
     <DCCReference Include="..\Sources\UMSTEDecoder.pas" />

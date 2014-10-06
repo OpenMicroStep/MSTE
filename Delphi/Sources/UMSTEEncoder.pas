@@ -25,6 +25,7 @@ type
     procedure _encodeTokenType(tokenType: Byte); overload;
     procedure _encodeUnsignedLongLong(AStream: TStringStream; l: MSULong);
     procedure _EncodeString(AStream: TStringStream; s: string);
+    function _CalculateCrc(AStream: TMemoryStream): Cardinal;
   public
     constructor Create;
     destructor Destroy; override;
@@ -45,6 +46,7 @@ type
     procedure EncodeLongLong(l: MSLong; withTokenType: boolean);
     procedure EncodeFloat(f: Float; withTokenType: boolean);
     procedure EncodeDouble(d: Double; withTokenType: boolean);
+    procedure EncodeDecimal(d: Extended; withTokenType: boolean);
 
     procedure EncodeArray(AnArray: TObjectList);
     procedure EncodeDictionary(ADictionary: TMSDictionary; isSnapshot: Boolean = False);
@@ -54,7 +56,7 @@ type
   end;
 
 implementation
-uses Dialogs, EncdDecd;
+uses Dialogs, EncdDecd,CRC32,StrUtils;
 
 { TMSTEEncoder }
 //------------------------------------------------------------------------------
@@ -136,7 +138,8 @@ begin
     if (objectReference <> -1) then begin
      //this is an already encoded object
       _encodeTokenSeparator;
-      if WeakRef then _encodeTokenType(tt_WEAK_REFERENCED_OBJECT) else _encodeTokenType(tt_STRONG_REFERENCED_OBJECT);
+      //if WeakRef then _encodeTokenType(tt_WEAK_REFERENCED_OBJECT) else _encodeTokenType(tt_STRONG_REFERENCED_OBJECT);
+      _encodeTokenType(tt_REFERENCED_OBJECT);
       EncodeUnsignedInt(objectReference, False); //  : (objectReference - 1)withTokenType: NO];
     end else begin
       tokenType := aObject.TokenType;
@@ -152,12 +155,13 @@ begin
         FEncodedObjects.Add(AObject);
 
         _encodeTokenSeparator;
-
+        {
         if WeakRef then
           _encodeTokenType(MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_USER_OBJECT + (2 * classIndex) - 1)
         else
           _encodeTokenType(MSTE_TOKEN_TYPE_STRONGLY_REFERENCED_USER_OBJECT + 2 * classIndex);
-
+         }
+        _encodeTokenType(integer(tt_USER_CLASS) + (2 * classIndex) - 1) ;
         EncodeDictionary(snapshot, True);
 
         FreeAndNil(snapshot);
@@ -313,9 +317,24 @@ begin
     _encodeTokenType(tt_DOUBLE);
   end;
   _encodeTokenSeparator;
+  DecimalSeparator:='.';
   FBuffer.WriteString(Format('%.15f', [d]));
 
 end;
+//------------------------------------------------------------------------------
+
+
+procedure TMSTEEncoder.EncodeDecimal(d: Extended; withTokenType: boolean);
+begin
+  if withTokenType then begin
+    _encodeTokenSeparator;
+    _encodeTokenType(tt_DECIMAL_VALUE);
+  end;
+  _encodeTokenSeparator;
+  DecimalSeparator:='.';
+  FBuffer.WriteString(Format('%.15f', [d]));
+end;
+
 //------------------------------------------------------------------------------
 
 procedure TMSTEEncoder.EncodeFloat(f: Float; withTokenType: boolean);
@@ -325,6 +344,7 @@ begin
     _encodeTokenType(tt_FLOAT);
   end;
   _encodeTokenSeparator;
+  DecimalSeparator:='.';
   FBuffer.WriteString(Format('%f', [f]));
 end;
 //------------------------------------------------------------------------------
@@ -466,7 +486,11 @@ end;
 function TMSTEEncoder.EncodeRootObject(AObject: TObject): string;
 var
   xBuf: TStringStream;
+  ms : TMemoryStream;
   i: Integer;
+  s:String;
+  crc:DWORD;
+  posCRC:Integer;
 begin
   FEncodedObjects.Clear;
   FClasses.Clear;
@@ -477,7 +501,10 @@ begin
   xBuf := TStringStream.Create('');
 
   //Header
-  xBuf.WriteString('["MSTE0101",');
+  //xBuf.WriteString('["MSTE0101",');
+  xBuf.WriteString('["MSTE');
+  xBuf.WriteString(tt_CURRENT_VERSION);
+  xBuf.WriteString('",');
   _encodeUnsignedLongLong(xBuf, 5 + FTokenCount + FKeys.Count + FClasses.Count);
   xBuf.WriteString(',"CRC00000000",');
 
@@ -498,12 +525,33 @@ begin
 
   xBuf.WriteString(FBuffer.DataString);
   xBuf.WriteString(']');
-
   FBuffer.Size := 0;
-  Result := xBuf.DataString;
+
+  ms := TMemoryStream.Create;
+  s:=xBuf.DataString;
+  ms.Write(s[1], Length(s));
+  ms.Seek(0, soFromBeginning);
+  crc:=_CalculateCrc(ms);
+  posCRC:=AnsiPos('"CRC00000000"',s);
+  s:=StuffString(s, posCRC+4, 8, IntToHex(crc, 8));
+
+  //Result := xBuf.DataString;
+  Result := s;
+
 
   xBuf.Free;
 
+end;
+
+
+//------------------------------------------------------------------------------
+function TMSTEEncoder._CalculateCrc(AStream: TMemoryStream): Cardinal;
+var
+  xCrc: Cardinal;
+begin
+  //AStream.SaveToFile('CRC.TXT');
+  MSCRC32(AStream.Memory, AStream.Size, xCrc);
+  Result := xCrc;
 end;
 
 end.
