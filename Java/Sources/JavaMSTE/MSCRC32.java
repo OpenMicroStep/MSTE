@@ -54,7 +54,7 @@ public static String getCRC(String theFile)
 	for (byte b : bytes) {
 		crc = (crc >>> 8) ^ __table[(crc ^ b) & 0xff];
 	}
-	crc = crc ^ 0xffffffff;
+	crc = ~crc;
 
 	return String.format("%08X", crc);
 	//return Integer.toHexString(crc);
