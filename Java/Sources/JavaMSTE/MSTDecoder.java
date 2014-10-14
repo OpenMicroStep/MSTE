@@ -731,6 +731,7 @@ public class MSTDecoder {
 			case MSTE_TOKEN_TYPE_DECIMAL_VALUE :{
 				_MSTJumpToNextToken(data,pos,tokenCount);
 				ret = _MSTDecodeNumber(data, pos, tokenType);
+				decodedObjects.add(ret);
 				break;
 			}
 
