@@ -721,11 +721,11 @@ public class MSTDecoder {
 	            break ;
 			}
 			case MSTE_TOKEN_TYPE_TRUE :{
-				ret = new Boolean(true);
+				ret = Boolean.valueOf(true);
 				break;
 			}
 			case MSTE_TOKEN_TYPE_FALSE :{
-				ret = new Boolean(false);
+				ret = Boolean.valueOf(false);
 				break;
 			}
 			case MSTE_TOKEN_TYPE_DECIMAL_VALUE :{

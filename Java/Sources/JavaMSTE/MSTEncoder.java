@@ -325,7 +325,7 @@ private void encodeIntValue(Object anObject, Boolean token) throws MSTEException
 		_encodeTokenType(MSTE_TOKEN_TYPE_INT32);	
 	}
 	int tokenOrigin = getTokenType(anObject,true);
-	Long l = new Long(0);
+	Long l = Long.valueOf(0);
 	switch (tokenOrigin){
 		case MSTE_TOKEN_TYPE_CHAR:
 			Byte bVal = (Byte)anObject;
@@ -360,7 +360,7 @@ private void encodeFloatValue(Object anObject, Boolean token) throws MSTEExcepti
 		_encodeTokenType(MSTE_TOKEN_TYPE_FLOAT);	
 	}
 	int tokenOrigin = getTokenType(anObject,true);
-	Double d = new Double(0);
+	Double d = Double.valueOf(0);
 	switch (tokenOrigin){
 		case MSTE_TOKEN_TYPE_FLOAT:
 			Float f = (Float)anObject;
