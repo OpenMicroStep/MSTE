@@ -6,702 +6,480 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTEncodeur.h"
 
-#include <iostream>
+#include "MSTEBool.h"
+#include "MSTEBasicType.h"
+#include "MSTENumber.h"
+#include "MSTEString.h"
+#include "MSTEDate.h"
+#include "MSTEColor.h"
+#include "MSTEData.h"
+#include "MSTENaturalArray.h"
+#include "MSTEDictionary.h"
+#include "MSTEArray.h"
+#include "MSTECouple.h"
+#include "MSTEUserClass.h"
 
-static const char *hexa = "0123456789ABCDEF" ;
+#include "CRC32Calculator.h"
 
-MSTEncodeur::MSTEncodeur() {
-	tokenCount = 0;
-	lastKeyIndex=0;
-	lastClassIndex = 0;
-	lastReference = 0;
-    
+#include <memory>
+
+MSTEncodeur::MSTEncodeur()
+{
 }
 
-MSTEncodeur::~MSTEncodeur() {
+MSTEncodeur::~MSTEncodeur()
+{
 	// TODO Auto-generated destructor stub
 }
 
-void MSTEncodeur::encodeTokenSeparator()
+std::unique_ptr<std::string> MSTEncodeur::encodeRootObject(std::shared_ptr<MSTEObject> o)
 {
-	ss<<",";
-	tokenCount++;
-}
-
-void MSTEncodeur::encodeBool(MSTEBool* o)
-{
-	encodeTokenSeparator();
-	if(o->getBool()==true) ss<< MSTE_TOKEN_TYPE_TRUE;
-	if(o->getBool()==false) ss<< MSTE_TOKEN_TYPE_FALSE ;
-}
-
-
-void MSTEncodeur::encodeInt(int o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_INT32;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeUInt(unsigned int o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_UNSIGNED_INT32  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-
-void MSTEncodeur::encodeChar(char o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_CHAR ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-
-void MSTEncodeur::encodeUChar(unsigned char o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_UNSIGNED_CHAR ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeShort(short o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_SHORT ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeUShort(unsigned short o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_UNSIGNED_SHORT ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeLong(long o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_INT64 ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeULong(unsigned long o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_UNSIGNED_INT64  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeLongLong(long long o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_INT64  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeULongLong(unsigned long long o)
-{
-	//encodeTokenSeparator();
-	//ss<<MSTE_TOKEN_TYPE_UNSIGNED_INT64  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeGlobalULongLong(unsigned long long o)
-{
-	//ssGlobal<<MSTE_TOKEN_TYPE_UNSIGNED_INT64  ;
-	//ssGlobal << ",";
-	ssGlobal << o;
-}
-
-void MSTEncodeur::encodeFloat(float o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_FLOAT  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeDouble(double o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_DOUBLE  ;
-	encodeTokenSeparator();
-	ss << o;
-}
-
-void MSTEncodeur::encodeDate(MSTEDate* o)
-{
+    // Initialize counters
+    nbTokens = 1; // The root object
+    lastKeyIndex=0;
+    lastClassIndex = 0;
+    lastReference = 0;
     
-    if ((o->getDate()) >= o->getDistantFuture())
-     {
-         encodeDistantFuture(o);
-     }
-    if ((o->getDate())<= o->getDistantPast())
-     {
-         encodeDistantPast(o);
-     }
-	if(((o->getDate()) > o->getDistantPast()) && ((o->getDate()) < o->getDistantFuture()))
-	{
-		encodeTokenSeparator();
-		ss<<MSTE_TOKEN_TYPE_DATE  ;
-		encodeTokenSeparator();       
-		ss << o->getSecondSince1970();        
-	}
-}
-
-void MSTEncodeur::encodeDistantPast(MSTEDate* o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_DISTANT_PAST  ;
-}
-
-void MSTEncodeur::encodeDistantFuture(MSTEDate* o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_DISTANT_FUTURE  ;
-}
-
-void MSTEncodeur::encodeBase64(MSTEData* o)
-{
-    char const* bytes_to_encode = o->getData();
+    std::string content;
+    std::string result;
     
-    unsigned long in_len = strlen(bytes_to_encode);
-	string ret;
-    int i = 0;
-    int j = 0;
-    unsigned char char_array_3[3];
-    unsigned char char_array_4[4];
+    // We encode the content first
+    o->encodeWithMSTEncodeur(this, content);
+
+    // We get the size of the arrays
+    unsigned long lenClassesArray = classesArray.size();
+    unsigned long lenKeysArray = keysArray.size();
     
-    while (in_len--) {
-	    char_array_3[i++] = *(bytes_to_encode++);
-	    if (i == 3) {
-            char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-            char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-            char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-            char_array_4[3] = char_array_3[2] & 0x3f;
-            
-            for(i = 0; (i <4) ; i++)
-                ret += base64_chars[char_array_4[i]];
-            i = 0;
-	    }
+    // MSTE version
+    result.append("[\"MSTE");
+    result.append(MSTE_CURRENT_VERSION);
+    result.append("\",");
+    
+    // Tokens count
+    unsigned long long ull = (5+lastKeyIndex+lastClassIndex+nbTokens);
+    result.append(std::to_string(ull));
+    result.append(",");
+    
+    // CRC
+    result.append("\"CRC");
+    unsigned long crcPosition = result.length();
+    result.append("00000000\",");
+    
+    // Classes array length
+    result.append(std::to_string(lenClassesArray));
+    result.append(",");
+    
+    // Classes array
+    for(int i=0; i < lenClassesArray; i++)
+    {
+        result.append("\"");
+        result.append(classesArray[i]);
+        result.append("\"");
+        result.append(",");
     }
     
-    if (i)
+    // Keys array length
+    result.append(std::to_string(lenKeysArray));
+    result.append(",");
+    
+    // Keys array
+    for(int i=0; i < lenKeysArray; i++)
     {
-	    for(j = i; j < 3; j++)
-            char_array_3[j] = '\0';
-        
-	    char_array_4[0] = (char_array_3[0] & 0xfc) >> 2;
-	    char_array_4[1] = ((char_array_3[0] & 0x03) << 4) + ((char_array_3[1] & 0xf0) >> 4);
-	    char_array_4[2] = ((char_array_3[1] & 0x0f) << 2) + ((char_array_3[2] & 0xc0) >> 6);
-	    char_array_4[3] = char_array_3[2] & 0x3f;
-        
-	    for (j = 0; (j < i + 1); j++)
-            ret += base64_chars[char_array_4[j]];
-        
-	    while((i++ < 3))
-            ret += '=';
-        
+        result.append("\"");
+        result.append(keysArray[i]);
+        result.append("\"");
+        result.append(",");
     }
-    encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_BASE64_DATA  ;
-    encodeTokenSeparator();
-    ss<<"\"";
-    ss<<ret;
-    ss<<"\"";
+    
+    // Content
+    result.append(content);
+    
+    // End of stream
+    result.append("]");
+    
+    // Calculates the crc
+    std::string crc = Crc32Calculator::calculateCRC32(result);
+    result.replace(crcPosition, crc.length(), crc);
+    
+    return std::unique_ptr<std::string>(new std::string(result));
 }
 
-void MSTEncodeur::encodeWString(MSTEString* o)
+void MSTEncodeur::encodeTokenSeparator(std::string& outputBuffer)
 {
-	unsigned long len = o->wlength(); 
-    int i;
-
-    if(len==0) {
-		encodeTokenSeparator();
-		ss<<MSTE_TOKEN_TYPE_EMPTY_STRING;
-		//throw "encodeString:withTokenType: no string to encode!";
-	}
-	else{
-		encodeTokenSeparator();
-		ss<<MSTE_TOKEN_TYPE_STRING;
-		encodeTokenSeparator();
-		ss<<"\"";
-        for (i=0 ; i<len ; i++) {
-            unsigned char c = o->getWString().at(i);
-
-            switch(c){
-                case 9 : { // \t
-                    ss<<"\\";
-                    ss<<"t";
-                    break ;
-                }
-                case 10 : { // \n
-                    ss<<"\\";
-                    ss<<"n";
-                    break ;
-                }
-                case 13 : { // \r
-                    ss<<"\\";
-                    ss<<"r";
-                    break ;
-                }
-                case 34 : { // \"
-                    ss<<"\\";
-                    ss<<"\"";
-                    break ;
-                }
-                case 92 : { // antislash
-                    ss<<"\\";
-                    ss<<"\\";
-                    break ;
-                }
-                case 47 : { // antislash
-                    ss<<"\\";
-                    ss<<"/";
-                    break ;
-                }
-                case 8 : { // antislash
-                    ss<<"\\";
-                    ss<<"b";
-                    break ;
-                }
-                case 12 : { // antislash
-                    ss<<"\\";
-                    ss<<"f";
-                    break ;
-                }
-                    
-                default: {
-                    if ((c < 32) || (c > 127)) { //escape non printable ASCII characters with a 4 characters in UTF16 hexadecimal format (\UXXXX)
-                        
-                        char16_t b0 = (char16_t)((c & 0xF000)>>12);
-                        char16_t b1 = (char16_t)((c & 0x0F00)>>8);
-                        char16_t b2 = (char16_t)((c & 0x00F0)>>4);
-                        char16_t b3 = (char16_t)(c & 0x000F);
-                        
-                        ss<<"\\";
-                        ss<<"u";
-                        ss<<shortValueToHexaCharacter(b0);
-                        ss<<shortValueToHexaCharacter(b1);
-                        ss<<shortValueToHexaCharacter(b2);
-                        ss<<shortValueToHexaCharacter(b3);
-
-                        break;
-                       
-                        
-                    }
-                    else{
-                        
-                        ss<<c;
-                    }
-                    break ;
-                }
-                    
-            }
-        }
-        
-		ss<<"\"";
-	}
-    
+    nbTokens++;
+    outputBuffer.append(",");
 }
 
-void MSTEncodeur::encodeString(MSTEString* o)
+void MSTEncodeur::encodeBool(MSTEBool* o, std::string& outputBuffer)
 {
-	unsigned long len = o->length();
-	int i;
-    
-	if(len==0) {
-		encodeTokenSeparator();
-		ss<<MSTE_TOKEN_TYPE_EMPTY_STRING;
-		//throw "encodeString:withTokenType: no string to encode!";
-	}
-	else{
-		encodeTokenSeparator();
-		ss<<MSTE_TOKEN_TYPE_STRING;
-		encodeTokenSeparator();
-		ss<<"\"";
-        for (i=0 ; i<len ; i++) {
-            unsigned char c = o->getString().at(i);
-                        
-            switch(c){
-                case 9 : { // \t
-                    ss<<"\\";
-                    ss<<"t";
-                    break ;
-                }
-                case 10 : { // \n
-                    ss<<"\\";
-                    ss<<"n";
-                    break ;
-                }
-                case 13 : { // \r
-                    ss<<"\\";
-                    ss<<"r";
-                    break ;
-                }
-                case 34 : { // \"
-                    ss<<"\\";
-                    ss<<"\"";
-                    break ;
-                }
-                case 92 : { // antislash
-                    ss<<"\\";
-                    ss<<"\\";
-                    break ;
-                }
-                case 47 : { // antislash
-                    ss<<"\\";
-                    ss<<"/";
-                    break ;
-                }
-                case 8 : { // antislash
-                    ss<<"\\";
-                    ss<<"b";
-                    break ;
-                }
-                case 12 : { // antislash
-                    ss<<"\\";
-                    ss<<"f";
-                    break ;
-                }
-                default: {
-                    ss<<c;
-                    break ;
-                }
-                    
-            }
-        }
-        
-		ss<<"\"";
-	}
-    
+    outputBuffer.append(std::to_string(o->getBool() ? MSTE_TYPE_TRUE : MSTE_TYPE_FALSE));
 }
 
-
-void MSTEncodeur::encodeGlobalUnicodeString(string o)
+void MSTEncodeur::encodeChar(MSTEBasicType* c, std::string& outputBuffer)
 {
-	unsigned long len = o.length();
-	int i;
-	if(len==0) {
-		ssGlobal<<",";
-		ssGlobal<<MSTE_TOKEN_TYPE_EMPTY_STRING;
-	}
-	else{
-		ssGlobal<<",";
-		ssGlobal<<"\"";
-        for (i=0 ; i<len ; i++) {
-            unsigned char c = o.at(i);
-            switch(c){
-                case 9 : { // \t
-                    ssGlobal<<"\\";
-                    ssGlobal<<"t";
-                    break ;
-                }
-                case 10 : { // \n
-                    ssGlobal<<"\\";
-                    ssGlobal<<"n";
-                    break ;
-                }
-                case 13 : { // \r
-                    ssGlobal<<"\\";
-                    ssGlobal<<"r";
-                    break ;
-                }
-                case 34 : { // \"
-                    ssGlobal<<"\\";
-                    ssGlobal<<"\"";
-                    break ;
-                }
-                case 92 : { // antislash
-                    ssGlobal<<"\\";
-                    ssGlobal<<"\\";
-                    break ;
-                }
-                case 47 : { // antislash
-                    ssGlobal<<"\\";
-                    ssGlobal<<"/";
-                    break ;
-                }
-                case 8 : { // antislash
-                    ssGlobal<<"\\";
-                    ssGlobal<<"b";
-                    break ;
-                }
-                case 12 : { // antislash
-                    ssGlobal<<"\\";
-                    ssGlobal<<"f";
-                    break ;
-                }
-                default: {
-                    
-                    ssGlobal<<c;
-                    break ;
-                }
-                    
-            }
-        }
-        
-        ssGlobal<<"\"";
-	}
-    
+    outputBuffer.append(std::to_string(MSTE_TYPE_CHAR));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string((int)c->getChar()));
 }
 
-unsigned char MSTEncodeur::shortValueToHexaCharacter(char16_t o)
+void MSTEncodeur::encodeUnsignedChar(MSTEBasicType* c, std::string& outputBuffer)
 {
-    if (o < 16)
+    outputBuffer.append(std::to_string(MSTE_TYPE_UNSIGNED_CHAR));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string((int)c->getUnsignedChar()));
+}
+
+void MSTEncodeur::encodeShort(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_SHORT));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getShort()));
+}
+
+void MSTEncodeur::encodeUnsignedShort(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_UNSIGNED_SHORT));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getUnsignedShort()));
+}
+
+void MSTEncodeur::encodeInt32(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_INT32));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getInt32()));
+}
+
+void MSTEncodeur::encodeUnsignedInt32(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_UNSIGNED_INT32));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getUnsignedInt32()));
+}
+
+void MSTEncodeur::encodeInt64(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_INT64));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getInt64()));
+}
+
+void MSTEncodeur::encodeUnsignedInt64(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_UNSIGNED_INT64));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getUnsignedInt64()));
+}
+
+void MSTEncodeur::encodeFloat(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_FLOAT));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getFloat()));
+}
+
+void MSTEncodeur::encodeDouble(MSTEBasicType* c, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_DOUBLE));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(c->getDouble()));
+}
+
+void MSTEncodeur::encodeReference(int idx, std::string& outputBuffer)
+{
+    outputBuffer.append(std::to_string(MSTE_TYPE_REFERENCE));
+    encodeTokenSeparator(outputBuffer);
+    outputBuffer.append(std::to_string(idx));
+}
+
+void MSTEncodeur::encodeNumber(MSTENumber* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
     {
-         return hexa[o] ;
-    }
-    throw "ShortValueToHexaCharacter - not an hexadecimal value ";
-    return 0 ;
-}
-
-
-void MSTEncodeur::encodeDictionary(MSTEDictionary* o)
-{
-	unsigned long len =  o->size();
-	int keyReference;
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_DICTIONARY;
-	//encodeTokenSeparator();
-	encodeULongLong(len);
-    
-	map<string, MSTEObject*>::iterator iter;
-    
-	for (iter = o->getMap()->begin(); iter != o->getMap()->end(); iter++)
-	{
-		MSTEObject* object ;
-		object = iter->second;
-		string key = (*iter).first;
-        
-    	keyReference = keys[key];
-	    if(keyReference==0)
-	    {
-	    	keyReference = ++lastKeyIndex;
-	    	keys[key]=keyReference;
-	    	keysArray.push_back(key);
-	    }
-        
-		encodeULongLong(keyReference-1);
-		encodeObject(object);
-	}
-    
-}
-
-void MSTEncodeur::encodeRootDictionary(MSTEDictionary* o)
-{
-	unsigned long len =  o->size();
-	int keyReference;
-	//encodeTokenSeparator();
-	//ss<<MSTE_TOKEN_TYPE_DICTIONARY;
-	//encodeTokenSeparator();
-	encodeULongLong(len);
-    
-	map<string, MSTEObject*>::iterator iter;
-    
-	for (iter = o->getMap()->begin(); iter != o->getMap()->end(); iter++)
-	{
-		MSTEObject* object ;
-		object = iter->second;
-		string key = (*iter).first;
-        
-    	keyReference = keys[key];
-	    if(keyReference==0)
-	    {
-	    	keyReference = ++lastKeyIndex;
-	    	keys[key]=keyReference;
-	    	keysArray.push_back(key);
-            
-	    }
-        
-		encodeULongLong(keyReference-1);
-		encodeObject(object);
-	}
-    
-}
-
-void MSTEncodeur::encodeArray(MSTEArray* o)
-{
-	MSTEObject* object;
-	int len = (int) o->size();
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_ARRAY;
-	//encodeTokenSeparator();
-	encodeULongLong(len);
-    
-	for(int i=0;i<len;i++)
-	{
-        object= o->getObjectVector(i);
-        encodeObject(object);
-	}
-}
-
-void MSTEncodeur::encodeNaturalArray(MSTENaturalArray* o)
-{
-	int ret;
-	int len = (int) o->size();
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_NATURAL_ARRAY;
-	//encodeTokenSeparator();
-	encodeULongLong(len);
-    
-	for(int i=0;i<len;i++)
-	{
-        ret= o->getIntVector(i);
-        encodeTokenSeparator();
-        ss<<ret;
-	}
-}
-
-void MSTEncodeur::encodeCouple(MSTECouple* o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_COUPLE;
-	//encodeTokenSeparator();
-    MSTEObject* firstMember = o->getFirstMember();
-    MSTEObject* secondMember = o->getSecondMember();
-	encodeObject(firstMember);
-    //encodeTokenSeparator();
-	encodeObject(secondMember);    
-}
-
-
-
-void MSTEncodeur::encodeColor(MSTEColor* o)
-{
-	encodeTokenSeparator();
-	ss<<MSTE_TOKEN_TYPE_COLOR;
-	//encodeTokenSeparator();
-	encodeULongLong(o->rgba());
-}
-
-
-void MSTEncodeur::encodeObject(MSTEObject* o)
-{
-	int objectReference;
-	string nomClasse = o->getClassName();
-    
-   
-	unsigned char singleToken = o->getSingleEncodingCode();
-    if (singleToken != MSTE_TOKEN_MUST_ENCODE)
-    {
-        
-        encodeTokenSeparator();
-        ss<<singleToken;
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_NUMBER));
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(c->getString());
     }
     else
-    {
-        objectReference = encodedObject[o];
+        encodeReference(objectIndex, outputBuffer);
+}
 
-        if(objectReference != 0)
+void MSTEncodeur::encodeString(MSTEString* c, std::string& outputBuffer)
+{
+    if(c->length() > 0)
+    {
+        int objectIndex = findObject(c);
+        
+        if (objectIndex == ITEM_NOT_FOUND)
         {
-            encodeTokenSeparator();
-            ss<<MSTE_TOKEN_TYPE_REFERENCED_OBJECT;
-            encodeTokenSeparator();
-            ss<<(objectReference-1);
-         }
+            registerObject(c);
+            outputBuffer.append(std::to_string(MSTE_TYPE_STRING));
+            encodeTokenSeparator(outputBuffer);
+            outputBuffer.append("\"");
+            outputBuffer.append(c->getEncodedString());
+            outputBuffer.append("\"");
+        }
         else
+            encodeReference(objectIndex, outputBuffer);
+    }
+    else
+        outputBuffer.append(std::to_string(MSTE_TYPE_EMPTY_STRING));
+}
+
+void MSTEncodeur::encodeWString(MSTEString* c, std::string& outputBuffer)
+{
+    if(c->wlength() > 0)
+    {
+        int objectIndex = findObject(c);
+        
+        if (objectIndex == ITEM_NOT_FOUND)
         {
-            unsigned char tokenType = o->getTokenType();
-            
-            if (tokenType == MSTE_TOKEN_USER_CLASS_MARKER)
+            registerObject(c);
+            outputBuffer.append(std::to_string(MSTE_TYPE_STRING));
+            encodeTokenSeparator(outputBuffer);
+            outputBuffer.append("\"");
+            outputBuffer.append(c->getEncodedWString());
+            outputBuffer.append("\"");
+        }
+        else
+            encodeReference(objectIndex, outputBuffer);
+    }
+    else
+        outputBuffer.append(std::to_string(MSTE_TYPE_EMPTY_STRING));
+}
+
+void MSTEncodeur::encodeLocalDate(MSTEDate* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_LOCAL_TIMESTAMP));
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(c->getLocalDate()));
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeUtcDate(MSTEDate* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_UTC_TIMESTAMP));
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(c->getUtcDate()));
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeColor(MSTEColor* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_COLOR));
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(c->getEncodedColor()));
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeData(MSTEData* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_BASE64_DATA));
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append("\"");
+        outputBuffer.append(c->getEncodedData());
+        outputBuffer.append("\"");
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeNaturalArray(MSTENaturalArray* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_NATURAL_ARRAY));
+    
+        unsigned long length = c->size();
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(length));
+    
+        for(int i=0; i < length; i++)
+        {
+            encodeTokenSeparator(outputBuffer);
+            outputBuffer.append(std::to_string(c->getIntVector(i)));
+        }
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeDictionary(MSTEDictionary* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+        outputBuffer.append(std::to_string(MSTE_TYPE_DICTIONNARY));
+    
+        unsigned long size = c->size();
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(size));
+    
+        for(int i=0; i < size; i++)
+        {
+            encodeTokenSeparator(outputBuffer);
+            outputBuffer.append("\"");
+            outputBuffer.append(c->getKeyDictionary(i));
+            outputBuffer.append("\"");
+            encodeTokenSeparator(outputBuffer);
+            c->getObjectDictionary(i)->encodeWithMSTEncodeur(this, outputBuffer);
+        }
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeArray(MSTEArray* c, std::string& outputBuffer)
+{
+   int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+
+        outputBuffer.append(std::to_string(MSTE_TYPE_ARRAY));
+    
+        unsigned long length = c->size();
+        encodeTokenSeparator(outputBuffer);
+        outputBuffer.append(std::to_string(length));
+    
+        for(int i=0; i < length; i++)
+        {
+            encodeTokenSeparator(outputBuffer);
+            c->getObjectVector(i)->encodeWithMSTEncodeur(this, outputBuffer);
+        }
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeCouple(MSTECouple* c, std::string& outputBuffer)
+{
+    int objectIndex = findObject(c);
+    
+    if (objectIndex == ITEM_NOT_FOUND)
+    {
+        registerObject(c);
+
+        outputBuffer.append(std::to_string(MSTE_TYPE_COUPLE));
+        encodeTokenSeparator(outputBuffer);
+        c->getFirstMember()->encodeWithMSTEncodeur(this, outputBuffer);
+        encodeTokenSeparator(outputBuffer);
+        c->getSecondMember()->encodeWithMSTEncodeur(this, outputBuffer);
+    }
+    else
+        encodeReference(objectIndex, outputBuffer);
+}
+
+void MSTEncodeur::encodeUserClass(MSTEUserClass* c, std::string& outputBuffer)
+{
+    if(c->getClassName().length()==0)
+        throw "No class name";
+    else
+    {
+        int objectIndex = findObject(c);
+        
+        if (objectIndex == ITEM_NOT_FOUND)
+        {
+            registerObject(c);
+            outputBuffer.append(std::to_string(registerClass(c->getClassName())));
+    
+            unsigned long nbAttributes = c->getNbAttributes();
+            encodeTokenSeparator(outputBuffer);
+            outputBuffer.append(std::to_string(nbAttributes));
+    
+            for(int i = 0; i < nbAttributes; i++)
             {
-                MSTEDictionary *snapshot = new MSTEDictionary(o->getSnapshot());
-                
-                if (!snapshot) throw "encodeObject: Specific user classes must implement MSTESnapshot to be encoded as a dictionary!";
-                int classIndex = classes[nomClasse];
-                if(classIndex==0)
-                {
-                    classIndex = ++lastClassIndex;
-                    //classes.insert(pair<string, int> (nomClasse,classIndex));
-                    
-                    classes[nomClasse]=classIndex;
-                    classesArray.push_back(nomClasse);
-                    
-          
-                }
-                objectReference = ++lastReference;
-                encodedObject[o] = objectReference;
-                
-                encodeTokenSeparator();
-                ss<< (classIndex + MSTE_TOKEN_TYPE_USER_CLASS - 1);
-                encodeRootDictionary(snapshot);
-            }
-            else if (tokenType < MSTE_TOKEN_TYPE_USER_CLASS )
-            {
-                objectReference = ++lastReference;
-                encodedObject[o] = objectReference;
-                //encodeTokenSeparator();
-                //ss<<tokenType;
-                o->encodeWithMSTEncodeur(this);
+                encodeTokenSeparator(outputBuffer);
+                outputBuffer.append(std::to_string(registerKey(c->getAttributeName(i))));
+                encodeTokenSeparator(outputBuffer);
+                c->getAttributeValue(i)->encodeWithMSTEncodeur(this, outputBuffer);
             }
         }
+        else
+            encodeReference(objectIndex, outputBuffer);
     }
 }
 
-
-
-void MSTEncodeur::encodeRootObject(MSTEObject* o)
+unsigned int MSTEncodeur::registerClass(std::string className)
 {
-    //unsigned int *crcPointer ;
-   
-	encodeObject(o);
-    unsigned long lenClassesArray = classesArray.size();
-	unsigned long lenKeysArray = keysArray.size();
-    ssGlobal<<"[\"MSTE0101\",";
-	unsigned long long ull = (5+lastKeyIndex+lastClassIndex+tokenCount);
+    // Check if the class name is already stored
+    std::vector<std::string>::iterator it = find(classesArray.begin(), classesArray.end(), className);
     
-	encodeGlobalULongLong(ull);
-	ssGlobal<<",\"CRC";
+    if(it == classesArray.end())
+    {
+        // Class not referenced
+        classesArray.push_back(className);
+        classes.insert( std::pair<std::string, int>(className, MSTE_TYPE_USER_CLASS + lastClassIndex) );
+        lastClassIndex++;
+    }
     
-	ssGlobal<<"00000000\",";
-    
-	ssGlobal<<lenClassesArray;
-    
-	for(int i=0;i<lenClassesArray;i++)
-	{
-		encodeGlobalUnicodeString(classesArray[i]);
-	}
-	ssGlobal<<",";
-	ssGlobal<<lenKeysArray;
-    
-	for(int j=0;j<lenKeysArray;j++)
-	{
-		encodeGlobalUnicodeString(keysArray[j]);
-	}
-    
-	encodeFinChaine();
-	ssStreamString = ss.str();
-	ssGlobalString = ssGlobal.str();
-	ssRes = ssGlobalString+ ssStreamString;
-    //return ssRes;
-    cout<<ssRes;
-    
+    return classes[className];
 }
 
-
-void MSTEncodeur::encodeFinChaine()
+unsigned int MSTEncodeur::registerKey(std::string keyName)
 {
-	ss<< "]";
+    // Check if the key name is already stored
+    std::vector<std::string>::iterator it = find(keysArray.begin(), keysArray.end(), keyName);
+    
+    if(it == keysArray.end())
+    {
+        // Key not referenced
+        keysArray.push_back(keyName);
+        keys.insert( std::pair<std::string, int>(keyName, lastKeyIndex) );
+        lastKeyIndex++;
+    }
+    
+    return keys[keyName];
 }
 
-void MSTEncodeur::clean()
+int MSTEncodeur::findObject(MSTEObject* item)
 {
-	ss.clear();
-	tokenCount =0;
-	lastKeyIndex = 0;
+    if(encodedObjects.count(item) > 0)
+        return encodedObjects[item];
+    else
+        return ITEM_NOT_FOUND;
 }
+
+void MSTEncodeur::registerObject(MSTEObject* item)
+{
+    encodedObjects.insert(std::pair<MSTEObject*, int>(item, lastReference));
+    lastReference++;
+}
+

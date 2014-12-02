@@ -6,21 +6,22 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
-#include <iostream>
+#include "MSTEString.h"
+#include <memory>
 
-MSTEString::MSTEString() {
+MSTEString::MSTEString()
+{
 	chaine = "";
     wchaine = L"";
 }
 
-MSTEString::MSTEString(string aString)
+MSTEString::MSTEString(std::string aString)
 {
 	chaine = aString;
     wchaine = L"";
 }
 
-MSTEString::MSTEString(wstring aWString)
+MSTEString::MSTEString(std::wstring aWString)
 {
     chaine = "";
 	wchaine = aWString;
@@ -36,35 +37,59 @@ MSTEString::~MSTEString() {
 	// TODO Auto-generated destructor stub
 }
 
-string MSTEString::getClassName()
-{
-	return "MSTEString";
-}
-
-string MSTEString::getString()
+std::string MSTEString::getString()
 {
 	return chaine;
 }
 
-wstring MSTEString::getWString()
+std::string MSTEString::getEncodedString()
 {
-	return wchaine;
-}
-
-unsigned char MSTEString::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_STRING;
-}
-
-unsigned char MSTEString::getSingleEncodingCode()
-{
-	if(chaine.length()==0)	return MSTE_TOKEN_TYPE_EMPTY_STRING;
-	else return MSTE_TOKEN_MUST_ENCODE;
+    unsigned long length = chaine.length();
+    const char * value = chaine.c_str();
+    std::string result;
+    
+    for(int i=0; i < length; i++)
+    {
+        switch(value[i])
+        {
+            case 9 : // \t
+                result += "\\t";
+                break ;
+            case 10 : // \n
+                result += "\\n";
+                break ;
+            case 13 : // \r
+                result += "\\r";
+                break ;
+            case 34 : // \"
+                result += "\\\"";
+                break ;
+            case 92 : // antislash
+                result += "\\\\";
+                break ;
+            case 8 : //
+                result += "\\b";
+                break ;
+            case 12 : //
+                result += "\\f";
+                break ;
+            default:
+                result += value[i];
+                break ;
+        }
+    }
+    
+    return result;
 }
 
 unsigned long MSTEString::length()
 {
-	return chaine.length();
+    return chaine.length();
+}
+
+std::wstring MSTEString::getWString()
+{
+	return wchaine;
 }
 
 unsigned long MSTEString::wlength()
@@ -72,14 +97,66 @@ unsigned long MSTEString::wlength()
 	return wchaine.length();
 }
 
-void MSTEString::encodeWithMSTEncodeur(MSTEncodeur* e)
+std::string MSTEString::getEncodedWString()
+{
+    unsigned long length = wchaine.length();
+    std::string result;
+
+    for(int i=0; i < length; i++)
+    {
+        unsigned char c = wchaine.at(i);
+        switch(c)
+        {
+            case 9 : // \t
+                result += "\\t";
+                break ;
+            case 10 : // \n
+                result += "\\n";
+                break ;
+            case 13 : // \r
+                result += "\\r";
+                break ;
+            case 34 : // \"
+                result += "\\\"";
+                break ;
+            case 92 : // antislash
+                result += "\\\\";
+                break ;
+            case 8 : //
+                result += "\\b";
+                break ;
+            case 12 : //
+                result += "\\f";
+                break ;
+            default:
+                if ((c < 32) || (c > 127))
+                {
+                    //escape non printable ASCII characters with a 4 characters in UTF16 hexadecimal format (\UXXXX)
+                    result += "\\u";
+                    result += hexChars[(c & 0xF000)>>12];
+                    result += hexChars[(c & 0x0F00)>>8];
+                    result += hexChars[(c & 0x00F0)>>4];
+                    result += hexChars[(c & 0x000F)];
+                }
+                else
+                {
+                    result += c;
+                }
+                break ;
+        }
+    }
+    
+    return result;
+}
+
+void MSTEString::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
     if(chaine != "")
     {
-        e->encodeString(this);
+        e->encodeString(this, outputBuffer);
     }
     else
     {
-        e->encodeWString(this);
+        e->encodeWString(this, outputBuffer);
     }
 }

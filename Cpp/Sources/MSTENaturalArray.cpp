@@ -6,60 +6,47 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTENaturalArray.h"
 
-MSTENaturalArray::MSTENaturalArray() {
-    
+MSTENaturalArray::MSTENaturalArray()
+{
 }
 
-MSTENaturalArray::MSTENaturalArray(vector<int> *vector)
+MSTENaturalArray::MSTENaturalArray(std::vector<int> *vector)
 {
 	aVector = *vector;
 }
 
-MSTENaturalArray::MSTENaturalArray(MSTENaturalArray &array)
+MSTENaturalArray::~MSTENaturalArray()
 {
-	aVector = array.aVector;
+
 }
 
-MSTENaturalArray::~MSTENaturalArray() {
-	// TODO Auto-generated destructor stub
-}
-
-
-string MSTENaturalArray::getClassName()
-{
-	return "MSTENaturalArray";
-}
 
 int MSTENaturalArray::getIntVector(int idx)
 {
 	return aVector[idx];
 }
 
-unsigned char MSTENaturalArray::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_NATURAL_ARRAY;
-}
-
-void MSTENaturalArray::setIntVector( int value)
-{
-	aVector.push_back(value);
-}
-
-vector<int>* MSTENaturalArray::getVector()
+std::vector<int>* MSTENaturalArray::getVector()
 {
 	return &aVector;
-}
-
-void MSTENaturalArray::encodeWithMSTEncodeur(MSTEncodeur* e)
-{
-	e->encodeNaturalArray(this);
 }
 
 unsigned long MSTENaturalArray::size()
 {
     
     return aVector.size();
-	
+    
 }
+
+void MSTENaturalArray::addItem(int item)
+{
+    aVector.push_back(item);
+}
+
+void MSTENaturalArray::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
+{
+    e->encodeNaturalArray(this, outputBuffer);
+}
+

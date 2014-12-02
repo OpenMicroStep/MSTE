@@ -6,60 +6,49 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTECouple.h"
+#include <memory>
 
 MSTECouple::MSTECouple()
 {
-	couple1 = new MSTEObject();
-	couple2 = new MSTEObject();
-    
+    couple1 = NULL;
+    couple2 = NULL;
 }
 
-MSTECouple::MSTECouple(MSTEObject* firstMember,MSTEObject* secondMember)
+MSTECouple::MSTECouple(std::shared_ptr<MSTEObject> firstMember, std::shared_ptr<MSTEObject> secondMember)
 {
 	couple1 = firstMember;
 	couple2 = secondMember;
     
 }
 
-MSTECouple::MSTECouple(MSTECouple &aCouple)
+MSTECouple::~MSTECouple()
 {
-	couple1 = aCouple.couple1;
-    couple2 = aCouple.couple2;
 }
 
-MSTECouple::~MSTECouple(){
-    delete couple1;
-    delete couple2;
-}
-
-
-string MSTECouple::getClassName()
-{
-	return "MSTECouple";
-}
-
-unsigned char MSTECouple::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_COUPLE;
-}
-
-
-MSTEObject* MSTECouple::getFirstMember()
+std::shared_ptr<MSTEObject> MSTECouple::getFirstMember()
 {
 
     return couple1;
-
 }
 
-MSTEObject* MSTECouple::getSecondMember()
+std::shared_ptr<MSTEObject> MSTECouple::getSecondMember()
 {
     
     return couple2;
-    
 }
 
-void MSTECouple::encodeWithMSTEncodeur(MSTEncodeur* e)
+void MSTECouple::setFirstMember(std::shared_ptr<MSTEObject> item)
 {
-	e->encodeCouple(this);
+    couple1 = item;
+}
+
+void MSTECouple::setSecondMember(std::shared_ptr<MSTEObject> item)
+{
+    couple2 = item;
+}
+
+void MSTECouple::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
+{
+    e->encodeCouple(this, outputBuffer);
 }

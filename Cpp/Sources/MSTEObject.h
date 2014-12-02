@@ -5,30 +5,20 @@
 //  Created by Melodie on 23/10/12.
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
+#ifndef MSTE_OBJECT_H
+#define MSTE_OBJECT_H
 
+#include <string>
 
+class MSTEncodeur;
 
-using namespace std;
-
-class MSTEncodeur ;
-class MSTEObject ;
-
-class MSTEObject {
-private:
-	//int tokenType;
-	map<string,MSTEObject*> *snapshot;
+class MSTEObject
+{
 public:
 	MSTEObject();
-    MSTEObject(map<string,MSTEObject*> *aSnapshot);
 	virtual ~MSTEObject();
-	virtual string getClassName();
-    virtual map<string,MSTEObject*>* getSnapshot();
     
-	virtual unsigned char getTokenType();
-	unsigned char getSingleEncodingCode();
-    
-	virtual void encodeWithMSTEncodeur(MSTEncodeur* e);
-
-    
+    virtual void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer) = 0;
 };
 
+#endif // MSTE_OBJECT_H

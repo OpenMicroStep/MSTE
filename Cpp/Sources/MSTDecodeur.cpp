@@ -6,1069 +6,614 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTDecodeur.h"
+
+#include "MSTEBool.h"
+#include "MSTEBasicType.h"
+#include "MSTENumber.h"
+#include "MSTEString.h"
+#include "MSTEDate.h"
+#include "MSTEColor.h"
+#include "MSTEData.h"
+#include "MSTENaturalArray.h"
+#include "MSTEDictionary.h"
+#include "MSTEArray.h"
+#include "MSTECouple.h"
+#include "MSTEUserClass.h"
+
+#include "CRC32Calculator.h"
+
 #include <iostream>
 
+MSTDecodeur::MSTDecodeur()
+{
+}
 
-MSTDecodeur::MSTDecodeur() {
-	// TODO Auto-generated constructor stub
+MSTDecodeur::~MSTDecodeur()
+{
+}
+
+std::shared_ptr<MSTEObject> MSTDecodeur::decodeString(const std::string& inputBuffer)
+{
+    if(inputBuffer.length()==0)
+        throw "Empty buffer";
+    else
+    {
+        // We flush the old data
+        classes.clear();
+        keys.clear();
         
-}
-
-MSTDecodeur::~MSTDecodeur() {
-	// TODO Auto-generated destructor stub
-    //delete decodedObjects;
-}
-
-
-unsigned char MSTDecodeur::MSTDecodeUnsignedChar(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    unsigned long result = strtoull((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeUnsignedChar - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if (result>MSByteMax) throw  "@MSTDecodeUnsignedChar - out of range (%llu)";
-    }
-    else throw "@MSTDecodeUnsignedChar - %@ (no termination)" + *operation;
-	return (unsigned char) result;
-}
-
-char MSTDecodeur::MSTDecodeChar(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    long result = strtoll((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeChar - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if ((result>MSCharMax) || (result<MSCharMin)) throw  "@MSTDecodeChar - out of range (%lld)";
-    }
-    else throw "@MSTDecodeChar - %@ (no termination)" + *operation;
-	return (char) result;
-}
-
-unsigned short  MSTDecodeur::MSTDecodeUnsignedShort(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    unsigned long result = strtoull((const char *)s, &stopCar, 10) ;
-    
-    
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeUnsignedShort - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if (result>MSUShortMax) throw  "@MSTDecodeUnsignedShort - out of range (%llu)";
-    }
-   // else throw "@MSTDecodeUnsignedShort - %@ (no termination)" + *operation;
-	return (unsigned short) result;
-}
-
-short  MSTDecodeur::MSTDecodeShort(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    long result = strtoll((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeShort - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if ((result>MSShortMax) || (result<MSShortMin)) throw  "@MSTDecodeShort - out of range (%llu)";
-    }
-    else throw "@MSTDecodeShort - %@ (no termination)" + *operation;
-	return (short) result;
-    
-}
-
-unsigned int  MSTDecodeur::MSTDecodeUnsignedInt(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    unsigned long result = strtoull((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeUnsignedInt - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if (result>MSUIntMax) throw  "@MSTDecodeUnsignedInt - out of range (%llu)";
-    }
-    else throw "@MSTDecodeUnsignedInt - %@ (no termination)" + *operation;
-    return (unsigned int) result;
-}
-int  MSTDecodeur::MSTDecodeInt(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    long result = strtoll((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeInt - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-    	if ((result>MSIntMax)|| (result<MSIntMin)) throw  "@MSTDecodeInt - out of range (%llu)";
-    }
-    else throw "@MSTDecodeInt - %@ (no termination)" + *operation;
-	return (int) result;
-}
-unsigned long  MSTDecodeur::MSTDecodeUnsignedLong(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    unsigned long result = strtoull((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeUnsignedLong - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-        *pointer = (unsigned char *)stopCar ;
-    }
-    else throw "@MSTDecodeUnsignedLong - %@ (no termination)" + *operation;
-	return (unsigned long) result;
-    
-}
-long  MSTDecodeur::MSTDecodeLong(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    long result = strtoll((const char *)s, &stopCar, 10) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeLong - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-        *pointer = (unsigned char *)stopCar ;
-    }
-    else throw "@MSTDecodeLong - %@ (no termination)" + *operation;
-	return (long) result;
-}
-float  MSTDecodeur::MSTDecodeFloat(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    float result = strtof((const char *)s, &stopCar) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeFloat - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-        *pointer = (unsigned char *)stopCar ;
-    }
-    else throw "@MSTDecodeFloat - %@ (no termination)" + *operation;
-	return result;
-}
-
-double  MSTDecodeur::MSTDecodeDouble(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    char *stopCar;
-    double result = strtod((const char *)s, &stopCar) ;
-    if ((unsigned char *)stopCar > endPointer) throw "@MSTDecodeDouble - %@ (exceed buffer end)" + *operation;
-    if ((unsigned char *)stopCar > s) {
-        *pointer = (unsigned char *)stopCar ;
-    }
-    else throw "@MSTDecodeDouble - %@ (no termination)" + *operation;
-	return result;
-}
-
-void MSTDecodeur::MSTJumpToNextToken(unsigned char **pointer, unsigned char *endPointer, unsigned long *tokenCount)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    
-    bool separatorFound = false ;
-    bool nextFound = false ;
-    while (!separatorFound && (endPointer-s)) {
+        // We start at the begining of the buffer
+        unsigned int currentPosition = 0;
         
-        if (*s != (unsigned char)',') { s++ ;  }
-        else if (*s == (unsigned char)',') { s++ ; separatorFound = true ;  (*tokenCount)++ ; }
-        else throw "MSTDecodeRetainedObject - Bad format (unexpected character before token separator)" ;
-    }
-    if (!separatorFound) throw "MSTDecodeRetainedObject - Bad format (no token separator)" ;
-    
-    while (!nextFound && (endPointer-s)) {
-        if (*s == (unsigned char)' ') { s++ ; }
-        nextFound = (*s != (unsigned char)' ') ;
-    }
-    if (!separatorFound) throw "MSTDecodeRetainedObject - Bad format (no next token)" ;
-    
-    *pointer = s ;
-}
-
-MSTEColor* MSTDecodeur::MSTDecodeColor(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    unsigned int rgbaValue = MSTDecodeUnsignedInt(&s, endPointer, operation) ;
-    MSTEColor *ret = new MSTEColor(rgbaValue) ;
-
-    *pointer = s ;
-
-    return ret;
-    
-}
-
-MSTECouple * MSTDecodeur::MSTDecodeCouple(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTEObject* firstMember;
-    MSTEObject* secondMember;
-    MSTECouple * ret = new MSTECouple();
-    decodedObjects->push_back(ret);    
-
-    firstMember = (MSTEObject*) MSTDecodeObject(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount) ;    
-    MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-    secondMember = (MSTEObject*) MSTDecodeObject(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount) ;   
-    
-    ret = new MSTECouple(firstMember, secondMember);    
-    
-    *pointer = s ;
-    
-    return ret;
-}
-
-MSTEArray * MSTDecodeur::MSTDecodeArray(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-   	unsigned long count = MSTDecodeUnsignedLong(&s, endPointer, operation) ;
-    
-    MSTEArray * ret = new MSTEArray();
-    decodedObjects->push_back(ret);
-    
-    if (count) {
-        unsigned int i ;
+        // We parse the beginning of array
+        if(inputBuffer[currentPosition]!='[')
+            throw "Buffer is not a json array";
+        currentPosition++;
         
-        for (i = 0 ; i < count ; i++) {
-            MSTEObject* object;
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            object = (MSTEObject*) MSTDecodeObject(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount) ;
-                        
-            ret->setObjectVector(object);            
-        }
+        // We parse the MSTE version
+        MSTEVersion = decodeStringToken(inputBuffer, currentPosition);
+        if(MSTEVersion != std::string("MSTE0102"))
+           throw "Unsupported version of MSTE";
+        
+        // We parse the number of tokens
+        nbTokens = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+        
+        // We parse the CRC
+        std::string crc = decodeStringToken(inputBuffer, currentPosition);
+        
+        // TODO: check the CRC
+        
+        // We parse the classes
+        int nbClasses = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+        for(int i = 0; i < nbClasses; i++)
+            classes.push_back(decodeStringToken(inputBuffer, currentPosition));
+        
+        // We parse the keys
+        int nbKeys = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+        for(int i = 0; i < nbKeys; i++)
+            keys.push_back(decodeStringToken(inputBuffer, currentPosition));
+        
+        // We decode the root object
+        return decodeObject(inputBuffer, currentPosition);
     }
-    
-    *pointer = s ;
-    return ret;
+    return NULL;
 }
 
-MSTENaturalArray * MSTDecodeur::MSTDecodeNaturalArray(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount)
+std::shared_ptr<MSTEObject> MSTDecodeur::decodeObject(const std::string& inputBuffer, unsigned int& currentPosition)
 {
-    unsigned char *s = (unsigned char *)*pointer ;
-   	unsigned long count = MSTDecodeUnsignedLong(&s, endPointer, operation) ;
+    int typeId = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+    std::shared_ptr<MSTEObject> result;
     
-    MSTENaturalArray * ret = new MSTENaturalArray();
-    decodedObjects->push_back(ret);
-    
-    if (count) {
-        unsigned int i ;
-        
-        for (i = 0 ; i < count ; i++) {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            int natural = MSTDecodeInt(&s, endPointer, operation) ;
+    switch (typeId)
+    {
+        case MSTE_TYPE_NULL:
+            result = NULL;
+            break;
             
-            ret->setIntVector(natural);
-        }
-    }
-    
-    *pointer = s ;
-    return ret;
-}
-
-MSTEDictionary * MSTDecodeur::MSTDecodeDictionary(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount, bool manageReference)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    unsigned long count = MSTDecodeUnsignedLong(&s, endPointer, operation) ;
-       
-    
-    MSTEDictionary* ret = new MSTEDictionary();
-    if (manageReference) {
-    	decodedObjects->push_back(ret);
-    }
-    
-    if (count!=0) {
-    	unsigned int i ;
-        
-        for (i = 0 ; i < count ; i++) {
-        	unsigned int keyReference ;
-            MSTEObject* object;
-            string key ;
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            keyReference = MSTDecodeUnsignedInt(&s, endPointer, operation) ;
-          
-            key = keys->at(keyReference) ;
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
+        case MSTE_TYPE_TRUE:
+            result = std::make_shared<MSTEBool>(MSTEBool(true));
+            break;
             
-            object = (MSTEObject*) MSTDecodeObject(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount) ;
+        case MSTE_TYPE_FALSE:
+            result = std::make_shared<MSTEBool>(MSTEBool(false));
+            break;
             
-            ret->setObjectDictionary(key,object);
-        }
-    }
-    *pointer = s ;
-    return ret ;
-}
+        case MSTE_TYPE_EMPTY_STRING:
+            result = std::make_shared<MSTEString>();
+            break;
 
-MSTEString * MSTDecodeur::MSTDecodeString(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *start = (unsigned char *)*pointer ;
-    unsigned char *s = start ;
-    bool endStringFound = false ;
-    short state = MSTE_DECODING_STRING_START ;
-    string ret ="" ;
-    MSTEString * result;
-    
-    while ((s < endPointer) && !endStringFound) {
-        unsigned char character = *s ;
-        
-        switch (state) {
-            case MSTE_DECODING_STRING_START:
-            {                
-                if ((unsigned char)character == (unsigned char)'"') { s++ ; state = MSTE_DECODING_STRING ; break ; }
-                throw "_MSTDecodeString - %@ (wrong starting character : %c)" ;
-                break ;
-            }
-            case MSTE_DECODING_STRING :
+        case MSTE_TYPE_EMPTY_DATA:
+            result = std::make_shared<MSTEData>();
+            break;
+
+        case MSTE_TYPE_REFERENCE:
+            result = objects[std::stoi(decodeNumberToken(inputBuffer, currentPosition))];
+            break;
+            
+        case MSTE_TYPE_CHAR:
+            result = decodeChar(inputBuffer, currentPosition);
+            break;
+
+        case MSTE_TYPE_UNSIGNED_CHAR:
+            result = decodeUnsignedChar(inputBuffer, currentPosition);
+            break;
+
+        case MSTE_TYPE_SHORT:
+            result = decodeShort(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_UNSIGNED_SHORT:
+            result = decodeUnsignedShort(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_INT32:
+            result = decodeInt32(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_UNSIGNED_INT32:
+            result = decodeUnsignedInt32(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_INT64:
+            result = decodeInt64(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_UNSIGNED_INT64:
+            result = decodeUnsignedInt64(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_FLOAT:
+            result = decodeFloat(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_DOUBLE:
+            result = decodeDouble(inputBuffer, currentPosition);
+            break;
+            
+        case MSTE_TYPE_NUMBER:
+            result = decodeNumber(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+
+        case MSTE_TYPE_STRING:
+            result = decodeString(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+
+        case MSTE_TYPE_LOCAL_TIMESTAMP:
+            result = decodeLocalDate(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+
+        case MSTE_TYPE_UTC_TIMESTAMP:
+            result = decodeUtcDate(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+
+        case MSTE_TYPE_COLOR:
+            result = decodeColor(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+            
+        case MSTE_TYPE_BASE64_DATA:
+            result = decodeData(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+            
+        case MSTE_TYPE_NATURAL_ARRAY:
+            result = decodeNumber(inputBuffer, currentPosition);
+            objects.push_back(result);
+            break;
+            
+        case MSTE_TYPE_DICTIONNARY:
+            result = std::make_shared<MSTEDictionary>();
+            objects.push_back(result);
+            decodeDictionary(inputBuffer, currentPosition, std::dynamic_pointer_cast<MSTEDictionary>(result));
+            break;
+            
+        case MSTE_TYPE_ARRAY:
+            result = std::make_shared<MSTEArray>();
+            objects.push_back(result);
+            decodeArray(inputBuffer, currentPosition, std::dynamic_pointer_cast<MSTEArray>(result));
+            break;
+            
+        case MSTE_TYPE_COUPLE:
+            result = std::make_shared<MSTECouple>();
+            objects.push_back(result);
+            decodeCouple(inputBuffer, currentPosition, std::dynamic_pointer_cast<MSTECouple>(result));
+            break;
+            
+        default:
+            if ((typeId >= MSTE_TYPE_USER_CLASS) && (typeId < MSTE_TYPE_USER_CLASS + classes.size()))
             {
-                if ((unsigned char)character == (unsigned char)'\\') { s++ ;state = MSTE_DECODING_STRING_ESCAPED_CAR ; break ; }
-                if ((unsigned char)character == (unsigned char)'"') { s++ ; state = MSTE_DECODING_STRING_STOP ; endStringFound = true ; break ; }
-                
-                ret += (unsigned char)character; //adding visible ascii character to unicode string
-                s++ ; //pass to next character
-                break ;
+                std::shared_ptr<MSTEUserClass> item(new MSTEUserClass(classes[typeId - MSTE_TYPE_USER_CLASS]));
+                objects.push_back(item);
+                decodeUserClass(inputBuffer, currentPosition, item);
+                return item;
             }
-            case MSTE_DECODING_STRING_ESCAPED_CAR :
-            {
-            	unsigned char character = (unsigned char)character ;
-                if (character == (unsigned char)'r') {
-                    ret += (unsigned char)0x000d ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'n')
-                {
-                    ret += (unsigned char)0x000a ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'t')
-                {
-                    ret += (unsigned char)0x0009 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'\\')
-                {
-                    ret += (unsigned char)0x005c ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'"')
-                {
-                    ret += (unsigned char)0x0022 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'/')
-                {
-                    ret += (unsigned char)0x002F ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'b')
-                {
-                    ret += (unsigned char)0x0008 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'f')
-                {
-                    ret += (unsigned char)0x0012 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (unsigned char)'u')
-                {
-                    //UTF16 value on 4 hexadecimal characters expected
-                	unsigned char s0, s1, s2, s3 ;
-                    
-                    if ((endPointer-s)<5) throw "_MSTDecodeString - %@ (too short UTF16 character expected)" ;
-                    
-                    s0 = (unsigned char)s[1] ;
-                    s1 = (unsigned char)s[2] ;
-                    s2 = (unsigned char)s[3] ;
-                    s3 = (unsigned char)s[4] ;
-                    
-                    if (!MSUnicharIsHexa(s0) ||
-                        !MSUnicharIsHexa(s1) ||
-                        !MSUnicharIsHexa(s2) ||
-                        !MSUnicharIsHexa(s3))  throw "MSTDecodeString - %@ (bad hexadecimal character for UTF16)" ;
-                    else {
-                        unsigned short b0 = hexaCharacterToShortValue(s0) ;
-                        unsigned short  b1 = hexaCharacterToShortValue(s1) ;
-                        unsigned short  b2 = hexaCharacterToShortValue(s2) ;
-                        unsigned short  b3 = hexaCharacterToShortValue(s3) ;
-                        ret += (unsigned char)((b0<<12) + (b1<<8) + (b2<<4) + b3) ; //unicode character to unicode string
-                        s += 5 ;
-                        state = MSTE_DECODING_STRING ;
-                    }
-                    break ;
-                }
-                else {
-                    throw "MSTDecodeString - %@ (unexpected escaped character : %c)" ;
-                    break ;
-                }
-            }
-            default: {
-                throw"MSTDecodeString - %@ (unknown state)" ;
-            }
-        }
+            else
+                throw "Invalid token type";
     }
     
-    *pointer = s ;
-    result = new MSTEString(ret);
-    
-    return  result ;
+    return result;
 }
 
-MSTEString * MSTDecodeur::MSTDecodeWString(unsigned char **pointer, unsigned char *endPointer, string *operation)
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeChar(const std::string& inputBuffer, unsigned int& currentPosition)
 {
-    unsigned char *start = (unsigned char *)*pointer ;
-    unsigned char *s = start ;
-    bool endStringFound = false ;
-    short state = MSTE_DECODING_STRING_START ;
-    wstring ret;
+    return std::make_shared<MSTEBasicType>((char)decodeStringToken(inputBuffer, currentPosition)[0]);
+}
 
-    MSTEString * result;
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedChar(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((unsigned char)decodeStringToken(inputBuffer, currentPosition)[0]);
+}
 
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeShort(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((short)std::stol(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedShort(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((unsigned short)std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeInt32(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((long)std::stol(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedInt32(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((unsigned long)std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeInt64(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((long long)std::stoll(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedInt64(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((unsigned long long)std::stoull(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeFloat(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((float)std::stof(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeDouble(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEBasicType>((double)std::stod(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+// Complex types
+std::shared_ptr<MSTENumber> MSTDecodeur::decodeNumber(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTENumber>(decodeNumberToken(inputBuffer, currentPosition));
+}
+
+std::shared_ptr<MSTEString> MSTDecodeur::decodeString(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEString>(decodeStringToken(inputBuffer, currentPosition));
+}
+
+std::shared_ptr<MSTEDate> MSTDecodeur::decodeLocalDate(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEDate>(std::stol(decodeNumberToken(inputBuffer, currentPosition)), Local);
+}
+
+std::shared_ptr<MSTEDate> MSTDecodeur::decodeUtcDate(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEDate>(std::stol(decodeNumberToken(inputBuffer, currentPosition)), Utc);
+}
+
+std::shared_ptr<MSTEColor> MSTDecodeur::decodeColor(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    return std::make_shared<MSTEColor>(std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
+}
+
+std::shared_ptr<MSTEData> MSTDecodeur::decodeData(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    std::pair<char*,char*> delimiters = delimitatesStringToken(inputBuffer, currentPosition);
+    std::shared_ptr<MSTEData> ret(new MSTEData());
+    ret->setEncodedData(delimiters.first, (delimiters.second - delimiters.first) * sizeof(char));
+    return ret;
+}
+
+std::shared_ptr<MSTENaturalArray> MSTDecodeur::decodeNaturalArray(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    std::shared_ptr<MSTENaturalArray> result(new MSTENaturalArray());
     
-    while ((s < endPointer) && !endStringFound) {
-        unsigned char character = *s ;
-        
-        switch (state) {
-            case MSTE_DECODING_STRING_START:
-            {
-                if ((char16_t)character == (char16_t)'"') { s++ ; state = MSTE_DECODING_STRING ; break ; }
-                throw "_MSTDecodeString - %@ (wrong starting character : %c)" ;
-                break ;
-            }
-            case MSTE_DECODING_STRING :
-            {   
-                if ((char16_t)character == (char16_t)'\\') { s++ ; state = MSTE_DECODING_STRING_ESCAPED_CAR ; break ; }
-                if ((char16_t)character == (char16_t)'"') { s++ ; state = MSTE_DECODING_STRING_STOP ; endStringFound = true ; break ; }
-                
-                ret += (char16_t)character; //adding visible ascii character to unicode string
-                s++ ; //pass to next character
-                break ;
-            }
-            case MSTE_DECODING_STRING_ESCAPED_CAR :
-            {                
-               //char16_t character = (char16_t)character ;
-
-                if (character == (char16_t)'r') {
-                    ret += (char16_t)0x000d ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'n')
-                {
-                    ret += (char16_t)0x000a ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'t')
-                {
-                    ret += (char16_t)0x0009 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'\\')
-                {
-                    ret += (char16_t)0x005c ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'"')
-                {
-                    ret += (char16_t)0x0022 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'/')
-                {
-                    ret += (char16_t)0x002F ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'b')
-                {
-                    ret += (char16_t)0x0008 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'f')
-                {
-                   
-                    ret += (char16_t)0x0012 ;
-                    s++ ;
-                    state = MSTE_DECODING_STRING ;
-                    break ;
-                }
-                else if (character == (char16_t)'u')
-                {
-                    //UTF16 value on 4 hexadecimal characters expected
-                	char16_t s0, s1, s2, s3 ;
-                                                            
-                    if ((endPointer-s)<5) throw "_MSTDecodeString - %@ (too short UTF16 character expected)" ;
-                    
-                    s0 = (char16_t)s[1] ;
-                    s1 = (char16_t)s[2] ;
-                    s2 = (char16_t)s[3] ;
-                    s3 = (char16_t)s[4] ;
-                    
-                    if (!MSUnicharIsHexa(s0) ||
-                        !MSUnicharIsHexa(s1) ||
-                        !MSUnicharIsHexa(s2) ||
-                        !MSUnicharIsHexa(s3))  throw "MSTDecodeString - %@ (bad hexadecimal character for UTF16)" ;
-                    else {
-                        unsigned short b0 = hexaCharacterToShortValue(s0) ;
-                        unsigned short  b1 = hexaCharacterToShortValue(s1) ;
-                        unsigned short  b2 = hexaCharacterToShortValue(s2) ;
-                        unsigned short  b3 = hexaCharacterToShortValue(s3) ;
-                        ret += (unsigned char)((b0<<12) + (b1<<8) + (b2<<4) + b3) ; //unicode character to unicode string
-                        s += 5 ;
-                        state = MSTE_DECODING_STRING ;
-                    }
-                    break ;
-                }
-                else {
-                    throw "MSTDecodeString - %@ (unexpected escaped character : %c)" ;
-                    break ;
-                }
-            }
-            default: {
-                throw"MSTDecodeString - %@ (unknown state)" ;
-            }
-                
-        }
+    unsigned long nbElements = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
+    
+    for(unsigned long i = 0; i < nbElements; i++)
+    {
+        result->addItem(std::stoi(decodeNumberToken(inputBuffer, currentPosition)));
     }
     
-    *pointer = s ;
-   
-    result = new MSTEString(ret);
-    
-    return  result ;
+    return result;
 }
 
-
-MSTENumber *MSTDecodeur::MSTDecodeNumber(unsigned char **pointer, unsigned char *endPointer, short tokenType)
+// Generic structures
+std::shared_ptr<MSTEDictionary> MSTDecodeur::decodeDictionary(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEDictionary> item)
 {
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTENumber* ret;
-    string sNumb = "MSTDecodeNumber";
+    unsigned long nbElements = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
     
-    switch (tokenType) {
-        case MSTE_TOKEN_TYPE_INTEGER_VALUE : {
-            ret= new MSTENumber(MSTDecodeInt(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_REAL_VALUE :
-        case MSTE_TOKEN_TYPE_DOUBLE : {
-            ret= new MSTENumber(MSTDecodeDouble(&s, endPointer, &sNumb));
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_CHAR : {
-            ret= new MSTENumber(MSTDecodeChar(&s, endPointer, &sNumb));
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_UNSIGNED_CHAR : {
-            ret= new MSTENumber(MSTDecodeUnsignedChar(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_SHORT : {
-            ret= new MSTENumber(MSTDecodeShort(&s, endPointer, &sNumb));
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_UNSIGNED_SHORT : {
-            ret= new MSTENumber(MSTDecodeUnsignedShort(&s, endPointer, &sNumb));
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_INT32 : {
-            ret= new MSTENumber(MSTDecodeInt(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_UNSIGNED_INT32 : {
-        	ret= new MSTENumber(MSTDecodeUnsignedInt(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_INT64 : {
-        	ret= new MSTENumber(MSTDecodeLong(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_UNSIGNED_INT64 : {
-        	ret= new MSTENumber(MSTDecodeUnsignedLong(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_FLOAT : {
-        	ret= new MSTENumber(MSTDecodeFloat(&s, endPointer, &sNumb)) ;
-            break ;
-        }
-        default: {
-            throw"_MSTDecodeNumber - unknown tokenType" ;
-        }
+    for(unsigned long i = 0; i < nbElements; i++)
+    {
+        std::string key = decodeStringToken(inputBuffer, currentPosition);
+        std::shared_ptr<MSTEObject> value = decodeObject(inputBuffer, currentPosition);
+        item->addItem(key, value);
     }
     
-    *pointer = s ;
-    return ret ;
+    return item;
 }
 
-MSTEDate* MSTDecodeur::MSTDecodeDate(long aDate)
+std::shared_ptr<MSTEArray> MSTDecodeur::decodeArray(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEArray> item)
 {
+    unsigned long nbElements = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
     
-    MSTEDate* date = new MSTEDate(difftime(aDate, time(NULL)));
-    return date;
-    
-}
-
-MSTEBool* MSTDecodeur::MSTDecodeBool(bool aBool)
-{
-    MSTEBool* mBool = new MSTEBool(aBool);
-    return mBool;
-    
-}
-
-
-MSTEObject* MSTDecodeur::MSTDecodeRefObject( unsigned char **pointer, vector<MSTEObject*> *decodedObjects, long ref)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTEObject* object;
-    
-    object = (decodedObjects->at(ref));
-    
-    *pointer = s ;
-    return object;
-}
-
-MSTEData* MSTDecodeur::base64_decode(unsigned char **pointer, unsigned char *endPointer, string *operation)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTEString* stri = MSTDecodeString(pointer,endPointer,operation) ;
-    string encoded_string = stri->getString();
-  
-    unsigned long in_len = encoded_string.size();
-    int i = 0;
-    int j = 0;
-    int in_ = 0;
-    unsigned char char_array_4[4], char_array_3[3];
-    string ret;
-    
-    while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
-        char_array_4[i++] = encoded_string[in_]; in_++;
-        if (i ==4) {
-            for (i = 0; i <4; i++)
-                char_array_4[i] = base64_chars.find(char_array_4[i]);
-            
-            char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-            char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-            char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-            
-            for (i = 0; (i < 3); i++)
-                ret += char_array_3[i];
-                i = 0;
-        }
+    for(unsigned long i = 0; i < nbElements; i++)
+    {
+        std::shared_ptr<MSTEObject> value = decodeObject(inputBuffer, currentPosition);
+        item->addItem(value);
     }
     
-    if (i) {
-        for (j = i; j <4; j++)
-            char_array_4[j] = 0;
-        
-        for (j = 0; j <4; j++)
-            char_array_4[j] = base64_chars.find(char_array_4[j]);
-        
-        char_array_3[0] = (char_array_4[0] << 2) + ((char_array_4[1] & 0x30) >> 4);
-        char_array_3[1] = ((char_array_4[1] & 0xf) << 4) + ((char_array_4[2] & 0x3c) >> 2);
-        char_array_3[2] = ((char_array_4[2] & 0x3) << 6) + char_array_4[3];
-        
-        for (j = 0; (j < i - 1); j++) ret += char_array_3[j];
-    }
-    
-    char *cstr = new char[ret.length() + 1];
-    strcpy(cstr, ret.c_str());
-    
-    MSTEData * data = new MSTEData(cstr);    
-   
-   
-    *pointer = s ;
-    
-    return data;
+    return item;
 }
 
-
-void* MSTDecodeur::MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount)
+std::shared_ptr<MSTECouple> MSTDecodeur::decodeCouple(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTECouple> item)
 {
-    
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTEObject* ret = new MSTEObject() ;
-    string tType = "token type";
-    string sDecod = "MSTDecodeObject";
-    unsigned short tokenType = MSTDecodeUnsignedShort(&s, endPointer, &tType ) ;
+    item->setFirstMember(decodeObject(inputBuffer, currentPosition));
+    item->setSecondMember(decodeObject(inputBuffer, currentPosition));
+    return item;
+}
 
-    switch (tokenType) {
-        case MSTE_TOKEN_TYPE_TRUE : {
-            ret = MSTDecodeBool(true);
-            s++;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_FALSE : {
-            ret = MSTDecodeBool(false);
-            s++;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_INTEGER_VALUE :
-        case MSTE_TOKEN_TYPE_REAL_VALUE :
+// User classes
+std::shared_ptr<MSTEUserClass> MSTDecodeur::decodeUserClass(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEUserClass> item)
+{
+    unsigned long nbAttributes = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
+    
+    for(unsigned long i = 0; i < nbAttributes; i++)
+    {
+        std::string keyName = keys[std::stoi(decodeNumberToken(inputBuffer, currentPosition))];
+        std::shared_ptr<MSTEObject> keyValue = decodeObject(inputBuffer, currentPosition);
+        item->addAttribute(keyName, keyValue);
+    }
+    
+    return item;
+}
+
+std::pair<char*, char*> MSTDecodeur::delimitatesStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    bool endOfStringReached = false;
+    char *stringBegining, *stringEnd;
+    
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+    
+    // We skip the first '"'
+    if(inputBuffer[currentPosition] != '"')
+        throw "Token is not a valid string.";
+    currentPosition++;
+    
+    // We set the begining of the string
+    stringBegining = (char*) (inputBuffer.data() + (currentPosition * sizeof(char)));
+    
+    while(!endOfStringReached)
+    {
+        switch(inputBuffer[currentPosition])
         {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeNumber(&s, endPointer, tokenType) ;
-            decodedObjects->push_back(ret);
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_CHAR :
-        case MSTE_TOKEN_TYPE_UNSIGNED_CHAR :
-        case MSTE_TOKEN_TYPE_SHORT :
-        case MSTE_TOKEN_TYPE_UNSIGNED_SHORT :
-        case MSTE_TOKEN_TYPE_INT32 :
-        case MSTE_TOKEN_TYPE_UNSIGNED_INT32 :
-        case MSTE_TOKEN_TYPE_INT64 :
-        case MSTE_TOKEN_TYPE_UNSIGNED_INT64 :
-        case MSTE_TOKEN_TYPE_FLOAT :
-        case MSTE_TOKEN_TYPE_DOUBLE :
-        {
-            //no reference on simple types
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeNumber(&s, endPointer, tokenType);
-            decodedObjects->push_back(ret);
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_STRING : {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeWString(&s, endPointer, &sDecod) ;            
-            decodedObjects->push_back(ret);                      
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_DATE : {
-            long seconds ;
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            seconds = MSTDecodeLong(&s, endPointer,&sDecod) ;
-            ret= MSTDecodeDate(seconds);
-            decodedObjects->push_back(ret);
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_DICTIONARY : {
-           
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeDictionary(&s, endPointer, &sDecod, decodedObjects, classes, keys, tokenCount, true) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_REFERENCED_OBJECT : {
-            long objectReference =0;
-            
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            
-            objectReference = MSTDecodeLong(&s, endPointer, &sDecod) ;
-            ret = decodedObjects->at(objectReference);
-            //ret = MSTDecodeRefObject(&s, decodedObjects, objectReference);
-
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_COLOR : {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeColor(&s, endPointer, &sDecod) ;
-            decodedObjects->push_back(ret);
-            
-            
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_ARRAY : {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeArray(&s, endPointer, &sDecod, decodedObjects, classes, keys, tokenCount) ;
-            
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_NATURAL_ARRAY : {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeNaturalArray(&s, endPointer, &sDecod, decodedObjects,  classes, keys, tokenCount) ;
-            
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_COUPLE : {
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            ret = MSTDecodeCouple(&s, endPointer, &sDecod, decodedObjects, classes, keys, tokenCount) ;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_BASE64_DATA : {
-            
-            MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-            
-            ret = base64_decode(&s, endPointer, &sDecod) ;
-            decodedObjects->push_back(ret);
-            
-            
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_DISTANT_PAST : {
-            ret = __theDistantPast;
-            s++;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_DISTANT_FUTURE : {
-        	ret = __theDistantFuture ;
-            s++;
-            break ;
-        }
-        case MSTE_TOKEN_TYPE_EMPTY_STRING : {
-             break ;
-        }
-        default :
-        {
-            if (tokenType >= MSTE_TOKEN_TYPE_USER_CLASS) {
-                
-                
-                MSTJumpToNextToken(&s, endPointer, tokenCount) ;
-                ret = MSTDecodeUserDefinedObject(&s, endPointer,&sDecod, tokenType, decodedObjects, classes, keys, tokenCount) ;
-            }
-            else throw "MSTDecodeObject - unknown tokenType : %u";
-            break ;
-        }
-    }
-    
-    *pointer = s ;
-    return ret ;
-}
-
-MSTEObject* MSTDecodeur::MSTDecodeUserDefinedObject(unsigned char **pointer, unsigned char *endPointer, string *operation, unsigned short tokenType, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount)
-{
-    unsigned char *s = (unsigned char *)*pointer ;
-    MSTEObject * ret ;
-    int classIndex = tokenType - MSTE_TOKEN_TYPE_USER_CLASS ;
-
-    if ((classIndex >=0) && (classIndex < (int)(classes->size()))) {
-        string className = classes->at(classIndex);
-        if (className!="") {
-            MSTEDictionary *dictionary ;
-            decodedObjects->push_back(ret);
-            
-            dictionary = MSTDecodeDictionary(&s, endPointer, operation, decodedObjects, classes, keys, tokenCount, false) ;
-                                    
-            ret =  new MSTEObject(dictionary->getMap());
-            
-        }
-        else throw "_MSTDecodeUserDefinedObject - unable to find user class %@ in current system" ;
-    }
-    else throw "_MSTDecodeUserDefinedObject - unable to find user class at index";
-    
-    *pointer = s ;
-    return ret ;
-}
-
-
-void* MSTDecodeur::MSTDecodeRetainedObject(const char* data, bool verifyCRC)
-{
-    unsigned long len = strlen(data);
-     
-    if (len > 26) { //minimum header size : ["MSTE0101",3,"CRC00000000" ...]
-        unsigned char *s = (unsigned char *) data;
-        unsigned char *end = (unsigned char *)s+len-1 ;
-        unsigned char *crcPtr = NULL ;
-        char crc[9] ;
-        unsigned int crcInt = 0;
-        unsigned long tokenNumber, classesNumber, keysNumber =0 ;
-        vector<string> *decodedClasses = new vector<string>() ;
-        vector<string> *decodedKeys = new vector<string>()  ;
-        short state = MSTE_DECODING_ARRAY_START ;
-        void* object;
-        vector<MSTEObject*> *decodedObjects = new vector<MSTEObject*>();
-
-        
-        unsigned long myTokenCount = 0 ;
-        
-        while ((s < (end+1))) {
-          
-            
-            switch (state) {
-                case MSTE_DECODING_ARRAY_START: {
-                
-                    if (*s == (unsigned char)' ') { s++ ; break ; }
-                    if (*s == (unsigned char)'[') { s++ ; state = MSTE_DECODING_VERSION_START ; break ; }
-                    throw "MSTDecodeRetainedObject - Bad header format (array start)";
-                }
-                case MSTE_DECODING_VERSION_START : {
-                  
-                    if (*s == (unsigned char)' ') { s++ ; break ; }
-                    if (*s == (unsigned char)'"') { s++ ; state = MSTE_DECODING_VERSION_HEADER ; break ; }
-                    
-                    throw "MSTDecodeRetainedObject - Bad header format (start)" ;
-                }
-                case MSTE_DECODING_VERSION_HEADER : {
-                    
-                    if (((end-s) < 4) || (s[0] != (unsigned char)'M') || (s[1] != (unsigned char)'S') || (s[2] != (unsigned char)'T') || (s[3] != (unsigned char)'E')) {
-                        throw "MSTDecodeRetainedObject - Bad header format (MSTE marker)" ; }
-                    s += 4 ;
-                    state = MSTE_DECODING_VERSION_VALUE ;
-                    break ;
-                }
-                case MSTE_DECODING_VERSION_VALUE : {
-                    //if (((end-s) < 4) || !MSUnicharIsIsoDigit(s[0])|| !MSUnicharIsIsoDigit(s[1])|| !MSUnicharIsIsoDigit(s[2])|| !MSUnicharIsIsoDigit(s[3])) {
-                    //    throw "MSTDecodeRetainedObject - Bad header version" ; }
-                    
-                    s += 4 ;
-                    state = MSTE_DECODING_VERSION_END ;
-                    break ;
-                }
-                case MSTE_DECODING_VERSION_END : {
-                    
-                    if (*s == (unsigned char)'"') { s++ ; state = MSTE_DECODING_VERSION_NEXT_TOKEN ; }
-                    else throw "MSTDecodeRetainedObject - Bad header format (version end)" ;
-                    break ;
-                }
-                case MSTE_DECODING_VERSION_NEXT_TOKEN :
-                case MSTE_DECODING_TOKEN_NUMBER_NEXT_TOKEN :
-                case MSTE_DECODING_CRC_NEXT_TOKEN :
-                case MSTE_DECODING_CLASSES_NUMBER_NEXT_TOKEN :
-                case MSTE_DECODING_CLASS_NEXT_TOKEN :
-                case MSTE_DECODING_KEYS_NUMBER_NEXT_TOKEN :
-                case MSTE_DECODING_KEY_NEXT_TOKEN :
+            case '"':
+                // End of string reached
+                endOfStringReached = true;
+                currentPosition++;
+                break;
+            case '\\':
+                // Escaped character
+                switch(inputBuffer[currentPosition+1])
                 {
+                    case 'u':
+                    case 'U':
+                        // Hexa character
+                        if(!isxdigit(inputBuffer[currentPosition+2]) || !isxdigit(inputBuffer[currentPosition+3]) || !isxdigit(inputBuffer[currentPosition+4]) || !isxdigit(inputBuffer[currentPosition+5]))
+                        throw "Invalid Hexadecimal sequence";
+                        else currentPosition += 6;
+                        break;
                     
-                    MSTJumpToNextToken(&s, end, &myTokenCount) ;
-                    switch (state) {
-                      
-                        case MSTE_DECODING_VERSION_NEXT_TOKEN:
-                            state = MSTE_DECODING_TOKEN_NUMBER_VALUE ; break ;
-                        case MSTE_DECODING_TOKEN_NUMBER_NEXT_TOKEN:
-                            state = MSTE_DECODING_CRC_START ; break ;
-                        case MSTE_DECODING_CRC_NEXT_TOKEN:
-                            state = MSTE_DECODING_CLASSES_NUMBER_VALUE ;break ;
-                        case MSTE_DECODING_CLASSES_NUMBER_NEXT_TOKEN:
+                    // Escaped character
+                    case 'r':
+                    case 'n':
+                    case 't':
+                    case '\\':
+                    case '"':
+                    case 'b':
+                    case 'f':
+                        currentPosition += 2;
+                        break;
+                    default:
+                        throw "Unrecognized character";
+                        break;
+                }
+                break;
+            default:
+                // Normal character
+                currentPosition++;
+                break;
+        }
+    }
+    stringEnd = (char*) (inputBuffer.data() + (currentPosition-2) * sizeof(char));
+    
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+    
+    // We check the next character is a separator
+    if(isSeparator(inputBuffer[currentPosition]))
+        currentPosition++;
+    else
+        throw "Invalid token";
+    
+    return std::pair<char*,char*>(stringBegining, stringEnd);
+}
+
+// Get the string token and validates the token
+std::string MSTDecodeur::decodeStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    bool endOfStringReached = false;
+    std::string result;
+    
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+    
+    // We skip the first '"'
+    if(inputBuffer[currentPosition]!='"')
+        throw "Token is not a valid string.";
+    currentPosition++;
+    
+    while (!endOfStringReached)
+    {
+        unsigned char currentCharacter = inputBuffer[currentPosition];
+        unsigned char nextCharacter;
+        
+        switch (currentCharacter)
+        {
+            case '"':
+                // End of string reached
+                endOfStringReached = true;
+                currentPosition++;
+                break;
+            case '\\':
+                // Escaped character
+                nextCharacter = inputBuffer[currentPosition+1];
+                switch(nextCharacter)
+                {
+                    case 'u':
+                    case 'U':
+                        // Hexa character
+                        if(!isxdigit(inputBuffer[currentPosition+2]) || !isxdigit(inputBuffer[currentPosition+3]) || !isxdigit(inputBuffer[currentPosition+4]) || !isxdigit(inputBuffer[currentPosition+5]))
+                            throw "Invalid Hexadecimal sequence";
+                        else
+                        {
+                            char *number = new char[5];
+                            number[0] = inputBuffer[currentPosition+2];
+                            number[1] = inputBuffer[currentPosition+3];
+                            number[2] = inputBuffer[currentPosition+4];
+                            number[3] = inputBuffer[currentPosition+5];
+                            number[4] = 0;
                             
-                            if (classesNumber) state = MSTE_DECODING_CLASS_NAME ;
-                            else state = MSTE_DECODING_KEYS_NUMBER_VALUE ;
-                            break ;
-                        case MSTE_DECODING_CLASS_NEXT_TOKEN:
-                            if (classesNumber > (decodedClasses->size())) state = MSTE_DECODING_CLASS_NAME ;
-                            else state = MSTE_DECODING_KEYS_NUMBER_VALUE ;
+                            long value = std::stol(number, NULL, 16);
+                            delete number;
                             
-                            break ;
-                        case MSTE_DECODING_KEYS_NUMBER_NEXT_TOKEN:
-                            
-                            if (keysNumber) state = MSTE_DECODING_KEY_NAME ;
-                            else state = MSTE_DECODING_ROOT_OBJECT ; break ;
-                        case MSTE_DECODING_KEY_NEXT_TOKEN:
-                      
-                            if (keysNumber > decodedKeys->size()) state = MSTE_DECODING_KEY_NAME ;
-                            else state = MSTE_DECODING_ROOT_OBJECT ;
-                            break ;
-                        default:
-                           throw "MSTDecodeRetainedObject - state unchanged!!!!" ;
-                    }
-                    break ;
-                }
-                case MSTE_DECODING_TOKEN_NUMBER_VALUE : {
-                    string tokenNumb = "token number";
-                    tokenNumber = MSTDecodeUnsignedLong(&s, end, &tokenNumb) ;
-                    state = MSTE_DECODING_TOKEN_NUMBER_NEXT_TOKEN ;
-                    break ;
-                }
-                case MSTE_DECODING_CRC_START : {
-                    if (*s == (unsigned char)'"') { s++ ;  state = MSTE_DECODING_CRC_HEADER ; break ; }
-                    throw "MSTDecodeRetainedObject - Bad header format (CRC start)" ;
-                }
-                case MSTE_DECODING_CRC_HEADER : {
-                    if (((end-s) < 3) || (s[0] != (unsigned char)'C') || (s[1] != (unsigned char)'R') || (s[2] != (unsigned char)'C')) { //CRC
-                    throw "MSTDecodeRetainedObject - Bad header format (CRC marker)" ; }
-                    s += 3 ;
-                    state = MSTE_DECODING_CRC_VALUE ;
-                    break ;
-                }
-                case MSTE_DECODING_CRC_VALUE : {
-                    
-                    short j ;
-                    if ((end-s) < 8) {throw "MSTDecodeRetainedObject - Bad header format (CRC value)" ; }
-                    crcPtr = s ;
-                    for (j=0; j<8; j++) {
-                        unsigned short localCRC ;
-                        crc[j] = s[j] ;
-                        
-                        localCRC = hexaCharacterToShortValue((unsigned char)crc[j]) ;
-                        crcInt = (crcInt<<4) ;
-                        crcInt += (unsigned int)localCRC ;
-                    }
-                    crc[8] = 0 ; //zero terminated hexa CRC string
-                    s += 8 ;
-                    state = MSTE_DECODING_CRC_END ;
-                    break ;
-                }
-                case MSTE_DECODING_CRC_END : {
-                    if (*s == (unsigned char)'"') { s++ ; state = MSTE_DECODING_CRC_NEXT_TOKEN ; }
-                    else throw "MSTDecodeRetainedObject - Bad header format (CRC end)" ;
-                    break ;
-                }
-                case MSTE_DECODING_CLASSES_NUMBER_VALUE : {
-                    string classNumber = "classes number";
-                    classesNumber=MSTDecodeUnsignedLong(&s, end, &classNumber) ;
-                    state = MSTE_DECODING_CLASSES_NUMBER_NEXT_TOKEN ;
-                    break ;
-                }
-                case MSTE_DECODING_CLASS_NAME : {
-                    string cName = "class name";
-                    
-                    MSTEString* className = MSTDecodeString(&s, end, &cName ) ;
-                                                       
-                    decodedClasses->push_back(className->getString());
-                                                            
-                    state = MSTE_DECODING_CLASS_NEXT_TOKEN ;
-                    break ;
-                }
-                case MSTE_DECODING_KEYS_NUMBER_VALUE : {
-                    string keyNumb = "keys number";
-                    keysNumber = MSTDecodeUnsignedLong(&s, end, &keyNumb ) ;                   
-                    state = MSTE_DECODING_KEYS_NUMBER_NEXT_TOKEN ;
-                    break ;
-                }
-                case MSTE_DECODING_KEY_NAME : {
-                    string kName = "key name";
-                    MSTEString* key = MSTDecodeString(&s, end, &kName) ;
-                    
-                    decodedKeys->push_back(key->getString()) ;
-                    state = MSTE_DECODING_KEY_NEXT_TOKEN ;
-                    break ;
-                }
-                case MSTE_DECODING_ROOT_OBJECT : {                          
-                    string root = "root object";                 
-                    object = MSTDecodeObject(&s, end, &root, decodedObjects, decodedClasses, decodedKeys, &myTokenCount) ;                    
-                    state = MSTE_DECODING_ARRAY_END ;
-                    break ;
-                }
-                case MSTE_DECODING_ARRAY_END : {
-                    if (*s != (unsigned char)']') { s++ ; break ; }
-                    if (*s == (unsigned char)']') { state = MSTE_DECODING_GLOBAL_END ; break ; }
-                    throw "MSTDecodeRetainedObject - Bad format (array end)" ;
-                }
-                case MSTE_DECODING_GLOBAL_END : {
-                    if (*s == (unsigned char)' ') { s++ ; break ; }
-                    if (s==end) {
-                        if (verifyCRC) {
-                            crcPtr[0] = crcPtr[1] = crcPtr[2] = crcPtr[3] = crcPtr[4] = crcPtr[5] = crcPtr[6] = crcPtr[7] = (unsigned char)'0';
-                            //if (crcInt != [data longCRC]) throw "MSTDecodeRetainedObject - CRC Verification failed" ;
+                            result += (unsigned char) value;
+                            currentPosition += 6;
                         }
+                        break;
+
+                    // Escaped character
+                    case 'r':
+                        result += '\r';
+                        currentPosition += 2;
+                        break;
+                    case 'n':
+                        result += '\n';
+                        currentPosition += 2;
+                        break;
+                    case 't':
+                        result += '\t';
+                        currentPosition += 2;
+                        break;
+                    case '\\':
+                        result += '\\';
+                        currentPosition += 2;
+                        break;
+                    case '"':
+                        result += '\"';
+                        currentPosition += 2;
+                        break;
+                    case 'b':
+                        result += '\b';
+                        currentPosition += 2;
+                        break;
+                    case 'f':
+                        result += '\f';
+                        currentPosition += 2;
+                        break;
                         
-                        myTokenCount += 1 ;
-                        if (tokenNumber != myTokenCount) throw "MSTDecodeRetainedObject - Wrong token number" ;
-                        s++ ;
-                        break ;
-                    }
-                    throw "MSTDecodeRetainedObject - Bad format (character after array end)" ;
+                    default:
+                        throw "Unrecognized character";
+                        break;
                 }
-                default : {
-                    //never go here
-                    throw "MSTDecodeRetainedObject - unknown state" ;
-                }
-            }
+                break;
+            default:
+                // Normal character
+                result += currentCharacter;
+                currentPosition++;
+                break;
         }
-        delete decodedObjects;
-        delete decodedKeys;
-        delete decodedClasses;
-        return object ;
     }
-    return 0 ;
+
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+    
+    // We check the next character is a separator
+    if(isSeparator(inputBuffer[currentPosition]))
+        currentPosition++;
+    else
+        throw "Invalid token";
+
+    return result;
 }
+
+std::string MSTDecodeur::decodeNumberToken(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    bool endOfNumberReached = false;
+    std::string result;
+    
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+
+    while (!endOfNumberReached)
+    {
+        unsigned char currentCharacter = inputBuffer[currentPosition];
+        switch (currentCharacter)
+        {
+            case '0':
+            case '1':
+            case '2':
+            case '3':
+            case '4':
+            case '5':
+            case '6':
+            case '7':
+            case '8':
+            case '9':
+            case '.':
+            case 'e':
+            case 'E':
+            case '-':
+                // Valid character
+                result += currentCharacter;
+                currentPosition++;
+                break;
+            case ' ':
+            case '\t':
+            case '\n':
+            case '\r':
+            case ',':
+            case ']':
+                // End of token
+                endOfNumberReached = true;
+                break;
+            default:
+                throw "Invalid number";
+                break;
+        }
+    }
+
+    // We skip the non-blank characters
+    jumpToNextNonBlankCharacter(inputBuffer, currentPosition);
+    
+    // We check the next character is a separator
+    if(isSeparator(inputBuffer[currentPosition]))
+        currentPosition++;
+    else
+        throw "Invalid token";
+    
+    return result;
+}
+
+
+void MSTDecodeur::jumpToNextNonBlankCharacter(const std::string& inputBuffer, unsigned int& currentPosition)
+{
+    while ((inputBuffer[currentPosition]==' ') || (inputBuffer[currentPosition]=='\t') || (inputBuffer[currentPosition]=='\n') || (inputBuffer[currentPosition]=='\r'))
+        currentPosition++;
+}
+
+bool MSTDecodeur::isSeparator(unsigned char c)
+{
+    return (c==',')||(c==']'); // End of array is also a valid separator
+}
+

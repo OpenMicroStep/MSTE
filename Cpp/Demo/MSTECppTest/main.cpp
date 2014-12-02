@@ -7,53 +7,194 @@
 //
 
 
-// LAST VERSION 
+// LAST VERSION
+#define _ENCODE 1
+#define _DECODE 2
+#define _CONCAT_PERFS 3
+#define _DECODE_AND_ENCODE 4
+#define _CRC 5
+
+#define PROGRAM _DECODE_AND_ENCODE
+
+#include <string>
 #include <iostream>
-#include <sstream>
-#include "MSTE.h"
+#include <chrono>
+
+#include "../../Sources/MSTELib.h"
+#include "../../Sources/RopeString.h"
+#include "../../Sources/MSTECustomClass.h"
+#include "MSPerson.h"
+#include "../../Sources/CRC32Calculator.h"
 
 int main(int argc, const char * argv[])
 {
+    std::string inputBuffer = "[\"MSTE0102\",59,\"CRCF5040002\",1,\"Person\",6,\"name\",\"firstName\",\"birthday\",\"maried-to\",\"father\",\"mother\",31,3,50,4,0,21,\"Durand\",1,21,\"Yves\",2,22,-1222131600,3,50,4,0,9,2,1,21,\"Claire\",2,22,-1185667200,3,9,1,9,5,50,5,0,9,2,1,21,\"Lou\",2,22,-426214800,4,9,1,5,9,5]";
     
-    /* ---- Encoder ----- */
-    MSTEncodeur* encodeur = new MSTEncodeur();
-    /*MSTETest* test = new MSTETest();
-    test->encodeWithMSTEncodeur(encodeur);*/
+#if PROGRAM==_ENCODE
+    std::shared_ptr<MSTEString> name(new MSTEString("Durand"));
+    
+    std::shared_ptr<MSTEUserClass> Yves(new MSTEUserClass("Person"));
+    Yves->addAttribute("name", name);
+    Yves->addAttribute("firstName", std::make_shared<MSTEString>("Yves"));
+    Yves->addAttribute("birthday", std::make_shared<MSTEDate>(-1222131600, Local));
+    
+    std::shared_ptr<MSTEUserClass> Claire(new MSTEUserClass("Person"));
+    Claire->addAttribute("name", name);
+    Claire->addAttribute("firstName", std::make_shared<MSTEString>("Claire"));
+    Claire->addAttribute("birthday", std::make_shared<MSTEDate>(-1185667200, Local));
+    Claire->addAttribute("maried-to", Yves);
+    Yves->addAttribute("maried-to", Claire);
+    
+    std::shared_ptr<MSTEUserClass> Lou(new MSTEUserClass("Person"));
+    Lou->addAttribute("name", name);
+    Lou->addAttribute("firstName", std::make_shared<MSTEString>("Lou"));
+    Lou->addAttribute("birthday", std::make_shared<MSTEDate>(-426214800, Local));
+    Lou->addAttribute("father", Yves);
+    Lou->addAttribute("mother", Claire);
+    
+    std::shared_ptr<MSTEArray> myArray(new MSTEArray());
+    myArray->addItem(Yves);
+    myArray->addItem(Claire);
+    myArray->addItem(Lou);
+    
+    MSTEncodeur encoder;
+    std::cout << *(encoder.encodeRootObject(myArray)) << std::endl;
+
+#endif // PROGRAM==_ENCODE
+    
+#if PROGRAM==_DECODE
+    
+    MSTDecodeur decoder;
+    std::shared_ptr<MSTEArray> array = std::static_pointer_cast<MSTEArray>(decoder.decodeString(inputBuffer));
+    
+    if(!array) throw "NULL pointer";
+    std::vector<std::shared_ptr<MSTEObject>> items = array->getVector();
+    
+    for (unsigned long i = 0; i < items.size(); i++)
+    {
+        std::shared_ptr<MSTEUserClass> usClass = std::dynamic_pointer_cast<MSTEUserClass>(items.at(i));
+        std::cout << MSTECustomClassFactory::createInstance(usClass)->description() << std::endl << std::endl;
+    }
+    
+#endif //PROGRAM==_DECODE
+    
+#if PROGRAM==_DECODE_AND_ENCODE
+ 
+    MSTDecodeur decoder;
+    std::shared_ptr<MSTEObject> root = decoder.decodeString(inputBuffer);
+    MSTEncodeur encoder;
+    std::cout << *(encoder.encodeRootObject(root)) << std::endl;
+#endif // PROGRAM==_DECODE_AND_ENCODE
+    
+#if PROGRAM==_CONCAT_PERFS
+    //              PERFORMANCE TESTING
+    // We concatenate the input buffer n times, and then put the result in a string
+    std::chrono::system_clock::time_point testBegin, testEnd;
+    
+    const int nbTests = 10000;
+    
+    std::cout << "PERFORMANCE TESTS" << std::endl;
     
 
-    /* ---- Decoder ----- */
-    MSTDecodeur* decodeur = new MSTDecodeur();
-    stringstream ss;
+    /////////////////////////////////////////////
+    std::cout << "1st Test : string operator +" << std::endl;
+    std::string resultTest1;
+    testBegin = std::chrono::system_clock::now();
+    
+    for(int i = 0; i < nbTests; i++)
+        resultTest1 = resultTest1 + std::string(inputBuffer);
+    
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
+    
+    /////////////////////////////////////////////
+    std::cout << "2nd Test : string operator += (without reserve)" << std::endl;
+    std::string resultTest2;
+    testBegin = std::chrono::system_clock::now();
+    
+    for(int i = 0; i < nbTests; i++)
+        resultTest2 += std::string(inputBuffer);
+    
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
 
-    ss<<"[\"MSTE0101\",45,\"CRC00000000\",1,\"MSTETest\",7,\"Arraaaayy\",\"blabla\",\"Array\",\"color\",\"datata\",\"date\",\"string\",50,6,0,20,2,7,2200083711,8,1,1,6,1351586383,2,20,3,14,12,1,9,2,3,9,2,4,23,\"bcOpbG9kaWU=\",5,9,4,6,5,\"SomeT\\u00E9ext\"]";
+    /////////////////////////////////////////////
+    std::cout << "3rd Test : string function append (without reserve)" << std::endl;
+    std::string resultTest3;
+    testBegin = std::chrono::system_clock::now();
     
-    //ss<<"[\"MSTE0101\",41,\"CRC00000000\",1,\"MSTETest\",6,\"Arraaaayy\",\"blabla\",\"Array\",\"color\",\"date\",\"string\",50,5,0,20,2,7,65791,8,1,1,6,1353584979,2,20,3,14,12,1,9,2,3,9,2,4,9,4,5,5,\"SomeT\\u00E9ext\"]";
+    for(int i = 0; i < nbTests; i++)
+        resultTest3.append(std::string(inputBuffer));
     
-    //ss<< "[\"MSTE0101\",58,\"CRC00000000\",1,\"MSTETest\",9,\"Arraaaayy\",\"blabla\",\"Array\",\"NatArraaaayy\",\"color\",\"datata\",\"date\",\"string\",\"wcouplle\",50,8,0,20,2,7,16711680,8,1,1,6,1351612171,2,20,3,14,12,1,9,2,3,21,2,72,3,4,9,2,5,23,\"bcOpbG9kaWU=\",6,9,7,7,5,\"\\u00E0\\u00E9\\u00E8\\u00E7\\u00F4\\u00E2\",8,22,9,5,9,6]";    
-   
-    //ss<<"[\"MSTE0101\",12,\"CRC00000000\",1,\"MSTETest\",1,\"blabla\",50,1,0,23,\"bcOpbG9kaWU=\"]";
-    
-    //ss<<"[\"MSTE0101\",15,\"CRC00000000\",1,\"MSTETest\",1,\"Array\",50,1,0,20,2,14,12,1]";
-    
-    //ss<<"[\"MSTE0101\",29,\"CRC00000000\",1,\"MSTETest\",3,\"Arraaaayy\",\"blabla\",\"Array\",50,2,0,20,2,7,2200083711,8,1,1,6,1351601742,2,20,3,14,12,1,9,2]";
-    
-    //ss<<"[\"MSTE0101\",33,\"CRC00000000\",1,\"MSTETest\",4,\"Arraaaayy\",\"blabla\",\"Array\",\"date\",50,3,0,20,2,7,2200083711,8,1,1,6,1351602121,2,20,3,14,12,1,9,2,3,9,6]";
-    
-    //ss<<"[\"MSTE0101\",33,\"CRC00000000\",1,\"MSTETest\",4,\"Arraaaayy\",\"blabla\",\"Array\",\"string\",50,3,0,20,2,7,2200083711,8,1,1,6,1351602501,2,20,3,14,12,1,9,6,3,5,\"SomeT\\u00E9ext\"]";
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
 
-    //ss<<"[\"MSTE0101\",33,\"CRC00000000\",1,\"MSTETest\",4,\"Arraaaayy\",\"blabla\",\"Array\",\"color\",50,3,0,20,2,7,2200083711,8,1,1,6,1351602650,2,20,3,14,12,1,9,4,3,9,6]";
+    /////////////////////////////////////////////
+    std::cout << "4th Test : string operator += (with reserve)" << std::endl;
+    std::string resultTest4;
+    unsigned long lengthTest4 = 0;
+    testBegin = std::chrono::system_clock::now();
     
-    //ss<<"[\"MSTE0101\",50,\"CRC00000000\",2,\"MSTETest\",\"MSParent\",8,\"Array\",\"blèàabla\",\"date\",\"mere\",\"firstname\",\"name\",\"sex\",\"pere\",50,5,0,20,1,7,16711680,1,5,\"\\u00E0\\u00E9\\u00E8\\u00E7\\u00F4\\u00E2\",2,6,1.35418e+09,3,51,3,4,5,\"martin\",5,5,\"juliette\",6,2,7,51,3,4,5,\"robert\",5,5,\"lucien\",6,1]";
+    // In our case, we cannot predict the exact size of the string, so we calculate it
+    for(int i = 0; i < nbTests; i++)
+        lengthTest4 += std::string(inputBuffer).length();
+    resultTest4.reserve(lengthTest4);
     
-    //ss<<"[\"MSTE0101\",46,\"CRC00000000\",2,\"MSTETest\",\"MSParent\",6,\"Array\",\"firstname\",\"name\",\"sex\",\"blèàabla\",\"date\",50,3,0,20,3,7,16711680,51,3,1,5,\"robert\",2,5,\"lucien\",3,1,51,3,1,5,\"martin\",2,5,\"juliette\",3,2,4,5,\"\\u00E0\\u00E9\\u00E8\\u00E7\\u00F4\\u00E2\",5,6,1353584979]";
+    for(int i = 0; i < nbTests; i++)
+        resultTest4 += std::string(inputBuffer);
     
-    string str(ss.str());
-    const char* cstr1 = str.c_str();
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
 
-    MSTEObject* obj = (MSTEObject*)decodeur->MSTDecodeRetainedObject(cstr1 , false);
-    MSTETest* essai = new MSTETest(obj->getSnapshot());
-    essai->encodeWithMSTEncodeur(encodeur);
+    /////////////////////////////////////////////
+    std::cout << "5th Test : string function append (with reserve)" << std::endl;
+    std::string resultTest5;
+    unsigned long lengthTest5 = 0;
+    testBegin = std::chrono::system_clock::now();
     
+    // In our case, we cannot predict the exact size of the string, so we calculate it
+    for(int i = 0; i < nbTests; i++)
+        lengthTest5 += std::string(inputBuffer).length();
+    resultTest5.reserve(lengthTest4);
+
+    for(int i = 0; i < nbTests; i++)
+        resultTest5.append(std::string(inputBuffer));
+    
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
+
+    /////////////////////////////////////////////
+    std::cout << "6th Test : stringstream" << std::endl;
+    std::stringstream resultTest6;
+    testBegin = std::chrono::system_clock::now();
+    
+    for(int i = 0; i < nbTests; i++)
+        resultTest6 << std::string(inputBuffer);
+    
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
+    
+    /////////////////////////////////////////////
+    std::cout << "7th Test : RopeString" << std::endl;
+    RopeString resultTest7;
+    testBegin = std::chrono::system_clock::now();
+    
+    for(int i = 0; i < nbTests; i++)
+        resultTest7.append(std::string(inputBuffer));
+    
+    std::string * res7 = resultTest7.getString();
+    
+    testEnd = std::chrono::system_clock::now();
+    std::cout << "\tDuration : " << std::chrono::duration<float, std::milli>(testEnd-testBegin).count() << "ms\n";
+
+#endif // PROGRAM==_CONCAT_PERFS
+    
+#if PROGRAM==_CRC
+    
+    std::cout << Crc32Calculator::calculateCRC32(inputBuffer) << std::endl;
+    
+#endif // PROGRAM==_CRC
+
     return 0;
 }
 

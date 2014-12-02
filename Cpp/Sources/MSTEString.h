@@ -6,26 +6,44 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-using namespace std;
+#ifndef _MSTE_STRING_H
+#define _MSTE_STRING_H
 
-class MSTEObject ;
+#include <string>
 
-class MSTEString : public MSTEObject{
-    private :
-	string chaine;
-    wstring wchaine;
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
+
+constexpr static char hexChars[] = "0123456789ABCDEF";
+
+class MSTEString : public MSTEObject
+{
 public:
+    // Constructors
 	MSTEString();
-	MSTEString(string aString);
-    MSTEString(wstring aWString);
+    MSTEString(std::string aString);
+    MSTEString(std::wstring aWString);
 	MSTEString(MSTEString & msteString);
+    
+    // Destructor
 	virtual ~MSTEString();
-	string getClassName();
-	string getString();
-    wstring getWString();
-	unsigned char getTokenType();
-	unsigned char getSingleEncodingCode();
-	unsigned long length();
+
+    // String getters
+    std::string getString();
+    unsigned long length();
+    std::string getEncodedString();
+
+    // WString getters
+    std::wstring getWString();
     unsigned long wlength();
-	void encodeWithMSTEncodeur(MSTEncodeur* e);
+    std::string getEncodedWString();
+    
+    // Methods
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+private :
+    std::string chaine;
+    std::wstring wchaine;
 };
+
+#endif // _MSTE_STRING_H

@@ -6,20 +6,16 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
-#include <iostream>
+#include "MSTEArray.h"
+#include <memory>
 
-MSTEArray::MSTEArray() {
+MSTEArray::MSTEArray()
+{
 }
 
-MSTEArray::MSTEArray(vector<MSTEObject*> *vector)
+MSTEArray::MSTEArray(std::vector<std::shared_ptr<MSTEObject>> vector)
 {
-	aVector = *vector;
-}
-
-MSTEArray::MSTEArray(MSTEArray &array)
-{
-	aVector = array.aVector;
+	aVector = vector;
 }
 
 MSTEArray::~MSTEArray()
@@ -27,41 +23,32 @@ MSTEArray::~MSTEArray()
     
 }
 
-string MSTEArray::getClassName()
-{
-	return "MSTEArray";
-}
-
-MSTEObject* MSTEArray::getObjectVector(int idx)
+std::shared_ptr<MSTEObject> MSTEArray::getObjectVector(int idx)
 {
 	return aVector[idx];
 }
 
-unsigned char MSTEArray::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_ARRAY;
-}
-
-void MSTEArray::setObjectVector(MSTEObject* object)
+void MSTEArray::setObjectVector(std::shared_ptr<MSTEObject> object)
 {
 	aVector.push_back(object);
 }
 
-vector<MSTEObject*>* MSTEArray::getVector()
+std::vector<std::shared_ptr<MSTEObject>> MSTEArray::getVector()
 {
-	return &aVector;
+	return aVector;
 }
-
 
 unsigned long MSTEArray::size()
 {
-
     return aVector.size();
-	
 }
 
-void MSTEArray::encodeWithMSTEncodeur(MSTEncodeur* e)
+void MSTEArray::addItem(std::shared_ptr<MSTEObject> item)
 {
-    
-	e->encodeArray(this);
+    aVector.push_back(item);
+}
+
+void MSTEArray::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
+{
+    e->encodeArray(this, outputBuffer);
 }

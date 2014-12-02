@@ -6,25 +6,36 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
+#ifndef _MSTE_NATURAL_ARRAY_H
+#define _MSTE_NATURAL_ARRAY_H
+
+#include <string>
 #include <vector>
-using namespace std;
 
-class MSTEArray ;
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
 
-class MSTENaturalArray : public MSTEArray {
-    private :
-	vector<int> aVector;
+class MSTENaturalArray : public MSTEObject
+{
 public:
+    // Constructors
 	MSTENaturalArray();
-	MSTENaturalArray(vector<int> *vector);
-	MSTENaturalArray(MSTENaturalArray &array);
-	virtual ~MSTENaturalArray();
-	string getClassName();
-	int getIntVector (int idx);
-	void setIntVector (int value);
-	vector<int> *getVector();
-    unsigned long size();
-	unsigned char getTokenType();
+    MSTENaturalArray(std::vector<int> *vector);
     
-	void encodeWithMSTEncodeur(MSTEncodeur* e);
+    // Destructor
+	virtual ~MSTENaturalArray();
+
+    // Getters
+    int getIntVector (int idx);
+    std::vector<int> *getVector();
+    unsigned long size();
+    
+    // Methods
+    void addItem(int item);
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+private :
+    std::vector<int> aVector;
 };
+
+#endif // _MSTE_NATURAL_ARRAY_H

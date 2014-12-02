@@ -6,22 +6,32 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-using namespace std;
-class MSTEObject ;
+#ifndef _MSTE_BOOL_H
+#define _MSTE_BOOL_H
 
-class MSTEBool : public MSTEObject{
-private:
-	bool aBool;
+#include <string>
+
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
+
+class MSTEBool : public MSTEObject
+{
 public:
+    // Constructors
 	MSTEBool();
     MSTEBool(bool tfBool);
+    
+    // Destructor
 	virtual ~MSTEBool();
-	string getClassName();
+    
+    // Getters
 	bool getBool();
-	unsigned char getSingleEncodingCode();
-	unsigned char getTokenType();
     
-	void encodeWithMSTEncodeur(MSTEncodeur* e);
+    // Methods
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
     
+private:
+    bool aBool;
 };
 
+#endif // _MSTE_BOOL_H

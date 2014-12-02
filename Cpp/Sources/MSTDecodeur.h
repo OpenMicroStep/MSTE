@@ -6,124 +6,118 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include <sstream>
+#ifndef _MSTE_DECODEUR_H
+#define _MSTE_DECODEUR_H
+
+#include <string>
 #include <vector>
-#include <map>
-using namespace std;
+#include <memory>
 
-class MSTEObject ;
-class MSTEArray ;
-class MSTEColor ;
-class MSTEBool ;
-class MSTECouple ;
-class MSTEData ;
-class MSTEDate ;
-class MSTEDictionary ;
-class MSTENaturalArray ;
-class MSTENumber ;
-class MSTEString ;
+#include "MSTE.h"
 
+// Root class
+class MSTEObject;
 
-#define MSCharMin		-128
-#define MSCharMax		127
-#define MSByteMax		255
-#define MSShortMin		-32768
-#define MSShortMax		32767
-#define MSUShortMax		65535
-#define MSIntMax		2147483647
-#define MSIntMin		(-MSIntMax-1)
-#define MSUIntMax		4294967295U
-#define MSLongMax		9223372036854775807LL
-#define MSLongMin		(-MSLongMax-1)
-#define	MSULongMax		18446744073709551615ULL
+// Basic types
+class MSTEBool;
+class MSTEBasicType;
 
-#define MSTE_DECODING_ARRAY_START               0
-#define MSTE_DECODING_VERSION_START             1
-#define MSTE_DECODING_VERSION_HEADER            2
-#define MSTE_DECODING_VERSION_VALUE             3
-#define MSTE_DECODING_VERSION_END               4
-#define MSTE_DECODING_VERSION_NEXT_TOKEN        5
-#define MSTE_DECODING_TOKEN_NUMBER_VALUE        6
-#define MSTE_DECODING_TOKEN_NUMBER_NEXT_TOKEN   7
-#define MSTE_DECODING_CRC_START                 8
-#define MSTE_DECODING_CRC_HEADER                9
-#define MSTE_DECODING_CRC_VALUE                 10
-#define MSTE_DECODING_CRC_END                   11
-#define MSTE_DECODING_CRC_NEXT_TOKEN            12
-#define MSTE_DECODING_CLASSES_NUMBER_VALUE      13
-#define MSTE_DECODING_CLASSES_NUMBER_NEXT_TOKEN 14
-#define MSTE_DECODING_CLASS_NAME                15
-#define MSTE_DECODING_CLASS_NEXT_TOKEN          16
-#define MSTE_DECODING_KEYS_NUMBER_VALUE         17
-#define MSTE_DECODING_KEYS_NUMBER_NEXT_TOKEN    18
-#define MSTE_DECODING_KEY_NAME                  19
-#define MSTE_DECODING_KEY_NEXT_TOKEN            20
-#define MSTE_DECODING_ROOT_OBJECT               21
-#define MSTE_DECODING_ARRAY_END                 22
-#define MSTE_DECODING_GLOBAL_END                23
+// Complex types
+class MSTEString;
+class MSTENumber;
+class MSTEDate;
+class MSTEColor;
+class MSTEData;
+class MSTENaturalArray;
 
-#define MSTE_DECODING_STRING_START              0
-#define MSTE_DECODING_STRING                    1
-#define MSTE_DECODING_STRING_ESCAPED_CAR        2
-#define MSTE_DECODING_STRING_STOP               3
-static MSTEDate *__theDistantPast = NULL ;
-static MSTEDate *__theDistantFuture = NULL ;
+// Generic structures
+class MSTEDictionary;
+class MSTEArray;
+class MSTECouple;
 
-class MSTDecodeur {
-    private :
-	bool MSUnicharIsHexa(unsigned c) { return ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'F') || (c >= 'a' && c <= 'f')) ; }
-    //vector<MSTEObject*> *decodedObjects;
+// User classes
+class MSTEUserClass;
+
+// Root class
+class MSTEObject;
+
+// Basic types
+class MSTEBool;
+class MSTEBasicType;
+
+// Complex types
+class MSTEString;
+class MSTENumber;
+class MSTEDate;
+class MSTEColor;
+class MSTEData;
+class MSTENaturalArray;
+
+// Generic structures
+class MSTEDictionary;
+class MSTEArray;
+class MSTECouple;
+
+// User classes
+class MSTEUserClass;
+
+class MSTDecodeur : public MSTE
+{
 public:
+    // Constructor
 	MSTDecodeur();
+    
+    // Destructor
 	virtual ~MSTDecodeur();
-	unsigned char MSTDecodeUnsignedChar(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	char MSTDecodeChar(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	unsigned short MSTDecodeUnsignedShort(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	short MSTDecodeShort(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	unsigned int MSTDecodeUnsignedInt(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	int MSTDecodeInt(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	unsigned long MSTDecodeUnsignedLong(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	long MSTDecodeLong(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	float MSTDecodeFloat(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	double MSTDecodeDouble(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	void MSTJumpToNextToken(unsigned char **pointer, unsigned char *endPointer, unsigned long *tokenCount);
-	MSTEColor *MSTDecodeColor(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	MSTECouple *MSTDecodeCouple(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount);
-	MSTEArray * MSTDecodeArray(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount);
-	MSTENaturalArray * MSTDecodeNaturalArray(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount);
-	MSTEDictionary * MSTDecodeDictionary(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount, bool manageReference);
-	MSTEString * MSTDecodeString(unsigned char **pointer, unsigned char *endPointer, string *operation);
-    MSTEString * MSTDecodeWString(unsigned char **pointer, unsigned char *endPointer, string *operation);
-	MSTENumber *MSTDecodeNumber(unsigned char **pointer, unsigned char *endPointer, short tokenType);
-	void *MSTDecodeObject(unsigned char **pointer, unsigned char *endPointer, string *operation, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount);
-	MSTEObject* MSTDecodeUserDefinedObject(unsigned char **pointer, unsigned char *endPointer, string *operation, unsigned short tokenType, vector<MSTEObject*> *decodedObjects, vector<string> *classes, vector<string> *keys, unsigned long *tokenCount);
-	MSTEDate* MSTDecodeDate(long aDate);
-    MSTEBool* MSTDecodeBool(bool aBool);
-    MSTEObject* MSTDecodeRefObject(  unsigned char **pointer, vector<MSTEObject*> *decodedObjects, long ref);
-    MSTEData* base64_decode(unsigned char **pointer, unsigned char *endPointer, string *operation);
-    void* MSTDecodeRetainedObject(const char* data, bool verifyCRC);
-    static unsigned int hexaCharacterToShortValue(unsigned char c)
-	{
-        if (c >= 48) {
-            if (c <= 57) { //'0' to '9'
-                return (unsigned int)(c - 48) ;
-            }
-            else if (c >= 65) {
-                if (c <= 70) { //'A' to 'F'
-                    return (unsigned int)(c - 55);
-                }
-                else if ((c >= 97) && (c <= 102)) { //'a' to 'f'
-                    return (unsigned int)(c - 87) ;
-                }
-            }
-        }
-        throw"hexaCharacterToShortValue - not an hexadecimal character %c";
-        return 0 ;
-	}
-    static inline bool is_base64(unsigned char c) {
-        return (isalnum(c) || (c == '+') || (c == '/'));
-    };
     
+    // Main method
+    std::shared_ptr<MSTEObject> decodeString(const std::string& inputBuffer);
+   
+protected:
+    std::shared_ptr<MSTEObject> decodeObject(const std::string& inputBuffer, unsigned int& currentPosition);
     
+    // Basic Types
+    std::shared_ptr<MSTEBasicType> decodeChar(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeUnsignedChar(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeShort(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeUnsignedShort(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeInt32(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeUnsignedInt32(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeInt64(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeUnsignedInt64(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeFloat(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEBasicType> decodeDouble(const std::string& inputBuffer, unsigned int& currentPosition);
+
+    // Complex types
+    std::shared_ptr<MSTENumber>         decodeNumber(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEString>         decodeString(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEDate>           decodeLocalDate(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEDate>           decodeUtcDate(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEColor>          decodeColor(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTEData>           decodeData(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::shared_ptr<MSTENaturalArray>   decodeNaturalArray(const std::string& inputBuffer, unsigned int& currentPosition);
+    
+    // Generic structures
+    std::shared_ptr<MSTEDictionary>     decodeDictionary(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEDictionary> item);
+    std::shared_ptr<MSTEArray>          decodeArray(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEArray> item);
+    std::shared_ptr<MSTECouple>         decodeCouple(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTECouple> item);
+    
+    // User classes
+    std::shared_ptr<MSTEUserClass>      decodeUserClass(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEUserClass> item);
+
+private :
+    std::string decodeStringToken(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::pair<char*,char*> delimitatesStringToken(const std::string& inputBuffer, unsigned int& currentPosition);
+    std::string decodeNumberToken(const std::string& inputBuffer, unsigned int& currentPosition);
+
+    void jumpToNextNonBlankCharacter(const std::string& inputBuffer, unsigned int& currentPosition);
+    bool isSeparator(unsigned char c);
+    
+    std::string MSTEVersion;
+    unsigned int nbTokens;
+    std::vector<std::string> classes;
+    std::vector<std::string> keys;
+    std::vector<std::shared_ptr<MSTEObject>> objects;
 };
 
+#endif // _MSTE_DECODEUR_H

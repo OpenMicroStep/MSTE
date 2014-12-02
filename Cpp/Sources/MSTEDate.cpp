@@ -6,15 +6,24 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTEDate.h"
 
-MSTEDate::MSTEDate() {
+MSTEDate::MSTEDate()
+{
 	date = 0;
+    dateType = Local;
 }
 
 MSTEDate::MSTEDate(long aDate)
 {
 	date = aDate;
+    dateType = Local;
+}
+
+MSTEDate::MSTEDate(long aDate, DateTimeType dateType)
+{
+    date = aDate;
+    this->dateType = dateType;
 }
 
 MSTEDate::MSTEDate(MSTEDate& msteDate)
@@ -22,56 +31,25 @@ MSTEDate::MSTEDate(MSTEDate& msteDate)
 	date = msteDate.date;
 }
 
-MSTEDate::~MSTEDate() {
+MSTEDate::~MSTEDate()
+{
     
 }
 
-
-
-string MSTEDate::getClassName()
+long MSTEDate::getLocalDate()
 {
-	return "MSTEDate";
+    return date;
 }
 
-
-long MSTEDate::getDate()
+long MSTEDate::getUtcDate()
 {
-	return date;
+    return date;
 }
 
-double MSTEDate::getSecondSince1970()
+void MSTEDate::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
-	return difftime(time(NULL),date);
-}
-
-long MSTEDate::getDistantPast()
-{
-	return DISTANT_PAST;
-}
-
-long MSTEDate::getDistantFuture()
-{
-	return DISTANT_FUTURE;
-}
-
-unsigned char MSTEDate::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_DATE;
-}
-
-void MSTEDate::encodeWithMSTEncodeur(MSTEncodeur* e)
-{
-	e->encodeDate(this);
-}
-
-void MSTEDate::initWithTimeIntervalSince1970()
-{
-	date = time(NULL);
-}
-
-unsigned char MSTEDate::getSingleEncodingCode()
-{
-	if(date >= DISTANT_FUTURE)	return MSTE_TOKEN_TYPE_DISTANT_FUTURE;
-	if(date <= DISTANT_PAST) return MSTE_TOKEN_TYPE_DISTANT_PAST;
-	else return MSTE_TOKEN_MUST_ENCODE;
+    if(dateType==Local)
+        e->encodeLocalDate(this, outputBuffer);
+    else
+        e->encodeUtcDate(this, outputBuffer);
 }

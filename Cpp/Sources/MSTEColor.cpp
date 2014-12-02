@@ -6,61 +6,69 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
-#include<iostream>
+#include "MSTEColor.h"
 
-MSTEColor::MSTEColor() {
-	red_ = 0;
-	blue_ = 0;
-	green_ = 0;
-	alpha_ = 0xFF;
-    rgbaValue= (red_*65536)+(green_*256)+blue_;
-    
+MSTEColor::MSTEColor()
+{
+	red = 0;
+	blue = 0;
+	green = 0;
+	alpha = 0xFF;
+    isAplhaDefined = false;
 }
 
 MSTEColor::MSTEColor(unsigned char red, unsigned char green, unsigned char blue)
 {
-	red_ = red;
-	blue_ = blue;
-	green_ = green;
-	alpha_ = 0xFF;
-    rgbaValue= (red*65536)+(green*256)+blue;
-
+	this->red = red;
+	this->blue = blue;
+	this->green = green;
+	this->alpha = 0xFF;
+    isAplhaDefined = false;
 }
 
-MSTEColor::MSTEColor(float red, float green, float blue)
+MSTEColor::MSTEColor(unsigned char red, unsigned char green, unsigned char blue, unsigned char alpha)
 {
-	red_ = red*255.0+.5;
-	blue_ = blue*255.0+.5;
-	green_ = green*255.0+.5;
-	alpha_ = 1.0*255.0+.5;
-    rgbaValue= (red*65536)+(green*256)+blue;
-
+    this->red = red;
+    this->blue = blue;
+    this->green = green;
+    this->alpha = alpha;
+    isAplhaDefined = true;
 }
 
-MSTEColor::MSTEColor(unsigned int rgba)
+MSTEColor::MSTEColor(unsigned long rgba)
 {
-    red_ = ((rgba >> 24) & 0xFF);
-	blue_ = (rgba >> 16) & 0xFF;
-	green_ = (rgba >> 8) & 0xFF;
-	alpha_ =  0xFF;
-    rgbaValue = rgba;
+    if(rgba & 0xFF000000)
+    {
+        red = ((rgba >> 24) & 0xFF);
+        blue = (rgba >> 16) & 0xFF;
+        green = (rgba >> 8) & 0xFF;
+        alpha =  rgba & 0xFF;
+        isAplhaDefined = true;
+    }
+    else
+    {
+        red = ((rgba >> 16) & 0xFF);
+        blue = (rgba >> 8) & 0xFF;
+        green = rgba & 0xFF;
+        alpha =  0xFF;
+        isAplhaDefined = false;
+    }
 }
 
-MSTEColor::~MSTEColor() {
+MSTEColor::~MSTEColor()
+{
     
 }
 
-string MSTEColor::getClassName()
+long MSTEColor::getEncodedColor()
 {
-	return "MSTEColor";
-}
-unsigned char MSTEColor::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_COLOR;
+    if(isAplhaDefined)
+        return (red<<24)|(green<<16)|(blue<<8)|alpha;
+    else
+        return (red<<16)|(green<<8)|blue;
 }
 
-void MSTEColor::encodeWithMSTEncodeur(MSTEncodeur* e)
+void MSTEColor::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
-	e->encodeColor(this);
+    e->encodeColor(this, outputBuffer);
 }

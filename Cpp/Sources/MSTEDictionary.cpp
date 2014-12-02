@@ -6,59 +6,66 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTEDictionary.h"
 
-MSTEDictionary::MSTEDictionary() {
-    
-}
-
-MSTEDictionary::MSTEDictionary(map<string,MSTEObject*> *aMap)
+MSTEDictionary::MSTEDictionary()
 {
-	sOmap = *aMap;
+    
 }
 
-MSTEDictionary::MSTEDictionary(MSTEDictionary &dictionary) {
-	sOmap = dictionary.sOmap;
+MSTEDictionary::MSTEDictionary(std::vector<std::string> someKeys, std::vector<std::shared_ptr<MSTEObject>> someValues)
+{
+    keys = someKeys;
+    values = someValues;
+}
+
+MSTEDictionary::MSTEDictionary(std::map<std::string,std::shared_ptr<MSTEObject>> *aMap)
+{
+    std::map<std::string, std::shared_ptr<MSTEObject>>::iterator iter;
     
+    for (iter = aMap->begin(); iter != aMap->end(); iter++)
+    {
+        keys.push_back(iter->first);
+        values.push_back(iter->second);
+    }
 }
 
 MSTEDictionary::~MSTEDictionary() {
     
 }
 
-string MSTEDictionary::getClassName()
+std::string MSTEDictionary::getKeyDictionary(unsigned long idx)
 {
-	return "MSTEDictionary";
+    return keys[idx];
 }
 
-MSTEObject* MSTEDictionary::getObjectDictionary(string key)
+std::shared_ptr<MSTEObject> MSTEDictionary::getObjectDictionary(std::string key)
 {
-	MSTEObject* object = sOmap[key];
-	return object;
+    unsigned long length = size();
+    for(int i=0; i< length; i++)
+        if (keys[i]==key)
+            return values[i];
+    return NULL;
 }
 
-void MSTEDictionary::setObjectDictionary(string key, MSTEObject* object)
+std::shared_ptr<MSTEObject> MSTEDictionary::getObjectDictionary(unsigned long idx)
 {
-	sOmap[key] = object;
-}
-
-map<string,MSTEObject*>* MSTEDictionary::getMap()
-{
-	return &sOmap;
-}
-
-unsigned char MSTEDictionary::getTokenType()
-{
-	return MSTE_TOKEN_TYPE_DICTIONARY;
+    return values[idx];
 }
 
 unsigned long MSTEDictionary::size()
 {
-	return sOmap.size();
+	return keys.size();
 }
 
-void MSTEDictionary::encodeWithMSTEncodeur(MSTEncodeur* e)
+void MSTEDictionary::addItem(std::string key, std::shared_ptr<MSTEObject> item)
 {
-	e->encodeDictionary(this);
+    keys.push_back(key);
+    values.push_back(item);
+}
+
+void MSTEDictionary::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
+{
+    e->encodeDictionary(this, outputBuffer);
 }
 

@@ -6,29 +6,31 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-using namespace std;
-#define MALE   false
-#define FEMALE true
+#ifndef _PERSON_H
+#define _PERSON_H
 
-class MSTEObject ;
+#include "MSTECustomClass.h"
+#include <map>
+#include <memory>
 
-class MSPerson : public MSTEObject {
-private:
-	/*MSTEString* name;
-    MSTEString* firstname;
-    bool sex;*/
-    map<string,MSTEObject*> * snapshot;
-  
-	
+class MSPerson : public MSTECustomClassBase
+{
 public:
+    // Constructors
     MSPerson();
-	//MSPerson(MSTEString* aName, MSTEString* aFirstName, aSex);
-    MSPerson(map<string,MSTEObject*> *aSnapshot);
-    virtual ~MSPerson();
-    virtual string getClassName();
-    map<string,MSTEObject*>* getSnapshot();
-    virtual unsigned char getTokenType();
-    virtual unsigned char getSingleEncodingCode();
-    virtual void encodeWithMSTEncodeur(MSTEncodeur* e);
+    MSPerson(std::shared_ptr<MSTEUserClass>);
+
+    // Cast operators
+    operator std::unique_ptr<MSTEUserClass>();
     
+    // Descriptors
+    std::string description();
+    
+private:
+    std::string name;
+    std::string firstname;
+    long birthday;
+    static MSTECustomClassRegister<MSPerson> registre;
 };
+
+#endif // _PERSON_H

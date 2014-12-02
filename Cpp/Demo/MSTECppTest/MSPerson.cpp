@@ -6,56 +6,51 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
+#include "MSPerson.h"
+#include "MSTELib.h"
 
-#include "MSTE.h"
-
-#include <iostream>
+MSTECustomClassRegister<MSPerson> MSPerson::registre("Person");
 
 MSPerson::MSPerson()
 {
-    snapshot = new map<string,MSTEObject*>();
 }
-/*MSPerson::MSPerson(MSTEString* aName, MSTEString* aFirstName, bool aSex)
+
+MSPerson::MSPerson(std::shared_ptr<MSTEUserClass> o)
 {
-    name = aName;
-    firstname = aFirstName;
-    sex= aSex;
+    unsigned long nbAttributes = o->getNbAttributes();
     
-}*/
-
-MSPerson::MSPerson(map<string,MSTEObject*> *aSnapshot) {
-    snapshot = aSnapshot;
+    for(unsigned long i = 0; i < nbAttributes; i++)
+    {
+        std::string attributeName = o->getAttributeName((int)i);
+        
+        if(attributeName=="name")
+            name = std::dynamic_pointer_cast<MSTEString>(o->getAttributeValue((int) i))->getString();
+        else if (attributeName=="firstName")
+            firstname =std::dynamic_pointer_cast<MSTEString>(o->getAttributeValue((int) i))->getString();
+        else if (attributeName=="birthday")
+            birthday = std::dynamic_pointer_cast<MSTEDate>(o->getAttributeValue((int) i))->getLocalDate();
+    }
 }
 
-MSPerson::~MSPerson(){
-    delete snapshot;
-}
-
-string MSPerson::getClassName()
+// Cast operators
+MSPerson::operator std::unique_ptr<MSTEUserClass>()
 {
+    std::unique_ptr<MSTEUserClass> myUserClass(new MSTEUserClass("Person"));
+    myUserClass->addAttribute("name", std::make_shared<MSTEString>(name));
+    myUserClass->addAttribute("firstName", std::make_shared<MSTEString>(firstname));
+    myUserClass->addAttribute("birthday", std::make_shared<MSTEDate>(birthday, Local));
+    return myUserClass;
+}
+
+// Descriptors
+std::string MSPerson::description()
+{
+    std::string result;
+    result.append("I'm a person");
+    result.append("\nName : ");
+    result.append(name);
+    result.append("\nFirst Name : ");
+    result.append(firstname);
     
-	return "MSPerson";
-}
-
-
-void MSPerson::encodeWithMSTEncodeur(MSTEncodeur* e)
-{
-   
-	e->encodeObject(this);
-}
-
-unsigned char MSPerson::getTokenType()
-{
-	return MSTE_TOKEN_USER_CLASS_MARKER;
-}
-
-unsigned char MSPerson::getSingleEncodingCode()
-{
-
-	 return MSTE_TOKEN_MUST_ENCODE;
-}
-
-map<string,MSTEObject*>* MSPerson::getSnapshot()
-{
-	return snapshot;
+    return result;
 }

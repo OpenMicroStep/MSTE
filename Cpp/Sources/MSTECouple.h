@@ -6,27 +6,38 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-using namespace std;
+#ifndef _MSTE_COUPLE_H
+#define _MSTE_COUPLE_H
 
-class MSTEObject ;
+#include <memory>
 
-class MSTECouple : public MSTEObject{
-    private :
-    
-	MSTEObject* couple1;
-    MSTEObject* couple2;
-    
-    
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
+
+class MSTECouple : public MSTEObject
+{
 public:
+    // Constructors
     MSTECouple();
-	MSTECouple(MSTEObject* firstMember,MSTEObject* secondMember);
-	MSTECouple(MSTECouple &aCouple);
+    MSTECouple(std::shared_ptr<MSTEObject> firstMember,std::shared_ptr<MSTEObject> secondMember);
+
+    // Destructor
     ~MSTECouple();
-	string getClassName();
-    MSTEObject* getFirstMember();
-	MSTEObject* getSecondMember();
-	unsigned char getTokenType();
+
+    // Getters
+    std::shared_ptr<MSTEObject> getFirstMember();
+	std::shared_ptr<MSTEObject> getSecondMember();
     
-	void encodeWithMSTEncodeur(MSTEncodeur* e);
+    // Setters
+    void setFirstMember(std::shared_ptr<MSTEObject> item);
+    void setSecondMember(std::shared_ptr<MSTEObject> item);
+
+    // Methods
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+private :
+    std::shared_ptr<MSTEObject> couple1;
+    std::shared_ptr<MSTEObject> couple2;
 };
 
+#endif // _MSTE_COUPLE_H

@@ -6,123 +6,113 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
+#ifndef MSTE_ENCODEUR_H
+#define MSTE_ENCODEUR_H
+
 #include <sstream>
 #include <vector>
 #include <map>
-using namespace std;
+#include <memory>
+#include "MSTE.h"
 
-class MSTEObject ;
-class MSTEArray ;
-class MSTEColor ;
-class MSTEBool ;
-class MSTECouple ;
-class MSTEData ;
-class MSTEDate ;
-class MSTEDictionary ;
-class MSTENaturalArray ;
-class MSTENumber ;
-class MSTEString ;
-class MSTEWString;
+// Root class
+class MSTEObject;
 
+// Basic types
+class MSTEBool;
+class MSTEBasicType;
 
-#define MSTE_TOKEN_TYPE_NULL                0
-#define MSTE_TOKEN_TYPE_TRUE                1
-#define MSTE_TOKEN_TYPE_FALSE               2
-#define MSTE_TOKEN_TYPE_INTEGER_VALUE       3
-#define MSTE_TOKEN_TYPE_REAL_VALUE          4
-#define MSTE_TOKEN_TYPE_STRING              5
-#define MSTE_TOKEN_TYPE_DATE                6
-#define MSTE_TOKEN_TYPE_COLOR               7
-#define MSTE_TOKEN_TYPE_DICTIONARY          8
-#define MSTE_TOKEN_TYPE_REFERENCED_OBJECT   9
-#define MSTE_TOKEN_TYPE_CHAR                10
-#define MSTE_TOKEN_TYPE_UNSIGNED_CHAR       11
-#define MSTE_TOKEN_TYPE_SHORT               12
-#define MSTE_TOKEN_TYPE_UNSIGNED_SHORT      13
-#define MSTE_TOKEN_TYPE_INT32               14
-#define MSTE_TOKEN_TYPE_UNSIGNED_INT32      15
-#define MSTE_TOKEN_TYPE_INT64               16
-#define MSTE_TOKEN_TYPE_UNSIGNED_INT64      17
-#define MSTE_TOKEN_TYPE_FLOAT               18
-#define MSTE_TOKEN_TYPE_DOUBLE              19
-#define MSTE_TOKEN_TYPE_ARRAY               20
-#define MSTE_TOKEN_TYPE_NATURAL_ARRAY       21
-#define MSTE_TOKEN_TYPE_COUPLE              22
-#define MSTE_TOKEN_TYPE_BASE64_DATA         23
-#define MSTE_TOKEN_TYPE_DISTANT_PAST        24
-#define MSTE_TOKEN_TYPE_DISTANT_FUTURE      25
-#define MSTE_TOKEN_TYPE_EMPTY_STRING        26
+// Complex types
+class MSTEString;
+class MSTENumber;
+class MSTEDate;
+class MSTEColor;
+class MSTEData;
+class MSTENaturalArray;
 
-#define MSTE_TOKEN_TYPE_USER_CLASS          50
-#define MSTE_TOKEN_USER_CLASS_MARKER        254
-#define MSTE_TOKEN_MUST_ENCODE              255
+// Generic structures
+class MSTEDictionary;
+class MSTEArray;
+class MSTECouple;
 
+// User classes
+class MSTEUserClass;
 
-static const string base64_chars =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-"abcdefghijklmnopqrstuvwxyz"
-"0123456789+/";
-
-class MSTEncodeur {
-private:
-	stringstream ss;
-	stringstream ssGlobal;
-	string ssStreamString;
-	string ssGlobalString;
-	string ssRes;
-	string global;
-	vector<string> keysArray;
-	map<string,int> keys;
-	vector<string> classesArray;
-	map<string,int> classes;
-	map<void*,int> encodedObject;
-	int tokenCount;
-	int lastKeyIndex;
-	int lastClassIndex;
-	int lastReference;
-    
+class MSTEncodeur : MSTE
+{
 public:
+    // Constructor
 	MSTEncodeur();
+    
+    // Destructor
 	virtual ~MSTEncodeur();
     
-	void encodeTokenSeparator();
-	void encodeBool(MSTEBool* o);
-	void encodeInt(int o);
-	void encodeUInt(unsigned int o);
-	void encodeDouble(double o);
-	void encodeChar(char o);
-	void encodeUChar(unsigned char o);
-	void encodeShort(short o);
-	void encodeUShort(unsigned short o);
-	void encodeLong(long o);
-	void encodeULong(unsigned long o);
-	void encodeLongLong(long long o);
-	void encodeULongLong(unsigned long long o);
-	void encodeGlobalULongLong (unsigned long long o);
-	void encodeFloat(float o);
-	void encodeString(MSTEString* o);
-    void encodeWString(MSTEString* o);
-	void encodeDate(MSTEDate* o);
-	void encodeDistantPast(MSTEDate* o);
-	void encodeDistantFuture(MSTEDate* o);
-	void encodeBase64(MSTEData* o);
-	static inline bool is_base64(unsigned char c) {
-        return (isalnum(c) || (c == '+') || (c == '/'));
-	}
+    // Main methods
+    std::unique_ptr<std::string> encodeRootObject(std::shared_ptr<MSTEObject>);
     
+    /************************************************/
+    /*          Encoding functions                  */
+    /************************************************/
     
-	void encodeDictionary(MSTEDictionary* o);
-    void encodeRootDictionary(MSTEDictionary* o);
-	void encodeArray(MSTEArray* o);
-	void encodeNaturalArray(MSTENaturalArray* o);
-	void encodeCouple(MSTECouple* o);
-	void encodeColor(MSTEColor* o);
-	unsigned char shortValueToHexaCharacter(char16_t o);
-	void encodeGlobalUnicodeString(string o);
+    // Special items
+    void encodeTokenSeparator(std::string&);
     
-	void encodeObject(MSTEObject* o);
-	void encodeRootObject(MSTEObject* o);
-	void encodeFinChaine();
-	void clean();
+    // Basic types
+    void encodeBool(MSTEBool*, std::string&);
+    void encodeChar(MSTEBasicType*, std::string&);
+    void encodeUnsignedChar(MSTEBasicType*, std::string&);
+    void encodeShort(MSTEBasicType*, std::string&);
+    void encodeUnsignedShort(MSTEBasicType*, std::string&);
+    void encodeInt32(MSTEBasicType*, std::string&);
+    void encodeUnsignedInt32(MSTEBasicType*, std::string&);
+    void encodeInt64(MSTEBasicType*, std::string&);
+    void encodeUnsignedInt64(MSTEBasicType*, std::string&);
+    void encodeFloat(MSTEBasicType*, std::string&);
+    void encodeDouble(MSTEBasicType*, std::string&);
+    void encodeReference(int, std::string&);
+    
+    // Complex types
+    void encodeNumber(MSTENumber*, std::string&);
+    void encodeString(MSTEString*, std::string&);
+    void encodeWString(MSTEString*, std::string&);
+    void encodeLocalDate(MSTEDate*, std::string&);
+    void encodeUtcDate(MSTEDate*, std::string&);
+    void encodeColor(MSTEColor*, std::string&);
+    void encodeData(MSTEData*, std::string&);
+    void encodeNaturalArray(MSTENaturalArray*, std::string&);
+    
+    // Generic structures
+    void encodeDictionary(MSTEDictionary*, std::string&);
+    void encodeArray(MSTEArray*, std::string&);
+    void encodeCouple(MSTECouple*, std::string&);
+    
+    // User classes
+    void encodeUserClass(MSTEUserClass*, std::string&);
+    
+private:
+    const int ITEM_NOT_FOUND = -1;
+    
+    // Utility functions
+    unsigned int registerClass(std::string);
+    unsigned int registerKey(std::string);
+    int findObject(MSTEObject*);
+    void registerObject(MSTEObject*);
+
+    // Keys names
+    std::vector<std::string> keysArray;
+    std::map<std::string,int> keys;
+    
+    // Classes names
+    std::vector<std::string> classesArray;
+    std::map<std::string,int> classes;
+    
+    // Encoded objects
+    std::map <MSTEObject*, unsigned int> encodedObjects;
+    
+    int nbTokens;
+    int lastKeyIndex;
+    int lastClassIndex;
+    int lastReference;
 };
 
+#endif // MSTE_ENCODEUR_H

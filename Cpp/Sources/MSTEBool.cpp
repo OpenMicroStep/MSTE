@@ -6,46 +6,27 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEPrivate.h"
+#include "MSTEBool.h"
 
-using namespace std ;
-
-MSTEBool::MSTEBool() {
-	// TODO Auto-generated constructor stub
-    
-}
-
-MSTEBool::MSTEBool(bool tfBool) {
-	aBool = tfBool;
-    
-}
-
-MSTEBool::~MSTEBool() {
-	// TODO Auto-generated destructor stub
-}
-
-string MSTEBool::getClassName()
+MSTEBool::MSTEBool()
 {
-	return "MSTEBool";
+}
+
+MSTEBool::MSTEBool(bool tfBool)
+{
+	aBool = tfBool;
+}
+
+MSTEBool::~MSTEBool()
+{
 }
 
 bool MSTEBool::getBool()
 {
 	return aBool;
 }
-unsigned char MSTEBool::getSingleEncodingCode()
-{
-	if(aBool==true)	return MSTE_TOKEN_TYPE_TRUE;
-	else return MSTE_TOKEN_TYPE_FALSE;
-}
 
-unsigned char MSTEBool::getTokenType()
+void MSTEBool::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
-	if(aBool==true)	return MSTE_TOKEN_TYPE_TRUE;
-	else return MSTE_TOKEN_TYPE_FALSE;
-}
-
-void MSTEBool::encodeWithMSTEncodeur(MSTEncodeur* e)
-{
-	e->encodeBool(this);
+    e->encodeBool(this, outputBuffer);
 }

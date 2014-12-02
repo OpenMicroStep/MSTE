@@ -6,25 +6,42 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
+#ifndef _MSTE_DICTIONNARY_H
+#define _MSTE_DICTIONNARY_H
+
+#include <string>
+#include <vector>
 #include <map>
-using namespace std;
+#include <memory>
 
-class MSTEObject ;
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
+#include "MSTEString.h"
 
-class MSTEDictionary  : public MSTEObject{
-    private :
-	map<string,MSTEObject*> sOmap;
+class MSTEDictionary  : public MSTEObject
+{
 public:
+    // Constructors
 	MSTEDictionary();
-	MSTEDictionary(map<string,MSTEObject*> *aMap);
-	MSTEDictionary(MSTEDictionary &dictionary);
-	virtual ~MSTEDictionary();
-	string getClassName();
-	MSTEObject* getObjectDictionary(string key);
-	void setObjectDictionary(string key, MSTEObject* object);
-	map<string,MSTEObject*> *getMap();
-	unsigned char getTokenType();
+    MSTEDictionary(std::vector<std::string> someKeys, std::vector<std::shared_ptr<MSTEObject>> someValues);
+    MSTEDictionary(std::map<std::string,std::shared_ptr<MSTEObject>> *aMap);
+
+    // Destructor
+    virtual ~MSTEDictionary();
+
+    // Getters
+    std::string getKeyDictionary(unsigned long idx);
+    std::shared_ptr<MSTEObject> getObjectDictionary(std::string key);
+    std::shared_ptr<MSTEObject> getObjectDictionary(unsigned long idx);
 	unsigned long size();
-	void encodeWithMSTEncodeur(MSTEncodeur* e);
+    
+    // Methods
+    void addItem(std::string key, std::shared_ptr<MSTEObject> item);
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+private :
+    std::vector<std::string> keys;
+    std::vector<std::shared_ptr<MSTEObject>> values;
 };
 
+#endif // _MSTE_DICTIONNARY_H

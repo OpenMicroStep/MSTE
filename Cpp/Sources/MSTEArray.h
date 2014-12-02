@@ -6,26 +6,38 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
+#ifndef _MSTE_ARRAY_H
+#define _MSTE_ARRAY_H
+
+#include <string>
 #include <vector>
+#include <memory>
 
-using namespace std;
+#include "MSTEObject.h"
+#include "MSTEncodeur.h"
 
-class MSTEObject ;
-
-class MSTEArray : public MSTEObject{
-    private :
-	vector<MSTEObject*> aVector;
+class MSTEArray : public MSTEObject
+{
 public:
+    // Constructors
 	MSTEArray();
-	MSTEArray(vector<MSTEObject*> *vector);
-	MSTEArray(MSTEArray &array);
+	MSTEArray(std::vector<std::shared_ptr<MSTEObject>> vector);
+    
+    // Destructor
 	virtual ~MSTEArray();
-	string getClassName();
-	MSTEObject* getObjectVector(int idx);
-	unsigned char getTokenType();
-	void setObjectVector(MSTEObject* object);
-	vector<MSTEObject*> *getVector();
-	virtual unsigned long size();
-	virtual void encodeWithMSTEncodeur(MSTEncodeur* e);
+    
+    // Getters
+    std::shared_ptr<MSTEObject> getObjectVector(int idx);
+    void setObjectVector(std::shared_ptr<MSTEObject> object);
+	std::vector<std::shared_ptr<MSTEObject>> getVector();
+	unsigned long size();
+    
+    // Methods
+    void addItem(std::shared_ptr<MSTEObject> item);
+    void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+private :
+    std::vector<std::shared_ptr<MSTEObject>> aVector;
 };
 
+#endif // _MSTE_ARRAY_H
