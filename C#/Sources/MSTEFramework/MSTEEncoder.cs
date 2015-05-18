@@ -22,68 +22,38 @@ namespace MSTEFramework {
         private int _lastReference;
         private Dictionary<string, object> _keys;
         private List<string> _keysArray;
-        //private Dictionary<string, MSNode> _encodedObjects;
         private Dictionary<int, object> _encodedObjects;
         private Dictionary<string, int> _classes;
         private List<string> _classesArray;
-
-        //const int MSTE_TOKEN_MUST_ENCODE = -1;
-        //const int MSTE_TOKEN_TYPE_NULL = 0;
-        //const int MSTE_TOKEN_TYPE_TRUE = 1;
-        //const int MSTE_TOKEN_TYPE_FALSE = 2;
-        //const int MSTE_TOKEN_TYPE_EMPTY_STRING = 3;
-        //const int MSTE_TOKEN_TYPE_DISTANT_PAST = 4;
-        //const int MSTE_TOKEN_TYPE_DISTANT_FUTURE = 5;
-        //const int MSTE_TOKEN_TYPE_EMPTY_DATA = 6;
-
-        //const int MSTE_TOKEN_TYPE_REFERENCED_OBJECT = 9;
-
-        //const int MSTE_TOKEN_TYPE_CHAR = 10;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_CHAR = 11;
-        //const int MSTE_TOKEN_TYPE_SHORT = 12;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_SHORT = 13;
-        //const int MSTE_TOKEN_TYPE_INT32 = 14;
-        //const int MSTE_TOKEN_TYPE_INSIGNED_INT32 = 15;
-        //const int MSTE_TOKEN_TYPE_INT64 = 16;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_INT64 = 17;
-        //const int MSTE_TOKEN_TYPE_FLOAT = 18;
-        //const int MSTE_TOKEN_TYPE_DOUBLE = 19;
-
-        //const int MSTE_TOKEN_TYPE_DECIMAL_VALUE = 20;
-        //const int MSTE_TOKEN_TYPE_STRING = 21;
-        //const int MSTE_TOKEN_TYPE_DATE = 22;
-        //const int MSTE_TOKEN_TYPE_COLOR = 23;
-        //const int MSTE_TOKEN_TYPE_BASE64_DATA = 24;
-        //const int MSTE_TOKEN_TYPE_NATURAL_ARRAY = 25;
-
-        //const int MSTE_TOKEN_TYPE_DICTIONARY = 30;
-        //const int MSTE_TOKEN_TYPE_ARRAY = 31;
-        //const int MSTE_TOKEN_TYPE_COUPLE = 32;
-
-        //const int MSTE_TOKEN_TYPE_USER_CLASS = 50;
 
         internal int MSTE_TOKEN_LAST_DEFINED_TYPE;
 
 
         // ========= constructors and destructors =========
-        public MSTEEncoder() {
-            if (!InstanceFieldsInitialized) {
+        public MSTEEncoder() 
+        {
+            if (!InstanceFieldsInitialized) 
+            {
                 InitializeInstanceFields();
                 InstanceFieldsInitialized = true;
             }
         }
-        ~MSTEEncoder() {
+
+        ~MSTEEncoder() 
+        {
             _content = null;
             _tokenCount = 0;
         }
 
         //=============Implements=============================
-        private void _encodeTokenSeparator() {
+        private void _encodeTokenSeparator() 
+        {
             _tokenCount++;
             _content.Append(",");
         }
 
-        private void _encodeTokenType(int tokenType) {
+        private void _encodeTokenType(int tokenType) 
+        {
             _content.Append(tokenType);
         }
 
@@ -116,7 +86,6 @@ namespace MSTEFramework {
                 _content.Append("\"");
                 MSData ms = MSData.initWithData(dataObj);
                 _content.Append(ms.ToString());
-                //_content.Append(encodeBase64(tb));
                 _content.Append("\"");
             }
             else {
@@ -125,60 +94,6 @@ namespace MSTEFramework {
             }
 
         }
-
-        /*
-        private void encodeUnicodeString(String str, Boolean token) throws MSTEException {
-	
-            if (!str.equals(null)){
-                if (token) {
-                    _encodeTokenSeparator();
-                    _encodeTokenType(MSTE_TOKEN_TYPE_STRING);	
-                }
-                _encodeTokenSeparator();
-                _content.append("\"");
-                int len = str.length();
-                if (len>0){
-                    for (int i=0; i<len; i++){
-                        char c = str.charAt(i);
-                        switch ((int)c) {
-                            case 34 : 	//Double quote
-                                _content.append("\\\"");
-                                break;
-                            case 92 : 	//antislash
-                                _content.append("\\\\");
-                                break;
-                            case 47 : 	//slash
-                                _content.append("\\/");
-                                break;
-                            case 8 : 	//backspace
-                                _content.append("\\\b");
-                                break;
-                            case 12 : 	//formfeed
-                                _content.append("\\\f");
-                                break;
-                            case 10 : 	//newline
-                                _content.append("\\\n");
-                                break;
-                            case 13 : 	//carrage return
-                                _content.append("\\\r");
-                                break;
-                            case 9 : 	//tabulation
-                                _content.append("\\\t");
-                                break;
-                            default : 
-                                _content.append(c);
-                                break;
-                        }
-                    }			
-                }
-                _content.append("\"");
-            }
-            else{
-                throw new MSTEException("encodeUnicodeString:withTokenType: no string to encode!");
-            }
-		
-        }
-        */
 
         private void encodeString(string str, bool token) {
             if (!str.Equals(null)) {
@@ -325,64 +240,6 @@ namespace MSTEFramework {
             _content.Append(string.Format("{0}", d).Replace(",","."));
         }
 
-        //private void encodeIntValue(object anObject, bool token) {
-        //    if (token) {
-        //        _encodeTokenSeparator();
-        //        _encodeTokenType(MSTE_TOKEN_TYPE_INTEGER_VALUE);
-        //    }
-        //    int tokenOrigin = getTokenType(anObject, true);
-        //    MSTE.logEvent("encodeIntValue tokenOrigin " + tokenOrigin);
-        //    long? l = new long?(0);
-        //    switch (tokenOrigin) {
-        //        case MSTE_TOKEN_TYPE_CHAR:
-        //            sbyte? bVal = (sbyte?)anObject;
-        //            l = (long)bVal;
-        //            break;
-        //        case MSTE_TOKEN_TYPE_UNSIGNED_SHORT:
-        //            char cVal = (char)anObject;
-        //            int? codeCar = (int?)Char.GetNumericValue(cVal);
-        //            l = (long)codeCar;
-        //            break;
-        //        case MSTE_TOKEN_TYPE_SHORT:
-        //            short? sVal = (short?)anObject;
-        //            l = (long)sVal;
-        //            break;
-        //        case MSTE_TOKEN_TYPE_INT32:
-        //            int? iVal = (int?)anObject;
-        //            l = (long)iVal;
-        //            break;
-        //        case MSTE_TOKEN_TYPE_INT64:
-        //            l = (long?)anObject;
-        //            break;
-        //        default:
-        //            throw new MSTEException("encodeIntValue: not integer value for type MSTE_TOKEN_TYPE_INTEGER_VALUE !");
-        //    }
-        //    _encodeTokenSeparator();
-        //    _content.Append(string.Format("{0:D}", l));
-        //}
-
-        //private void encodeFloatValue(object anObject, bool token) {
-        //    if (token) {
-        //        _encodeTokenSeparator();
-        //        _encodeTokenType(MSTE_TOKEN_TYPE_REAL_VALUE);
-        //    }
-        //    int tokenOrigin = getTokenType(anObject, true);
-        //    double? d = new double?(0);
-        //    switch (tokenOrigin) {
-        //        case MSTE_TOKEN_TYPE_FLOAT:
-        //            float? f = (float?)anObject;
-        //            d = (double)f;
-        //            break;
-        //        case MSTE_TOKEN_TYPE_DOUBLE:
-        //            d = (double?)anObject;
-        //            break;
-        //        default:
-        //            throw new MSTEException("encodeFloatValue: not float value for type MSTE_TOKEN_TYPE_REAL_VALUE !");
-        //    }
-        //    _encodeTokenSeparator();
-        //    _content.Append(string.Format("{0:F15}", d));
-        //}
-
         private void encodeArray(List<object> anArray) {
             _encodeTokenSeparator();
             _encodeTokenType(MSTE_TOKEN_TYPE_ARRAY);
@@ -489,84 +346,8 @@ namespace MSTEFramework {
             keys = null;
         }
 
-        //private void encodeObject(object anObject) {
-        //    this.encodeObject(anObject, true);
-        //}
-
-        private void encodeObject(object anObject, bool referencing) {
-
-            //// *****************************************************************************************************
-            //// Version test
-            //// *****************************************************************************************************
-            //int classIndex = 0;
-            //int objectReference = 0;
-
-            //int singleToken = getTokenType(anObject, referencing);
-
-            //MSTE.logEvent("encodeObject object type = " + singleToken);
-            //if (singleToken == MSTE_TOKEN_MUST_ENCODE) {
-            //    throw new MSTEException("encodeObject:unknow token type !");
-            //}
-
-            //objectReference = getObjectReference(anObject);
-            //if (objectReference > 0) {
-            //    _encodeTokenSeparator();
-            //    _encodeTokenType(MSTE_TOKEN_TYPE_REFERENCED_OBJECT);
-            //    encodeInt(objectReference - 1, false);
-            //}
-            //// User type 
-            //else {
-            //    if (singleToken >= MSTE_TOKEN_TYPE_USER_CLASS) {
-            //        MSTE.logEvent("encodeObject 1");
-            //        Dictionary<string, object> dictSnapshot = null;
-
-            //        MethodInfo method;
-            //        try {
-            //            method = anObject.GetType().GetMethod(MSTEIMethods.SNAP);
-            //        }
-            //        catch (Exception e) {
-            //            throw new MSTEException("encodeObject:unknow Exception : " + e.ToString());
-            //        }
-
-            //        try {
-            //            dictSnapshot = (Dictionary<string, object>)method.Invoke(anObject, null);
-            //        }
-            //        catch (Exception e) {
-            //            throw new MSTEException("encodeObject:unknow IllegalArgumentException : " + e.ToString());
-            //        }
-
-            //        string aClassName = anObject.GetType().Name;
-            //        if (_classes.ContainsKey(aClassName)) {
-            //            classIndex = _classes[aClassName];
-            //        }
-            //        else {
-            //            classIndex = ++_lastClassIndex;
-            //            _classes[aClassName] = classIndex;
-            //            _classesArray.Add(aClassName);
-            //        }
-            //        objectReference = ++_lastReference;
-            //        addObjectReference(anObject, objectReference);
-            //        _encodeTokenSeparator();
-            //        //_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + 2 * (classIndex - 1));
-            //        _encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + classIndex - 1);
-            //        encodeDictionary(dictSnapshot, true);
-            //    }
-            //    else if (singleToken <= MSTE_TOKEN_LAST_DEFINED_TYPE) {
-            //        if (referencing) {
-            //            objectReference = ++_lastReference ;
-            //            addObjectReference(anObject, objectReference);
-            //        }
-                
-            //        _encodeTokenSeparator();
-            //        _encodeTokenType(singleToken);
-            //         encodeWithTokenType(anObject, singleToken);
-            //    }
-            //    else {
-            //        throw new Exception("encodeObject: cannot encode an object with token type : " + singleToken.ToString());
-            //    }
-            //}
-            //// *****************************************************************************************************
-
+        private void encodeObject(object anObject, bool referencing) 
+        {
             int classIndex = 0;
             int objectReference = 0;
 
@@ -614,7 +395,6 @@ namespace MSTEFramework {
                     objectReference = ++_lastReference;
                     addObjectReference(anObject, objectReference);
                     _encodeTokenSeparator();
-                    //_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + 2 * (classIndex - 1));
                     _encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + classIndex - 1);
                     encodeDictionary(dictSnapshot, true);
                 }
@@ -628,72 +408,6 @@ namespace MSTEFramework {
                 }
 
             } 
-
-            //// Base type 
-            //if (singleToken < MSTE_TOKEN_TYPE_USER_CLASS) {
-            //    if (singleToken != MSTE_TOKEN_TYPE_NULL) {
-            //        objectReference = getObjectReference(anObject);
-            //        if (singleToken["referencing"] == true) {
-            //            if (objectReference < 0) {
-            //                objectReference = ++_lastReference;
-            //                addObjectReference(anObject, objectReference);
-            //                encodeWithTokenType(anObject, singleToken);
-            //            }
-            //            else {
-            //                _encodeTokenSeparator();
-            //                _encodeTokenType(MSTE_TOKEN_TYPE_REFERENCED_OBJECT);
-            //                encodeInt(objectReference - 1, false);
-            //            }
-            //        }
-            //        else { 
-                        
-            //        }
-            //    }
-            //}
-            //// User type 
-            //else {
-            //    objectReference = getObjectReference(anObject);
-            //    if (objectReference > 0) {
-            //        _encodeTokenSeparator();
-            //        _encodeTokenType(MSTE_TOKEN_TYPE_REFERENCED_OBJECT);
-            //        encodeInt(objectReference - 1, false);
-            //    }
-            //    else {
-            //        MSTE.logEvent("encodeObject 1");
-            //        Dictionary<string, object> dictSnapshot = null;
-
-            //        MethodInfo method;
-            //        try {
-            //            method = anObject.GetType().GetMethod(MSTEIMethods.SNAP);
-            //        }
-            //        catch (Exception e) {
-            //            throw new MSTEException("encodeObject:unknow Exception : " + e.ToString());
-            //        }
-
-            //        try {
-            //            dictSnapshot = (Dictionary<string, object>)method.Invoke(anObject, null);
-            //        }
-            //        catch (Exception e) {
-            //            throw new MSTEException("encodeObject:unknow IllegalArgumentException : " + e.ToString());
-            //        }
-
-            //        string aClassName = anObject.GetType().Name;
-            //        if (_classes.ContainsKey(aClassName)) {
-            //            classIndex = _classes[aClassName];
-            //        }
-            //        else {
-            //            classIndex = ++_lastClassIndex;
-            //            _classes[aClassName] = classIndex;
-            //            _classesArray.Add(aClassName);
-            //        }
-            //        objectReference = ++_lastReference;
-            //        addObjectReference(anObject, objectReference);
-            //        _encodeTokenSeparator();
-            //        //_encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + 2 * (classIndex - 1));
-            //        _encodeTokenType(MSTE_TOKEN_TYPE_USER_CLASS + classIndex - 1);
-            //        encodeDictionary(dictSnapshot, true);
-            //    }
-            //}
         }
 
         public Dictionary<string, object> encodeRootObject(object anObject) {
@@ -816,7 +530,8 @@ namespace MSTEFramework {
             }
         }
 
-        private Dictionary<string, int> getTokenType(object anObject, bool isSnapshot) {
+        private Dictionary<string, int> getTokenType(object anObject, bool isSnapshot) 
+        {
             Dictionary<string, int> dRes = new Dictionary<string, int>();
             dRes["referencing"] = 0;
             if (anObject == null) {
@@ -849,60 +564,25 @@ namespace MSTEFramework {
                 }
             }
             else if (anObject is sbyte?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_CHAR;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_INT64;
-                //}
             }
             else if (anObject is char?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_UNSIGNED_SHORT;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_INT64;
-                //}
             }
             else if (anObject is short?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_SHORT;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_INT64;
-                //}
             }
             else if (anObject is int?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_INT32;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_INT64;
-                //}
             }
             else if (anObject is long?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_INT64;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_INT64;
-                //}
             }
             else if (anObject is float?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_FLOAT;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_DECIMAL_VALUE;
-                //}
             }
             else if (anObject is double?) {
-                //if (isSnapshot) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_DOUBLE;
-                //}
-                //else {
-                //    return MSTE_TOKEN_TYPE_DECIMAL_VALUE;
-                //}
             }
             else if (anObject is IList) {
                 dRes["tokenType"] = MSTE_TOKEN_TYPE_ARRAY;
@@ -949,10 +629,6 @@ namespace MSTEFramework {
             }
 
             return dRes;
-            //if (anObject is MSTE) {
-            //    
-            //}
-            //return MSTE_TOKEN_MUST_ENCODE;
         }
 
         private void encodeWithTokenType(object anObject, int tokenType) {
@@ -973,7 +649,6 @@ namespace MSTEFramework {
                     encodeData(anObject, true);
                     break;
                 case MSTE_TOKEN_TYPE_STRING:
-                    //encodeUnicodeString((String)anObject, true);
                     encodeString((string)anObject, true);
                     break;
                 case MSTE_TOKEN_TYPE_EMPTY_STRING:
@@ -995,12 +670,6 @@ namespace MSTEFramework {
                 case MSTE_TOKEN_TYPE_INT64:
                     encodeLongLong((long?)anObject, true);
                     break;
-                //case MSTE_TOKEN_TYPE_INTEGER_VALUE:
-                //    encodeIntValue(anObject, true);
-                //    break;
-                //case MSTE_TOKEN_TYPE_REAL_VALUE:
-                //    encodeFloatValue(anObject, true);
-                //    break;
                 case MSTE_TOKEN_TYPE_FLOAT:
                     encodeFloat((float?)anObject, true);
                     break;
@@ -1044,36 +713,10 @@ namespace MSTEFramework {
             return @ref;
         }
 
-        private void addObjectReference(object anObject, int @ref) {
-
-            //string objHashCode = Convert.ToString(anObject.GetHashCode());
-            //MSNode node = new MSNode();
-            //node.FirstMember = anObject;
-            //node.Reference = @ref;
-            //_encodedObjects[objHashCode] = node;
+        private void addObjectReference(object anObject, int @ref) 
+        {
             _encodedObjects[@ref] = anObject;
-
         }
-
-        //private const string base64code = "ABCDEFGHIJKLMNOPQRSTUVWXYZ" + "abcdefghijklmnopqrstuvwxyz" + "0123456789" + "+/";
-
-        //private static byte[] zeroPad(int length, byte[] bytes) {
-        //    byte[] padded = new byte[length]; // initialized to zero by JVM
-        //    Array.Copy(bytes, 0, padded, 0, bytes.Length);
-        //    return padded;
-        //}
-
-        //private string encodeBase64(byte[] bArray) {
-        //    string encoded = "";
-        //    int paddingCount = (3 - (bArray.Length % 3)) % 3;
-        //    bArray = zeroPad(bArray.Length + paddingCount, bArray);
-        //    for (int i = 0; i < bArray.Length; i += 3) {
-        //        int j = ((bArray[i] & 0xff) << 16) + ((bArray[i + 1] & 0xff) << 8) + (bArray[i + 2] & 0xff);
-        //        encoded = encoded + base64code[(j >> 18) & 0x3f] + base64code[(j >> 12) & 0x3f] + base64code[(j >> 6) & 0x3f] + base64code[j & 0x3f];
-        //    }
-        //    return encoded;
-        //}
-
     }
 
 }

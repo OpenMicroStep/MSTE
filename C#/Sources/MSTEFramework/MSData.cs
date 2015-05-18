@@ -3,61 +3,93 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 
-namespace MSTEFramework {
-    public class MSData {
-        byte[] _dataValue;
+namespace MSTEFramework 
+{
+    public class MSData
+    {
 
-        public MSData() {
+        #region Constructor
+
+        public MSData() 
+        {
             this._dataValue = new byte[0];
         }
 
-        protected void setValue(byte[] b) {
-            this._dataValue = b;
-        }
+        #endregion
 
-        public static MSData initWithString(string s) {
+        #region Initializers
+
+        public static MSData initWithString(string s) 
+        {
             MSData md = new MSData();
-            try {
+            try 
+            {
                 md.setValue(ASCIIEncoding.ASCII.GetBytes(s));
-                
             }
-            catch (Exception e) {
+            catch (Exception e) 
+            {
                 Console.WriteLine(e.ToString());
             }
             return md;
         }
 
-        public static MSData initWithData(byte[] b) {
+        public static MSData initWithData(byte[] b) 
+        {
             MSData md = new MSData();
-            try {
+            try 
+            {
                 md.setValue(b);
             }
-            catch (Exception e) {
+            catch (Exception e) 
+            {
                 Console.WriteLine(e.ToString());
             }
             return md;
         }
 
-        public int getLength() {
+        #endregion
+
+        #region Public Getters
+
+        public int getLength() 
+        {
             return this.getValue().Length;
         }
 
-        public string getValue() {
-            if (this._dataValue != null && this._dataValue.Length>0) {
+        public string getValue() 
+        {
+            if (this._dataValue != null && this._dataValue.Length>0)
                 return Encoding.ASCII.GetString(this._dataValue);
-            }
-            else {
+            else
                 return ""; 
-            }
         }
 
-        public byte[] getRawValue() {
+        public byte[] getRawValue() 
+        {
             return this._dataValue;
         }        
         
-        public override string ToString() {
+        public override string ToString() 
+        {
             return this.getValue().ToString();
         }
-    
+
+        #endregion
+
+        #region Setters
+
+        protected void setValue(byte[] b)
+        {
+            this._dataValue = b;
+        }
+
+        #endregion
+
+        #region Private attributes
+
+        byte[] _dataValue;
+
+        #endregion
+
     }
 }

@@ -16,7 +16,6 @@ namespace MSTEFramework {
 
         public static DateTime? getDateTime(long unixTimeStamp, DateTimeKind dtk) {
             try {
-                //DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
                 DateTime dt = new DateTime(1970, 1, 1, 0, 0, 0, 0, dtk);
                 dt = dt.AddSeconds(Convert.ToDouble(unixTimeStamp));
                 return dt;
@@ -33,10 +32,6 @@ namespace MSTEFramework {
 
         public static long? getEpochTime(DateTime dt, DateTimeKind dtk) {
             try {
-                // method with C# class
-                //long unixTimestamp = dt.Ticks - epochBase.Ticks;
-                //unixTimestamp /= TimeSpan.TicksPerSecond;
-                //return unixTimestamp;
                 // method with DateTime calculation
                 DateTime origin = new DateTime(1970, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc);
                 TimeSpan diff = dt - origin;

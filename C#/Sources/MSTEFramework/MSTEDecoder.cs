@@ -27,45 +27,6 @@ namespace MSTEFramework {
         
         #endregion
 
-        //const int MSTE_TOKEN_MUST_ENCODE = -1;
-        //const int MSTE_TOKEN_TYPE_NULL = 0;
-        //const int MSTE_TOKEN_TYPE_TRUE = 1;
-        //const int MSTE_TOKEN_TYPE_FALSE = 2;
-        //const int MSTE_TOKEN_TYPE_EMPTY_STRING = 3;
-        //const int MSTE_TOKEN_TYPE_DISTANT_PAST = 4;
-        //const int MSTE_TOKEN_TYPE_DISTANT_FUTURE = 5;
-        //const int MSTE_TOKEN_TYPE_EMPTY_DATA = 6;
-
-        //const int MSTE_TOKEN_TYPE_REFERENCED_OBJECT = 9;
-
-        //const int MSTE_TOKEN_TYPE_CHAR = 10;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_CHAR = 11;
-        //const int MSTE_TOKEN_TYPE_SHORT = 12;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_SHORT = 13;
-        //const int MSTE_TOKEN_TYPE_INT32 = 14;
-        //const int MSTE_TOKEN_TYPE_INSIGNED_INT32 = 15;
-        //const int MSTE_TOKEN_TYPE_INT64 = 16;
-        //const int MSTE_TOKEN_TYPE_UNSIGNED_INT64 = 17;
-        //const int MSTE_TOKEN_TYPE_FLOAT = 18;
-        //const int MSTE_TOKEN_TYPE_DOUBLE = 19;
-
-        //const int MSTE_TOKEN_TYPE_DECIMAL_VALUE = 20;
-        //const int MSTE_TOKEN_TYPE_STRING = 21;
-        //const int MSTE_TOKEN_TYPE_DATE = 22;
-        //const int MSTE_TOKEN_TYPE_COLOR = 23;
-        //const int MSTE_TOKEN_TYPE_BASE64_DATA = 24;
-        //const int MSTE_TOKEN_TYPE_NATURAL_ARRAY = 25;
-		
-        //const int MSTE_TOKEN_TYPE_DICTIONARY = 30;
-        //const int MSTE_TOKEN_TYPE_ARRAY = 31;
-        //const int MSTE_TOKEN_TYPE_COUPLE = 32;
-	
-        //const int MSTE_TOKEN_TYPE_USER_CLASS = 50;
-
-        //const int MSTE_TOKEN_TYPE_INTEGER_VALUE = 3;
-        //const int MSTE_TOKEN_TYPE_REAL_VALUE = 4;
-        //const int MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT = 27;
-
 		const int MSTE_DECODING_ARRAY_START = 0;
 		const int MSTE_DECODING_VERSION_START = 1;
 		const int MSTE_DECODING_VERSION_HEADER = 2;
@@ -117,20 +78,21 @@ namespace MSTEFramework {
 		private DateTime __theDistantFuture = DateTime.MaxValue;
 
 		// ========= constructors and destructors =========
-		public MSTEDecoder(Dictionary<string, object> options)
+
+        public MSTEDecoder(Dictionary<string, object> options)
 		{
-			if (!InstanceFieldsInitialized) {
+			if (!InstanceFieldsInitialized) 
+            {
 				InitializeInstanceFields();
 				InstanceFieldsInitialized = true;
 			}
-            this.dUserClass = options.ContainsKey(MSTEDecoder.OPT_USER_CLASS) ? (Dictionary<string, string>)options[MSTEDecoder.OPT_USER_CLASS] : null;
+            if (options == null)
+                this.dUserClass = null;
+            else
+                this.dUserClass = options.ContainsKey(MSTEDecoder.OPT_USER_CLASS) ? (Dictionary<string, string>)options[MSTEDecoder.OPT_USER_CLASS] : null;
 		}
-        //~MSTEDecoder()
-        //{
-        //    this._tokenCount = 0;
-        //}
 
-		//=============Implements=============================
+        //=============Implements=============================
 
 		private void _MSTJumpToNextToken(sbyte[] data, int[] pos, int[] tokenCount)
 		{
@@ -163,7 +125,6 @@ namespace MSTEFramework {
 			if (!separatorFound) {
 				throw new MSTEException("_MSTJumpToNextToken: - Bad format (no next token)");
 			}
-			MSTE.logEvent("_MSTJumpToNextToken > " + (char)data[pos[0]]);
 		}
 
 		private object _MSTDecodeNumber(sbyte[] data, int[] pos, int tokenType)	{
@@ -298,7 +259,7 @@ namespace MSTEFramework {
 			}
 
 			if (sb.Length > 0) {
-				value = Convert.ToSingle(sb.ToString());
+				value = Convert.ToSingle(sb.ToString(), new CultureInfo("en-US"));
 			}
 			return value;
 		}
@@ -323,15 +284,6 @@ namespace MSTEFramework {
             }
             if (sb.Length > 0) {
                 value.initWithString(sb.ToString());
-                //try {
-                //    value = Convert.ToDecimal(sb.ToString(), new System.Globalization.CultureInfo("en-US"));
-                //}
-                //catch (Exception e){
-                //    Console.WriteLine(e.ToString());
-                //    value = 0;
-                //}
-                //value = Decimal.Parse(sb.ToString(), System.Globalization.NumberStyles.Any);
-                //value = Convert.ToDecimal(sb.ToString(), new System.Globalization.CultureInfo("en-US"));
             }
             return value;
 
@@ -563,17 +515,6 @@ namespace MSTEFramework {
         }
 
 
-        //private byte[] _MSTDecodeBufferBase64String(sbyte[] data, int[] pos, string operation) {
-        //    byte[] ret = null;
-        //    string base64String = _MSTDecodeString(data, pos, operation);
-        //    if (base64String.Length > 0) {
-        //        //byte[] bytes = Encoding.Unicode.GetBytes(s);
-        //        return ASCIIEncoding.ASCII.GetBytes(base64String); 
-        //        //ret = decodeFromBase64(base64String);
-        //    }
-        //    return ret;
-        //}
-
 		private MSCouple _MSTDecodeCouple(sbyte[] data, int[] pos, string operation, List<object> decodedObjects, List<string> classes, List<string> keys, int[] tokenCount, bool? allowsUnknownUserClasses) {
 			MSCouple ret = new MSCouple();
 			object firstMember = null;
@@ -616,7 +557,6 @@ namespace MSTEFramework {
                                         MSTE.logEvent(">> _MSTDecodeUserDefinedObject : unable to load assembly to locate user class > decoded as dictionnary");
                                         aClass = null;
                                     }
-                                    //aClass = Type.GetType(this.dUserClass[className]);
                                 }
                                 else {
                                     MSTE.logEvent("_MSTDecodeUserDefinedObject: -	unable to definition for user class " + this.dUserClass[className] + " > miss namespace");
@@ -634,7 +574,6 @@ namespace MSTEFramework {
                         try {
                             ret = Activator.CreateInstance(aClass);
                         } catch (Exception ) {
-                            //Console.WriteLine(ex.Message);
                             throw new MSTEException("_MSTDecodeUserDefinedObject: -	unable to find constructor or initializer for user class " + className + " in current system");
                         }
 						Dictionary<string, object> dict = new Dictionary<string, object>();
@@ -848,7 +787,6 @@ namespace MSTEFramework {
                 }
             }
             throw new MSTEException("_hexaCharacterToShortValue - not an hexadecimal character " + c);
-            //return 0 ;
         }
 
         private object _MSTDecodeObject(sbyte[] data, int[] pos, string operation, List<object> decodedObjects, List<string> classes, List<string> keys, int[] tokenCount, bool? isWeaklyReferenced, bool? allowsUnknownUserClasses) {
@@ -856,7 +794,6 @@ namespace MSTEFramework {
 			object ret = null;
 
 			int tokenType = (int)_MSTDecodeUnsignedShort(data, pos,"token type");
-        	MSTE.logEvent("_MSTDecodeObject tokenType : " + tokenType);
 			switch (tokenType) {
 				case MSTE_TOKEN_TYPE_NULL :	{
 					//nothing to do: returning nil
@@ -874,17 +811,7 @@ namespace MSTEFramework {
                         ret = "";
                         break;
                 }
-                //case MSTE_TOKEN_TYPE_DISTANT_PAST: {
-                //        ret = __theDistantPast;
-                //        break;
-                //}
-                //case MSTE_TOKEN_TYPE_DISTANT_FUTURE: {
-                //        ret = __theDistantFuture;
-                //        break;
-                //}
                 case MSTE_TOKEN_TYPE_EMPTY_DATA: {
-                        //byte[] aByte = new Byte[0];
-                        //ret = aByte;
                         ret = new MSData();
                         break;
                 }
@@ -893,9 +820,7 @@ namespace MSTEFramework {
                         int? objectReference;
                         _MSTJumpToNextToken(data, pos, tokenCount);
                         objectReference = _MSTDecodeInt(data, pos, "_MSTDecodeObject");
-                        //MSTE.logEvent("_MSTDecodeObject objectReference" + objectReference);
                         ret = decodedObjects[(int)objectReference];
-                        //MSTE.logEvent("_MSTDecodeObject ret" + ret.ToString());
                         break;
                 }
 
@@ -939,7 +864,7 @@ namespace MSTEFramework {
                 case MSTE_TOKEN_TYPE_TIMESTAMP: {
                     long? seconds = long.MinValue;
                     _MSTJumpToNextToken(data, pos, tokenCount);
-                    seconds = _MSTDecodeLong(data, pos, "_MSTDecodeObject");
+                    seconds = (long?)_MSTDecodeFloat(data, pos, "_MSTDecodeObject");
                     DateTime? dt = UnixEpoch.getDateTime((long)seconds, DateTimeKind.Utc);
                     ret = (dt == null ? this.__theDistantPast : dt);
                     //ret = null;
@@ -979,31 +904,11 @@ namespace MSTEFramework {
 					break;
 				}
 
-                //case MSTE_TOKEN_TYPE_WEAKLY_REFERENCED_OBJECT : {
-                //    //Decoded like Strongly referenced
-                //    int? objectReference;
-                //    _MSTJumpToNextToken(data, pos, tokenCount);
-                //    objectReference = _MSTDecodeInt(data, pos, "_MSTDecodeObject");
-                //    ret = decodedObjects[(int)objectReference];
-                //    break;
-                //}
-                //case MSTE_TOKEN_TYPE_INTEGER_VALUE :
-                //case MSTE_TOKEN_TYPE_REAL_VALUE : {
-                //    _MSTJumpToNextToken(data,pos,tokenCount);
-                //    ret = _MSTDecodeNumber(data, pos, tokenType);
-                //    decodedObjects.Add(ret);
-                //    break;
-                //}
 				default : {
 					if (tokenType >= MSTE_TOKEN_TYPE_USER_CLASS){
 						_MSTJumpToNextToken(data, pos, tokenCount);
 						ret = _MSTDecodeUserDefinedObject(data, pos, operation, tokenType, decodedObjects, classes, keys, tokenCount, allowsUnknownUserClasses);
 
-                        //if (((tokenType - MSTE_TOKEN_TYPE_USER_CLASS) % 2) > 0) {
-                        //    isWeaklyReferenced = true;
-                        //} else {
-                        //    isWeaklyReferenced = false;
-                        //}
 					} else {
 						throw new MSTEException("_MSTDecodeObject - unknown tokenType : " + tokenType);
 					}
@@ -1266,20 +1171,6 @@ namespace MSTEFramework {
 								break;
 							}
 							if (pos[0] == len - 1) {
-                                //if (verifyCRC) {
-                                //    StringBuilder global = new StringBuilder();
-                                //    Encoding enc8 = Encoding.UTF8;
-                                //    byte[] byteData = Array.ConvertAll(data, (a) => (byte)a);
-                                //    string s = enc8.GetString(byteData);
-                                //    global.Append(s);
-                                //    int posCRC = s.IndexOf("CRC");
-                                //    global.Remove(posCRC + 3, 11);
-                                //    global.Insert(posCRC + 3, "00000000");
-                                //    string calcCRC = MSCRC32.getCRC(global.ToString());
-                                //    if (calcCRC.ToUpper() != strCRC.ToUpper()) {
-                                //        throw new MSTEException("decodeObject  - CRC Verification failed");
-                                //    }
-                                //}
 								myTokenCount[0]++;
 								if (tokenNumber != myTokenCount[0]) {
 									throw new MSTEException("decodeObject - Wrong token number : " + myTokenCount[0] + " (expected : " + tokenNumber + ")");
@@ -1300,31 +1191,5 @@ namespace MSTEFramework {
 				throw new MSTEException("decodeObject:no minimum header size !");
 			}
 		}
-
-        //private static int[] toInt = new int[128];
-		
-        //private static sbyte[] decodeFromBase64(string s) {
-        //    int delta = s.EndsWith("==") ? 2 : s.EndsWith("=") ? 1 : 0;
-        //    sbyte[] buffer = new sbyte[s.Length * 3 / 4 - delta];
-        //    int mask = 0xFF;
-        //    int index = 0;
-        //    for (int i = 0; i < s.Length; i += 4) {
-        //        int c0 = (byte)s[i];
-        //        int c1 = (byte)s[i + 1];
-        //        buffer[index++] = (sbyte)(((c0 << 2) | (c1 >> 4)) & mask);
-        //        if (index >= buffer.Length) {
-        //            return buffer;
-        //        }
-        //        int c2 = toInt[s[i + 2]];
-        //        buffer[index++] = (sbyte)(((c1 << 4) | (c2 >> 2)) & mask);
-        //        if (index >= buffer.Length) {
-        //            return buffer;
-        //        }
-        //        int c3 = toInt[s[i + 3]];
-        //        buffer[index++] = (sbyte)(((c2 << 6) | c3) & mask);
-        //    }
-        //    return buffer;
-        //}
-
 	}
 }
