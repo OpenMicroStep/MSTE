@@ -1,511 +1,441 @@
 <?php
 
-// -----------------------------------------------------------------------------
-// Existing MS Types
-// -----------------------------------------------------------------------------
-class MSType {
-
-	const MSOBJECT 			= "MSObject";
-	const MSARRAY 			= "MSArray"; 
-	const MSNATURALARRAY	= "MSNaturalArray";
-	const MSDICT 			= "MSDict";
-	const MSCOUPLE			= "MSCouple";
-	const MSDATE 			= "MSDate";
-	const MSCOLOR 			= "MSColor";
-	const MSDATA 			= "MSData";
-	const MSSTRING 			= "MSString";
-} 
-
-// -----------------------------------------------------------------------------
-// Class Object : bases class for decoding
-// -----------------------------------------------------------------------------
-class MSObject {
-	protected $_values;
-	public $className;
-	public $isA;
-
-	function __construct() {
-		$this->isA = MSType::MSOBJECT; 
-	}
-
-	function getValueFromKey($key) {
-		if (sizeof($this->_values) == 0) {return null;}
-		return (array_key_exists($key, $this->_values) ? $this->_values[$key] : null);
-		// return $this->_values[$key];
-	}
-
-	function setObjectForKey(&$value, $key) {
-		$this->_values[$key] = $value;
-	}
-
-	function setValueForKey($value, $key) {
-		$this->_values[$key] = $value;
-	}
-
-	function getValues() {
-		return $this->_values;
-	}
-}
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// Array class
-// -----------------------------------------------------------------------------
-class MSArray extends MSObject {
-	function __construct() {
-		$this->isA = MSType::MSARRAY;
-	}
-
-	function getValueFromKey($key) {
-		if (is_int($key)) return $this->_values[$key];
-	}
-
-	function setObjectForKey(&$value, $key) {
-		if (is_int($key)) { 
-			$this->_values[$key] = $value;
-		}
-	}
-	function getSize() {
-		return sizeof($this->_values);
-	}
-}
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// NAtural Array class
-// -----------------------------------------------------------------------------
-class MSNaturalArray extends MSObject {
-	function __construct($arr=null) {
-		$this->isA = MSType::MSNATURALARRAY;
-		$this->_values = array();
-		if ($arr!=null) {
-			for ($j=0; $j<sizeof($arr); $j++) {
-				array_push($this->_values, round($arr[$j]));
-			}
-
-		}
-	}
-
-	function getValueFromKey($key) {
-		if (is_int($key)) return $this->_values[$key];
-	}
-
-	function setObjectForKey(&$value, $key) {
-		if (is_int($key)) { 
-			array_push($this->_values, $value);
-		}
-	}
-
-	// function getValues() {
-	// 	return $this->_values;
-	// }
-}
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// Dictionnary Class
-// -----------------------------------------------------------------------------
-class MSDict extends MSObject {
-	function __construct() {
-		$this->isA = MSType::MSDICT;
-	}
-
-	public static function  initWithArray($arr) {
-		if (isAssoc($arr)) {
-			$d = new MSDict();
-			foreach ($arr as $key => $value) {
-				$d->setObjectForKey($value, $key);
-			}
-			return $d;
-		}
-		return null;
-	}
+function MSCapacityForCount($count)
+{
+    static $DEFAULT_CAPACITY_FOR_COUNTS= NULL;
+    if ($DEFAULT_CAPACITY_FOR_COUNTS === NULL) {
+        $DEFAULT_CAPACITY_FOR_COUNTS = array(
+          /* 000 */   2,   2,   4,   4,   8,   8,   8,   8,
+          /* 008 */  16,  16,  16,  16,  16,  16,  16,  16,
+          /* 016 */  32,  32,  32,  32,  32,  32,  32,  32,
+          /* 024 */  32,  32,  32,  32,  32,  32,  32,  32,
+          /* 032 */  64,  64,  64,  64,  64,  64,  64,  64,
+          /* 040 */  64,  64,  64,  64,  64,  64,  64,  64,
+          /* 048 */  64,  64,  64,  64,  64,  64,  64,  64,
+          /* 056 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 064 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 072 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 080 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 088 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 096 */ 128, 128, 128, 128, 128, 128, 128, 128,
+          /* 104 */ 256, 256, 256, 256, 256, 256, 256, 256,
+          /* 112 */ 256, 256, 256, 256, 256, 256, 256, 256,
+          /* 120 */ 256, 256, 256, 256, 256, 256, 256, 256
+        ) ;
+    }
+    $count = (int)$count ;
+    return ($count < 128 ? $DEFAULT_CAPACITY_FOR_COUNTS[$count] : (($count + ($count >> 1)) & (int)~255) + 256) ;
 }
 
-function isAssoc($array) {
-	return ($array !== array_values($array));
+class MSArray extends SplFixedArray {
+    private $internalCount = 0 ;
+
+    public function __construct($arr_or_capacity) {
+        if (is_array($arr_or_capacity)) {
+            $this->setSize(count($arr_or_capacity));
+            $this->internalCount= $this->getSize();
+            foreach($arr_or_capacity as $i => $o) {
+                $this->offsetSet($i, $o) ;
+            }
+        }
+        else if (is_numeric($arr_or_capacity)) {
+            $this->setSize($arr_or_capacity);
+        }
+    }
+    public function resizeForCount($n) {
+        $size = $this->getSize() ;
+        if ($n > $size) {
+            $this->setSize(MSCapacityForCount($n)) ;
+        }
+    }
+    public function count() { return $this->internalCount ; }
+    public function offsetExists ($offset) {
+        return $offset >= 0 && $offset < $this->internalCount ? parent::offsetExists($offset) : false ;
+    }
+    public function addObject($anObject) {
+        $count = $this->count() ;
+        $this->resizeForCount($this->internalCount + 1) ;
+        $this->offsetSet($this->internalCount, $anObject) ;
+        $this->internalCount += 1 ;
+    }
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushItems($this) ;
+        }
+    }
 }
 
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// COUPLE Class
-// -----------------------------------------------------------------------------
-class MSCouple extends MSObject {
-
-	const FIRST_MEMBER = "firstMember"; 
-	const SECOND_MEMBER = "secondMember"; 
-
-	function __construct($f=null, $s=null) {
-		$this->isA 			= MSType::MSCOUPLE;
-		$this->setFirstMember($f);
-		$this->setSecondMember($s);
-	}
-
-	function getValueFromKey($key) {
-		if ($key == MSCouple::FIRST_MEMBER || $key == MSCouple::SECOND_MEMBER) { 
-			return $this->_values[$key];
-		}
-	}
-
-	function getFirstMember() {
-		return $this->getValueFromKey(MSCouple::FIRST_MEMBER);
-	}
-
-	function getSecondMember() {
-		return $this->getValueFromKey(MSCouple::SECOND_MEMBER);
-	}
-
-	function setObjectForKey(&$value, $key) {
-		if ($key == MSCouple::FIRST_MEMBER || $key == MSCouple::SECOND_MEMBER) { 
-			$this->_values[$key] = $value;
-		}
-	}
-
-	function setFirstMember($value) {
-		$this->setObjectForKey($value, MSCouple::FIRST_MEMBER);
-	}
-
-	function setSecondMember($value) {
-		$this->setObjectForKey($value, MSCouple::SECOND_MEMBER);
-	}
-}
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// DATA Class
-// -----------------------------------------------------------------------------
-class MSData extends MSObject{
-	
-	const B64_STRING = 'base64String';
-	const B64_LENGHT = 'base64Length';
-	
-	function __construct($data) {
-		$this->isA 	= MSType::MSDATA;
-
-		$this->setString($data);
-		$l = (strlen($data) > 1) ? strlen($data)-1 : 0 ; // we remove the final '=' from the length
-		$this->setLength($l);
-		// echo $this->_isBase64Valid() ? "<hr>OUI<hr>" : "<hr>NON<hr>";
-	}
-
-	// getters
-	function getValueFromKey($key) {
-		if ($key == MSData::B64_STRING || $key == MSData::B64_LENGHT) { 
-			return $this->_values[$key];
-		}
-	}
-	function getString() {
-		return $this->getValueFromKey(MSData::B64_STRING);
-	}
-	function toString() {
-		return $this->getString();
-	}
-	function getLength() {
-		return $this->getValueFromKey(MSData::B64_LENGHT);
-	}
-
-	// setters
-	function setObjectForKey(&$value, $key) {
-		if ($key == MSData::B64_STRING || $key == MSData::B64_LENGHT) { 
-			$this->_values[$key] = $value;
-		}
-	}
-	function setString($value) {
-		$this->setObjectForKey($value, MSData::B64_STRING);
-	}
-	function setLength($value) {
-		$this->setObjectForKey($value, MSData::B64_LENGHT);
-	}
-
-	private function _isBase64Valid() {
- 		return (bool) preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $this->getString());
- 		// return  (bool) (base64_encode(base64_decode($this->getString())) === $this->getString());
-
-	}
-	private function _isBase64ValidDecode() {
-		return base64_decode($mystring, true);
-	}
-
-	public static function isValid($s) {
-		return (bool) preg_match('/^[a-zA-Z0-9\/\r\n+]*={0,2}$/', $s);
-	}
-}
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
-// DATA Class
-// -----------------------------------------------------------------------------
-class MSString extends MSObject{
-	
-	const S_STRING = 'sString';
-	const S_LENGHT = 'sLength';
-	
-	function __construct($data) {
-		$this->isA 	= MSType::MSSTRING;
-		$this->setString($data);
-		$this->setLength(strlen($data));
-
-	}
-
-	// getters
-	function getValueFromKey($key) {
-		if ($key == MSString::S_STRING || $key == MSString::S_LENGHT) { 
-			return $this->_values[$key];
-		}
-	}
-	function getString() {
-		return $this->getValueFromKey(MSString::S_STRING);
-	}
-	function toString() {
-		return $this->getValueFromKey(MSString::S_STRING);
-	}
-	function getLength() {
-		return $this->getValueFromKey(MSString::S_LENGHT);
-	}
-
-	// setters
-	function setObjectForKey(&$value, $key) {
-		if ($key == MSString::S_STRING || $key == MSString::S_LENGHT) { 
-			$this->_values[$key] = $value;
-		}
-	}
-	function setString(&$value) {
-		$this->setObjectForKey($value, MSString::S_STRING);
-	}
-	function setLength(&$value) {
-		$this->setObjectForKey($value, MSString::S_LENGHT);
-	}
-}
-// -----------------------------------------------------------------------------
-
-// -----------------------------------------------------------------------------
-// Date Class
-// -----------------------------------------------------------------------------
-class MSDate {
-	public $isA;
-	private $orginalTimeValue;
-	private $decodedTimeValue;
-
-	const DISTANT_PAST 		= -8640000000000000 ;
-	const DISTANT_FUTURE 	= 8640000000000000 ;
-
-	public static $dateFuture;
-	public static $datePast;
-	private static $ddp;
-	private static $ddf;
-
-	function __construct($val, $isUTC=true) {
-		$this->isA 				= MSType::MSDATE;
-		$this->orginalTimeValue = $val;
-		if (!$isUTC) {	
-			$this->decodedTimeValue = $this->_decodeValue();
-		} else {
-			$this->decodedTimeValue = $this->orginalTimeValue;
-		}
-	}
-	private function _decodeValue() {
-		$timeInSeconds = $this->orginalTimeValue;
-		$res = null;
-		if ($timeInSeconds >= MSDate::DISTANT_FUTURE) { $res =  MSDate::DISTANT_FUTURE ; }
-		else if ( $timeInSeconds <= MSDate::DISTANT_PAST) { $res = MSDate::DISTANT_PAST ; }
-		else {
-			$res = $this->_initWithUTCSeconds() ;
-		}
-		return $res;
-	}
-
-	private function _initWithUTCSeconds() {
-		$dtBase = mktime(0, 0, 0, 1, 1, 1970);
-		// $offset = Date('Z');
-		// echo $offset.'<br>';
-		$d 		= $dtBase + $this->orginalTimeValue ;
-		return $d;
-	}
-
-	function getValue() {
-		return $this->decodedTimeValue;
-	}
-
-	function getOriginalValue() {
-		return $this->orginalTimeValue;
-	}
-
-	function getDateFormat($format='d-m-Y') {
-		return date($format,$this->decodedTimeValue);
-
-	}
-
-	public static function getDatePast() {
-		if (!isset(MSDate::$ddp)){
-			MSDate::$ddp = new MSDate(MSDate::DISTANT_PAST);
-		}
-		// echo '<hr>'.MSDate::$ddp->getValue().'<hr>';
-		return MSDate::$ddp->getValue();
-	}
-	public static function getDateFuture() {
-		if (!isset(MSDate::$ddf)){
-			MSDate::$ddf = new MSDate(MSDate::DISTANT_FUTURE);
-		}
-		// echo '<hr>'.MSDate::$ddf->getValue().'<hr>';
-		return MSDate::$ddf->getValue();
-	}
-}
-MSDate::$datePast = new MSDate(MSDate::DISTANT_PAST);
-MSDate::$dateFuture = new MSDate(MSDate::DISTANT_FUTURE);
-// -----------------------------------------------------------------------------
-
-
-// -----------------------------------------------------------------------------
-// Color Class
-// -----------------------------------------------------------------------------
 class MSColor {
-	public $isA;
-	private $red;
-	private $green;
-	private $blue;
-	private $alpha;
+    private $red = 0 ;
+  private $green = 0 ;
+  private $blue = 0 ;
+  private $alpha = 255 ;
 
-	// public $redColor 	= MSColor(0xff,0,0);
-	// public $whiteColor 	= new MSColor(0xff, 0xff, 0xff);
-	// public $blackColor 	= new MSColor(0,0,0);
+  static $NAMED_COLORS  = array(
+    "beige"   => 'f5f5dc', "black"    => '000000', "blue"   => '0000ff',
+    "brown"   => 'a52a2a', "cyan"     => '00ffff', "fuchsia"  => 'ff00ff',
+    "gold"    => 'ffd700', "gray"     => '808080', "green"  => '008000',
+    "indigo "   => '4b0082', "ivory"    => 'fffff0', "khaki"  => 'f0e68c',
+    "lavender"  => 'e6e6fa', "magenta"    => 'ff00ff', "maroon"   => '800000',
+    "olive"   => '808000', "orange"     => 'ffa500', "pink"   => 'ffc0cb',
+    "purple"  => '800080', "red"      => 'ff0000', "salmon"   => 'fa8072',
+    "silver"  => 'c0c0c0', "snow"     => 'fffafa', "teal"   => '008080',
+    "tomato"  => 'ff6347', "turquoise"  => '40e0d0', "violet"   => 'ee82ee',
+    "wheat"   => 'f5deb3', "white"    => 'ffffff', "yellow"   => 'ffff00'
+  );
 
-	public static $colorStringRegex 		= '/[a-f0-9]{6}/'; //'/^(\w{2})(\w{2})(\w{2})$/' ;
-	public static $shortColorStringRegex 	= '/[a-f0-9]{3}/'; //'/^(\w{1})(\w{1})(\w{1})$/' ;
-	public static $namedColors 	= array(
-		"beige" 	=> 'f5f5dc', "black" 		=> '000000', "blue" 	=> '0000ff',
-		"brown"	 	=> 'a52a2a', "cyan" 		=> '00ffff', "fuchsia" 	=> 'ff00ff',
-		"gold" 		=> 'ffd700', "gray" 		=> '808080', "green" 	=> '008000',
-		"indigo " 	=> '4b0082', "ivory" 		=> 'fffff0', "khaki" 	=> 'f0e68c',
-		"lavender" 	=> 'e6e6fa', "magenta" 		=> 'ff00ff', "maroon" 	=> '800000',
-		"olive" 	=> '808000', "orange" 		=> 'ffa500', "pink" 	=> 'ffc0cb',
-		"purple" 	=> '800080', "red" 			=> 'ff0000', "salmon" 	=> 'fa8072',
-		"silver" 	=> 'c0c0c0', "snow" 		=> 'fffafa', "teal"		=> '008080',
-		"tomato" 	=> 'ff6347', "turquoise" 	=> '40e0d0', "violet" 	=> 'ee82ee',
-		"wheat" 	=> 'f5deb3', "white" 		=> 'ffffff', "yellow" 	=> 'ffff00'
-	);
+  CONST COLOR_REGEX           = '/[a-f0-9]{6}/' ;
+  CONST SHORT_COLOR_REGEX     = '/[a-f0-9]{3}/' ;
 
-	function __construct() {
-		$this->isA 	= MSType::MSCOLOR;
-		$nb 		= func_num_args();
-		$args 		= func_get_args();
+  public function __construct($colorOrRed, $green= null, $blue= null, $alpha= 255) {
+    if ($green === null) {
+        if (is_string($colorOrRed)) { $this->setColorFromString($colorOrRed) ; }
+        else { $this->setColorFromInteger($colorOrRed) ; }
+    }
+    else {
+        $this->setRGBAColor($colorOrRed,$green,$blue,$alpha) ;
+    }
+  }
 
-		// echo '<br>Args: '.gettype($args[0]).'<br>';
-		if ($nb==1 && gettype($args[0]) == 'string') {
-			$this->_initWithString($args);
-		}
-		else if ($nb>=3) {
-			$this->_initWithValues($args);
-		}
-		else if ($nb>=1 && gettype($args[0]) == 'integer') {
-			$this->_initWithValue($args);
-		}
-		else {
-			$this->_initDefault();
-		}
-	}
+    public function setRGBAColor($r, $g, $b, $a) {
+        if (is_int($r) && !is_nan($r) && $r >= 0 &&
+            is_int($g) && !is_nan($g) && $g >= 0 &&
+            is_int($b) && !is_nan($b) && $b >= 0 &&
+            is_int($a) && !is_nan($a) && $a >= 0) {
+            $this->alpha= $a;
+            $this->red= $r;
+            $this->green= $g;
+            $this->blue= $b;
+        }
+        else {
+            throw new Exception("MSColor : impossible to setRGBAColor() with (r:".getType($r).", g:".getType($g).", b:".getType($b).", a:".getType($a).").") ;
+        }
+    }
+    public function setColorFromInteger($integer) {
+        if (is_int($integer) && !is_nan($integer) && $integer >= 0) {
+            $this->alpha = 0xff - (($integer >> 24) & 0xff) ;
+            $this->red = ($integer >> 16) & 0xff ;
+            $this->green = ($integer >> 8) & 0xff ;
+            $this->blue = $integer & 0xff ;
+        }
+        else {
+            throw new Exception("MSColor : impossible to setColorFromInteger() with a ".getType($integer).".") ;
+        }
+    }
 
-	private function _initWithString($args) {
-		$r = $args[0];
-		if (gettype($r) == 'string') {
-			$s = $bits = null; 
-			$ok = true;
-			$r = preg_replace('/\s\s+/', '', $r); 
+    public function setColorFromString($str) {
+        if (is_string($str)) {
+        $ok = true ;
+             $str = preg_replace('/\s\s+/', '', $str);
+        $bits = null ;
 
-			if (!strlen($r)>0) { $ok = false ; }
-		    if ($ok && $r[0] == '#') { $r = substr($r, 1); }
-		    if ($ok && strlen($r) < 3) { $ok = false ; }
-			if ($ok) {
-			    $r 		= strtolower($r);
-				$s 		= isset(MSColor::$namedColors[$r]) ? MSColor::$namedColors[$r] : '';
-				$v 		= $s?$s:$r;
-				if (preg_match(MSColor::$colorStringRegex, $v)) { 
-					$bits 	= str_split($v, 2);
-				}
-		        
-				if (sizeof($bits) != 3) {
-					if (preg_match(MSColor::$shortColorStringRegex, $v)) { 
-			        	$bits = str_split($v, 1);
-			        }
-					if (sizeof($bits) != 3) { $ok = false ; }
-				}
-				if ($ok) {
-				    $this->red 		= hexdec('0x'.$bits[0]);
-				    $this->green 	= hexdec('0x'.$bits[1]);
-				    $this->blue 	= hexdec('0x'.$bits[2]);
-				}
-			}		
-			if (!$ok) {
-				$this->red = $this->green = $this->blue = 0 ;
-			}
-			$this->alpha = 255 ;
-		} 
-	}
+          if (!strlen($str)) { $ok = false ; }
+        if ($ok && $str[0] == '#') { $str = substr($str, 1); }
+          if ($ok && strlen($str) < 3) { $ok = false ; }
+          if ($ok) {
+              $str = strtolower($str);
+              $name = MSColor::$NAMED_COLORS[$str] ;
+          if (isset($name)) { $str = $name ; }
+          if (preg_match(MSColor::COLOR_REGEX, $str)) {
+            $bits   = str_split($str, 2);
+          }
+          if (sizeof($bits) != 3) {
+            if (preg_match(MSColor::SHORT_COLOR_REGEX, $str)) {
+                  $bits = str_split($str, 1);
+                }
+            if (sizeof($bits) != 3) { $ok = false ; }
+          }
+          if ($ok) {
+              $this->red    = hexdec('0x'.$bits[0]);
+              $this->green  = hexdec('0x'.$bits[1]);
+              $this->blue   = hexdec('0x'.$bits[2]);
+          }
+            }
+        }
+    }
 
-	private function _initWithValue($args) {
-		if (isset($args[0])) { 
-			$r = $args[0];
-			$this->red 		= ($r >> 16) & 0xff;
-			$this->green 	= ($r >> 8) & 0xff;
-			$this->blue 	= $r & 0xff;
-			$this->alpha 	= 255;
-		} else {$this->_initDefault();}
-	}
+    public function toString() {
+        return $this->alpha == 255 ? "#".str_pad(dechex($this->red), 2, '0', STR_PAD_LEFT).
+                                         str_pad(dechex($this->green), 2, '0', STR_PAD_LEFT).
+                                         str_pad(dechex($this->blue), 2, '0', STR_PAD_LEFT) :
+                                     "rgba(".$this->red.",".$this->green.",".$this->blue.",".(this.alpha/255.0).")" ;
+    }
+    public function toNumber() { return ((0xff - $this->alpha) * 16777216) + ($this->red * 65536) + ($this->green * 256) + $this->blue ;}
 
-	private function _initWithValues($args) {
-		// echo "Args 0 : ".$args[0].'<br>';
-		// echo "Args 1 : ".$args[1].'<br>';
-		// echo "Args 2: ".$args[2].'<br>';
-		if ($args != null && sizeof($args)>1 && $args[1] !== '' && $args[2] !== '') { 
-			$this->red 		= ($args[0] === '' || $args[0] < 0) ? 0 : ($args[0]>255 ? 255 : $args[0]);
-			$this->green 	= ($args[1] === '' || $args[1] < 0) ? 0 : ($args[1]>255 ? 255 : $args[1]);
-			$this->blue 	= ($args[2] === '' || $args[2] < 0) ? 0 : ($args[2]>255 ? 255 : $args[2]);
-
-			$this->alpha 	= (isset($args[3]) && $args[3] !== '') ? $args[3] : 255;
-		} else {$this->_initDefault();}
-	}
-
-	private function _initDefault() {
-		$this->red 		= 0;
-		$this->green 	= 0;
-		$this->blue 	= 0;
-		$this->alpha 	= 255;
-	}
-
-	public function getStringValue($withAlpha=false) {
-		$r  = str_pad(dechex($this->red), 2, '0', STR_PAD_LEFT);
-		$r .= str_pad(dechex($this->green), 2, '0', STR_PAD_LEFT);
-		$r .= str_pad(dechex($this->blue), 2, '0', STR_PAD_LEFT);
-		if ($withAlpha) { 
-			$r .= str_pad(dechex($this->alpha), 2, '0', STR_PAD_LEFT); 
-		}
-		return '#'.$r;
-	}
-
-	public function getValue($withAlpha=false) {
-		if ($withAlpha) {
-			$res = ($this->red << 24) | ($this->green << 16) | ($this->blue << 8) | $this->alpha;
-		} else {
-			$res = ($this->red << 16) | ($this->green << 8) | ($this->blue);
-		}
-		return dechex($res);
-
-	}
-
-	public function toString() {
-		$s  = 'Couleur RVB > ';
-		$s .= '('.$this->red.', ';
-		$s .= ''.$this->green.', ';
-		$s .= ''.$this->blue.') ';
-		$s .= 'A : '.$this->alpha.'';
-		return $s;		
-	}
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushColor($this->toNumber()) ;
+        }
+    }
 }
-// -----------------------------------------------------------------------------
 
-?>
+class MSCouple {
+    private $first ;
+    private $second ;
+
+    public function __construct($a, $b) { $this->first = $a ; $this->second = $b ; }
+    public function firstMember() { return $this->first ; }
+    public function secondMember() { return $this->second ; }
+    public function setFirstMember($o) { $this->first = $o ; }
+    public function setSecondMember($o) { $this->second = $o ; }
+    public function setCouple(MSCouple $c) { $this->first = $c->firstMemner() ; $this->second = $c->secondMember() ; }
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushCouple($this->first, $this->second) ;
+        }
+    }
+}
+
+class MSNaturalArray extends MSArray {
+
+    public static function fromArray($data, $save_indexes = NULL) {
+        return new MSNaturalArray($data);
+    }
+
+    public function addNatural($n) {
+        if ($n < 0) { throw new Exception("Impossible to add negative values in a MSNaturalArray") ; }
+        parent::addObject($n);
+    }
+
+    public function addObject($o) {
+        if (method_exists($o, 'isNumeric') && is_callable(array($o, 'isNumeric')) && $o->isNumeric()) {
+            parent::addObject($n);
+        }
+        else { throw new Exception("Impossible to add non numeric values in a MSNaturalArray") ; }
+    }
+
+    public function offsetSet($index, $o) {
+        if (is_numeric($o) || (is_object($o) && method_exists($o, 'isNumeric') && is_callable(array($o, 'isNumeric')) && $o->isNumeric())) {
+            $o = (int)$o ;
+            if ($o < 0) { throw new Exception("Impossible to set negative values in a MSNaturalArray") ; }
+            parent::offsetSet($index, $o) ;
+        }
+        else { throw new Exception("Impossible to set non numeric values in a MSNaturalArray") ; }
+    }
+
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushNaturals($this) ;
+        }
+    }
+}
+
+class MSBuffer implements ArrayAccess {
+    private $_data;
+    function __construct($data_or_size) {
+        if (is_string($data_or_size))
+            $this->_data= $data_or_size;
+        else if (is_numeric($data_or_size))
+            $this->_data= str_repeat('\0', $data_or_size);
+    }
+    public function length() {
+        return strlen($this->_data);
+    }
+    public function bytes() {
+        return $this->_data;
+    }
+
+    public function offsetExists ($offset) {
+        return is_numeric($offset) && $offset >= 0 && $offset < strlen($this->_data);
+    }
+    public function offsetGet ($offset) {
+        if ($this->offsetExists($offset))
+            return $this->_data[$offset];
+        throw new Exception("Impossible to set out of bounds offset");
+    }
+    public function offsetSet ($offset, $value) {
+        $this->_data[$offset] = $value;
+    }
+    public function offsetUnset ($offset) {
+        throw new Exception("Impossible to unset a byte in MSBuffer");
+    }
+
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($this->length() == 0) {
+            $encoder->pushTokenType('emptyData');
+        } else if ($encoder->shouldPushObject($this)) {
+            $encoder->pushTokenType('data');
+            $encoder->push(base64_encode($this->_data)) ;
+        }
+    }
+}
+
+class MSGMTDate {
+    const TIMEINTERVALSINCE1970 = 978307200.0;
+
+    protected $_time;
+
+    function __construct($unixTimestamp) {
+        if (!is_numeric($unixTimestamp))
+            throw new Exception("Impossible to create MSGMTDate with a non numeric timestamp");
+        $this->_time = (double)$unixTimestamp;
+    }
+
+    function timeIntervalSince1970() {
+        return $this->_time;
+    }
+
+    function timeIntervalSince2001() {
+        return $this->_time + TIMEINTERVALSINCE1970;
+    }
+
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushTokenType('gmtDate');
+            $encoder->push($this->_time);
+        }
+    }
+}
+
+class MSLocalDate extends MSGMTDate {
+    static private $DaysFrom00000229To20010101= 730792;
+    static private $DaysFrom00010101To20010101= 730485;
+    static private $SecsFrom00010101To20010101= 63113904000;
+    static private $SecsFrom19700101To20010101= 978307200;
+    static private $DaysInMonth= array(0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
+    static private $DaysInPreviousMonth= array(0, 0, 0, 0, 31, 61, 92, 122, 153, 184, 214, 245, 275, 306, 337);
+
+    function __construct($intervalOrYear, $month= 0, $day= 0, $hours= 0, $minutes= 0, $seconds= 0) {
+        if ($month > 0 && $day > 0)
+            $this->_time = static::intervalFrom($intervalOrYear, $month, $day, $hours, $minutes, $seconds);
+        else
+            $this->_time = $intervalOrYear - static::$SecsFrom19700101To20010101;
+    }
+
+    public static function isLeapYear($y) {
+        return ($y % 4 ? false : ( $y % 100 ? ($y > 7 ? true : false) : ($y % 400 || $y < 1600 ? false : true)));
+    }
+    public static function validDate($year, $month, $day) {
+        if (!is_numeric($day) || !is_numeric($month) || !is_numeric($year) || $day < 1 || $month < 1 || $month > 12) { return false ; }
+        if ($day > static::$DaysInMonth[$month]) { return ($month === 2 && $day === 29 && static::isLeapYear(year)) ? true : false ; }
+        return true ;
+    }
+    public static function validTime($hour, $minute, $second) {
+        return (is_numeric($hour) && is_numeric($minute) && is_numeric($second) && $hour >= 0 && $hour < 24 && $minute >= 0 && $minute < 60 && $second >= 0 && $second < 60);
+    }
+    public static function intervalFromYMD($year, $month, $day) {
+        if ($month < 3) { $month += 12; $year--; }
+
+        $leaps = floor($year/4) - floor($year/100) + floor($year/400);
+
+        return floor(($day + static::$DaysInPreviousMonth[$month] + 365 * $year + $leaps - static::$DaysFrom00000229To20010101) * 86400) ;
+    }
+    public static function intervalFrom($year, $month, $day, $hours, $minutes, $seconds) {
+        return static::intervalFromYMD($year, $month, $day) + $hours * 3600 + $minutes * 60 + $seconds ;
+    }
+    public static function timeFromInterval($t) { return (($t+static::$SecsFrom00010101To20010101) % 86400) ; }
+    public static function dayFromInterval($t) { return floor(($t - static::timeFromInterval($t))/86400) ; }
+    public static function secondsFromInterval($t) { return (($t+static::$SecsFrom00010101To20010101) % 60) ; }
+    public static function minutesFromInterval($t) { return (int)(floor(($t+static::$SecsFrom00010101To20010101) %  3600) / 60) ; }
+    public static function hoursFromInterval($t) { return (int)(floor(($t+static::$SecsFrom00010101To20010101) %  86400) /  3600) ; }
+    public static function dayOfWeekFromInterval($t, $offset= 0) {
+        return (static::dayFromInterval($t)+static::$DaysFrom00010101To20010101 + 7 - ($offset % 7)) % 7;
+    }
+    public static function componentsWithInterval($interval) {
+        $Z =                  static::dayFromInterval($interval) + static::$DaysFrom00000229To20010101 ;
+        $gg =                 $Z - 0.25 ;
+        $CENTURY =            floor($gg/36524.25) ;
+        $CENTURY_MQUART =     $CENTURY - floor($CENTURY/4) ;
+        $ALLDAYS =            $gg + $CENTURY_MQUART ;
+        $Y =                  floor($ALLDAYS / 365.25) ;
+        $Y365 =               floor($Y * 365.25) ;
+        $DAYS_IN_Y =          $CENTURY_MQUART + $Z - $Y365 ;
+        $MONTH_IN_Y =         floor((5 * $DAYS_IN_Y + 456)/153) ;
+
+        $ret = array(
+            "day" => floor($DAYS_IN_Y - floor((153*$MONTH_IN_Y - 457) / 5)),
+            "hour" => static::hoursFromInterval($interval),
+            "minute" => static::minutesFromInterval($interval),
+            "seconds" => static::secondsFromInterval($interval),
+            "dayOfWeek" => (($Z + 2) % 7)
+        );
+
+        if ($MONTH_IN_Y > 12) {
+            $ret["month"] = $MONTH_IN_Y - 12 ;
+            $ret["year"] = $Y + 1 ;
+        }
+        else {
+            $ret["month"] = $MONTH_IN_Y ;
+            $ret["year"] = $Y ;
+        }
+        return $ret ;
+    }
+    public static function dateWithInt($decimalDate) {
+        if (is_int($decimalDate)) {
+            $day = $decimalDate % 100 ;
+            $month = (int)(($decimalDate % 10000) /100) ;
+            $year = (int)($decimalDate / 10000) ;
+            if (static::validDate($year, $month, $day)) { return new MSDate($year, $month, $day) ; }
+        }
+        return null ;
+    }
+    public static function _lastDayOfMonth($year,$month) { return ($month === 2 && static::isLeapYear($year)) ? 29 : static::$DaysInMonth[$month]; } // not protected. use carrefully
+    public static function _yearRef($y, $offset) {
+        $firstDayOfYear = static::intervalFromYMD($y, 1, 1);
+        $d = static::dayOfWeekFromInterval($firstDayOfYear, $offset) ;
+        $d = ($d <= 3 ? -$d : 7-$d ); // Day of the first week
+        return $firstDayOfYear + $d * 86400 ;
+    }
+
+    public function components() {
+        return static::componentsWithInterval($this->_time);
+    }
+    public function __toString() {
+        $c = $this->components();
+        if (!is_array($c)) return null;
+        return $c['year']
+            . '-' . str_pad($c['month'], 2, "0", STR_PAD_LEFT)
+            . '-' . str_pad($c['day'], 2, "0", STR_PAD_LEFT)
+            . 'T' . str_pad($c['hour'], 2, "0", STR_PAD_LEFT)
+            . ':' . str_pad($c['minute'], 2, "0", STR_PAD_LEFT)
+            . ':' . str_pad($c['seconds'], 2, "0", STR_PAD_LEFT);
+    }
+    public function isLeap() {
+        $c = $this->components();
+        if (!is_array($c)) return false;
+        return static::isLeapYear($c['year']);
+    }
+    public function yearOfCommonEra() { $c = $this->components() ; return $c !== null ? $c['year'] : NAN ; }
+    public function monthOfYear() { $c = $this->components() ; return $c !== null ? $c['month'] : NAN ; }
+    public function dayOfMonth() { $c = $this->components() ; return $c !== null ? $c['day'] : NAN ; }
+    public function lastDayOfMonth() { $c = $this->components() ; return $c !== null ? static::lastDayOfMonth($c['month']) : NAN ; }
+
+    public function dayOfWeek($offset) { return static::dayOfWeekFromInterval($this->_time, $offset) ; }
+
+    public function hourOfDay() { return static::hoursFromInterval($this->_time) ; }
+    public function secondOfDay() { return static::timeFromInterval($this->_time) ; }
+
+    public function minuteOfHour() { return static::minutesFromInterval($this->_time) ; }
+
+    public function secondOfMinute() { return static::secondsFromInterval($this->_time) ; }
+
+    public function dateWithoutTime() { return new MSDate(this.interval - MSDate.timeFromInterval(this.interval)) ; }
+    public function dateOfFirstDayOfYear() { $c = $this->components() ; return $c !== null ? new MSDate($c['year'],1, 1) : null ; }
+    public function dateOfLastDayOfYear() { $c = $this->components() ; return $c !== null ? new MSDate($c['year'],12, 31) : null ; }
+    public function dateOfFirstDayOfMonth() { $c = $this->components() ; return $c !== null ? new MSDate($c['year'], $c['month'], 1) : null ; }
+    public function dateOfLastDayOfMonth() { $c = $this->components() ; return $c !== null ? new MSDate($c['year'], $c['month'], static::_lastDayOfMonth($c['year'], $c['month'])) : null ; }
+
+    public function secondsSinceLocal1970() {
+        return $this->_time + static::$SecsFrom19700101To20010101;
+    }
+
+    public function secondsSinceLocal2001() {
+        return $this->_time;
+    }
+
+    public function timeIntervalSince1970() {
+        $c = $this->components() ;
+        return $c !== null ? mktime($c['hour'], $c['minute'], $c['seconds'], $c['month'], $c['day'], $c['year']) : 0;
+    }
+
+    public function timeIntervalSince2001() {
+        return $this->timeIntervalSince1970() - static::$SecsFrom19700101To20010101;
+    }
+
+    public function toMSTE(MSTEncoder $encoder) {
+        if ($encoder->shouldPushObject($this)) {
+            $encoder->pushTokenType('localDate');
+            $encoder->push($this->_time + static::$SecsFrom19700101To20010101);
+        }
+    }
+}
