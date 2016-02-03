@@ -483,8 +483,8 @@ class MSTEDecoder {
                     $obj->initFromMSTE($this) ;
                     return $obj;
                 }
-                $token = $this->engine->tokenForType('dictionary') ;
             }
+            $token = $this->engine->tokenForType('dictionary') ;
 
         }
         $type= $this->engine->typeForToken($token);
