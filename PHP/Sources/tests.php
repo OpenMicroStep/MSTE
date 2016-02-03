@@ -1,6 +1,6 @@
 <?php
 
-error_reporting( E_ALL );
+error_reporting( E_ALL | E_STRICT);
 date_default_timezone_set('Europe/Paris');
 
 require_once('MSTE.php');
@@ -165,7 +165,7 @@ function tests_mste() {
     test_mste("[\"MSTE0102\",11,\"CRC1258D06E\",0,0,31,2,21,\"First object\",21,\"Second object\"]", new MSArray(array("First object", "Second object")));
     test_mste("[\"MSTE0102\",10,\"CRCF8392337\",0,0,32,21,\"First member\",21,\"Second member\"]", new MSCouple("First member", "Second member"));
     test_mste("[\"MSTE0102\",21,\"CRCD959E1CB\",0,3,\"20061\",\"entity\",\"0\",30,2,0,30,1,1,31,1,21,\"R_Right\",2,30,0]", array('20061'=> array('entity'=>new MSArray(array('R_Right'))), '0'=> array()));
-
+    test_mste("[\"MSTE0102\",11,\"CRC1258D06E\",0,0,31,2,20,11,9,1]", new MSArray(array(11, 11)));
     $nomDurand = "Durand" ;
     $pers1 = new Person("Yves", "Durand", new MSGMTDate(-243820800)) ;
     $pers2 = new Person("Claire", "Durand", new MSGMTDate(-207360000)) ;
@@ -176,8 +176,6 @@ function tests_mste() {
     $pers2->mariedTo= $pers1;
     $pers3->mother= $pers2;
     $pers3->father= $pers1;
-    test_mste("[\"MSTE0102\",59,\"CRCBB46D817\",1,\"person\",6,\"firstName\",\"maried-to\",\"name\",\"birthday\",\"mother\",\"father\",31,3,50,4,0,21,\"Yves\",1,50,4,0,21,\"Claire\",1,9,1,2,21,\"Durand\",3,23,-207360000.000000000000000,2,9,5,3,23,-243820800.000000000000000,9,3,50,5,0,21,\"Lou\",4,9,3,2,9,5,3,23,552096000.000000000000000,5,9,1]", $o);
-
-}
+    }
 tests_mste();
 

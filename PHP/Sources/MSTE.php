@@ -400,6 +400,7 @@ class MSTEDecoder {
     private $localClasses ;
     private $classes = array();
     private $keys = array();
+    private $refs = array();
 
     private $tokens;
     private $idx;
@@ -493,7 +494,7 @@ class MSTEDecoder {
         return $this->{'parse_' . $type}();
     }
     function pushRef($o) {
-        //echo "pushRef" . count($this->refs) . " " . ((getType($o) == 'object') ? get_class($o) : $o) . PHP_EOL;
+        //echo "pushRef" . count($this->refs) . " " . ((getType($o) == 'object') ? get_class($o) : (getType($o) === 'array' ? 'array' : $o)) . PHP_EOL;
         $this->refs[] = $o;
         return $o;
     }
@@ -514,7 +515,11 @@ class MSTEDecoder {
         return new MSBuffer(0);
     }
     function parse_ref() {
-        return $this->refs[$this->tokens[$this->idx++]];
+        $idx = $this->tokens[$this->idx++];
+        $count = count($this->refs);
+        if ($idx < $count)
+            return $this->refs[$idx];
+        throw new Exception("Unable to decode MSTE: referenced object index is too big ($idx < $count)");
     }
     function parse_numeric() {
         $ret= $this->nextToken();
@@ -528,11 +533,11 @@ class MSTEDecoder {
     function parse_u4() { return $this->parse_numeric(); }
     function parse_i8() { return $this->parse_numeric(); }
     function parse_u8() { return $this->parse_numeric(); }
-    function parse_decimal() { return $this->parse_numeric(); }
     function parse_real() { return $this->parse_numeric(); }
     function parse_integer() { return $this->parse_numeric(); }
     function parse_float() { return $this->parse_numeric(); }
     function parse_double() { return $this->parse_numeric(); }
+    function parse_decimal() { return $this->pushRef($this->parse_numeric()); }
     function parse_localDate() { return $this->pushRef(new MSLocalDate($this->nextToken())); }
     function parse_gmtDate() { return $this->pushRef(new MSGMTDate($this->nextToken())); }
     function parse_color() { return $this->pushRef(new MSColor($this->nextToken())); }
