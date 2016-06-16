@@ -27,7 +27,7 @@ function MSCapacityForCount($count)
     return ($count < 128 ? $DEFAULT_CAPACITY_FOR_COUNTS[$count] : (($count + ($count >> 1)) & (int)~255) + 256) ;
 }
 
-class MSArray extends SplFixedArray {
+class MSArray extends SplFixedArray implements JsonSerializable {
     private $internalCount = 0 ;
 
     public function __construct($arr_or_capacity) {
@@ -63,9 +63,13 @@ class MSArray extends SplFixedArray {
             $encoder->pushItems($this) ;
         }
     }
+
+    public function jsonSerialize() {
+        return $this->toArray();
+    }
 }
 
-class MSColor {
+class MSColor implements JsonSerializable {
     private $red = 0 ;
   private $green = 0 ;
   private $blue = 0 ;
@@ -158,7 +162,7 @@ class MSColor {
         return $this->alpha == 255 ? "#".str_pad(dechex($this->red), 2, '0', STR_PAD_LEFT).
                                          str_pad(dechex($this->green), 2, '0', STR_PAD_LEFT).
                                          str_pad(dechex($this->blue), 2, '0', STR_PAD_LEFT) :
-                                     "rgba(".$this->red.",".$this->green.",".$this->blue.",".(this.alpha/255.0).")" ;
+                                     "rgba(".$this->red.",".$this->green.",".$this->blue.",".round($this->alpha/255.0, 2).")" ;
     }
     public function toNumber() { return ((0xff - $this->alpha) * 16777216) + ($this->red * 65536) + ($this->green * 256) + $this->blue ;}
 
@@ -167,9 +171,13 @@ class MSColor {
             $encoder->pushColor($this->toNumber()) ;
         }
     }
+
+    public function jsonSerialize() {
+        return $this->toString();
+    }
 }
 
-class MSCouple {
+class MSCouple implements JsonSerializable {
     private $first ;
     private $second ;
 
@@ -183,6 +191,10 @@ class MSCouple {
         if ($encoder->shouldPushObject($this)) {
             $encoder->pushCouple($this->first, $this->second) ;
         }
+    }
+
+    public function jsonSerialize() {
+        return array($this->first, $this->second);
     }
 }
 
@@ -220,7 +232,7 @@ class MSNaturalArray extends MSArray {
     }
 }
 
-class MSBuffer implements ArrayAccess {
+class MSBuffer implements ArrayAccess, JsonSerializable {
     private $_data;
     function __construct($data_or_size) {
         if (is_string($data_or_size))
@@ -258,9 +270,13 @@ class MSBuffer implements ArrayAccess {
             $encoder->push(base64_encode($this->_data)) ;
         }
     }
+
+    public function jsonSerialize() {
+        return base64_encode($this->_data);
+    }
 }
 
-class MSGMTDate {
+class MSGMTDate implements JsonSerializable {
     const TIMEINTERVALSINCE1970 = 978307200.0;
 
     protected $_time;
@@ -284,6 +300,10 @@ class MSGMTDate {
             $encoder->pushTokenType('gmtDate');
             $encoder->push($this->_time);
         }
+    }
+
+    public function jsonSerialize() {
+        return date('c', $this->timeIntervalSince1970());
     }
 }
 
