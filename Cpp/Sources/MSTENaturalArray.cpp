@@ -50,3 +50,7 @@ void MSTENaturalArray::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& output
     e->encodeNaturalArray(this, outputBuffer);
 }
 
+std::string MSTENaturalArray::getClassName()
+{
+	return "MSTENaturalArray";
+}

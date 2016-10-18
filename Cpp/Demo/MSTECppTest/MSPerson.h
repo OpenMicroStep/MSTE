@@ -9,7 +9,7 @@
 #ifndef _PERSON_H
 #define _PERSON_H
 
-#include "MSTECustomClass.h"
+#include "../../Sources/MSTECustomClass.h"
 #include <map>
 #include <memory>
 

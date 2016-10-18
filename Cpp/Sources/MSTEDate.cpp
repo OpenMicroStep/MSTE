@@ -53,3 +53,8 @@ void MSTEDate::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
     else
         e->encodeUtcDate(this, outputBuffer);
 }
+
+std::string MSTEDate::getClassName()
+{
+	return "MSTEDate";
+}

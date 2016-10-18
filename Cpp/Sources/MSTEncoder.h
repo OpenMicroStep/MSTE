@@ -19,6 +19,7 @@
 class MSTEObject;
 
 // Basic types
+class MSTENull;
 class MSTEBool;
 class MSTEBasicType;
 
@@ -58,6 +59,7 @@ public:
     void encodeTokenSeparator(std::string&);
     
     // Basic types
+	void encodeNull(MSTENull*, std::string&);
     void encodeBool(MSTEBool*, std::string&);
     void encodeChar(MSTEBasicType*, std::string&);
     void encodeUnsignedChar(MSTEBasicType*, std::string&);

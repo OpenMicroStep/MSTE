@@ -72,3 +72,8 @@ void MSTEColor::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
     e->encodeColor(this, outputBuffer);
 }
+
+std::string MSTEColor::getClassName()
+{
+	return "MSTEColor";
+}

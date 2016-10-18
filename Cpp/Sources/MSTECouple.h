@@ -12,7 +12,7 @@
 #include <memory>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 class MSTECouple : public MSTEObject
 {
@@ -34,6 +34,8 @@ public:
 
     // Methods
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+	std::string getClassName();
 
 private :
     std::shared_ptr<MSTEObject> couple1;

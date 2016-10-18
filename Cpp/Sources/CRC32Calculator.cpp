@@ -28,11 +28,9 @@ std::string Crc32Calculator::calculateCRC32(const std::string& inputString)
                 crc = crc >> 1;
     }
     
-    std::stringstream myHexStream;
-    myHexStream << std::hex << ~crc;
-    
-    std::string result(myHexStream.str());
-    std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+	char szBuffer[9];
+	sprintf(szBuffer, "%08X", ~crc);
+	std::string result = szBuffer;
     
     return result;
 }

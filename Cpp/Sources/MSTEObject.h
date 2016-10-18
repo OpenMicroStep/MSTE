@@ -15,10 +15,13 @@ class MSTEncodeur;
 class MSTEObject
 {
 public:
+	// Constructor & destructor
 	MSTEObject();
 	virtual ~MSTEObject();
     
+	// Common virtual methods
     virtual void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer) = 0;
+	virtual std::string getClassName() = 0;
 };
 
 #endif // MSTE_OBJECT_H

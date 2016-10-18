@@ -30,3 +30,8 @@ void MSTEBool::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
     e->encodeBool(this, outputBuffer);
 }
+
+std::string MSTEBool::getClassName()
+{
+	return "MSTEBool";
+}

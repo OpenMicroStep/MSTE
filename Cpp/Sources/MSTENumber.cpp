@@ -33,3 +33,8 @@ void MSTENumber::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer
 {
     e->encodeNumber(this, outputBuffer);
 }
+
+std::string MSTENumber::getClassName()
+{
+	return "MSTENumber";
+}

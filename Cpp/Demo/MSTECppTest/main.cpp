@@ -28,7 +28,7 @@
 
 int main(int argc, const char * argv[])
 {
-    std::string inputBuffer = "[\"MSTE0102\",59,\"CRCF5040002\",1,\"Person\",6,\"name\",\"firstName\",\"birthday\",\"maried-to\",\"father\",\"mother\",31,3,50,4,0,21,\"Durand\",1,21,\"Yves\",2,22,-1222131600,3,50,4,0,9,2,1,21,\"Claire\",2,22,-1185667200,3,9,1,9,5,50,5,0,9,2,1,21,\"Lou\",2,22,-426214800,4,9,1,5,9,5]";
+    std::string inputBuffer = "[\"MSTE0102\",59,\"CRCB43F574E\",1,\"Person\",6,\"name\",\"firstName\",\"birthday\",\"maried-to\",\"father\",\"mother\",31,3,50,4,0,21,\"Durand\",1,21,\"Yves\",2,22,-1222131600,3,50,4,0,9,2,1,21,\"Claire\",2,22,-1185667200,3,9,1,9,5,50,5,0,9,2,1,21,\"Lou\",2,22,-426214800,4,9,1,5,9,5]";
     
 #if PROGRAM==_ENCODE
     std::shared_ptr<MSTEString> name(new MSTEString("Durand"));
@@ -80,7 +80,7 @@ int main(int argc, const char * argv[])
     
 #if PROGRAM==_DECODE_AND_ENCODE
  
-    MSTDecodeur decoder;
+    MSTDecoder decoder;
     std::shared_ptr<MSTEObject> root = decoder.decodeString(inputBuffer);
     MSTEncodeur encoder;
     std::cout << *(encoder.encodeRootObject(root)) << std::endl;

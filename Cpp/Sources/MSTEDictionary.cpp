@@ -69,3 +69,7 @@ void MSTEDictionary::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBu
     e->encodeDictionary(this, outputBuffer);
 }
 
+std::string MSTEDictionary::getClassName()
+{
+	return "MSTEDictionary";
+}

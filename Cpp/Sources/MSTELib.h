@@ -36,7 +36,7 @@
 #include "MSTEUserClass.h"
 
 // Encoders / decoders
-#include "MSTEncodeur.h"
-#include "MSTDecodeur.h"
+#include "MSTEncoder.h"
+#include "MSTDecoder.h"
 
 #endif // _MSTE_LIB_H

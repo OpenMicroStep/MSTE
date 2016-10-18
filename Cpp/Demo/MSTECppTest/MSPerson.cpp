@@ -7,7 +7,7 @@
 //
 
 #include "MSPerson.h"
-#include "MSTELib.h"
+#include "../../Sources/MSTELib.h"
 
 MSTECustomClassRegister<MSPerson> MSPerson::registre("Person");
 

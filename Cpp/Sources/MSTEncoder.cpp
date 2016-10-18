@@ -6,7 +6,7 @@
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 #include "MSTEBool.h"
 #include "MSTEBasicType.h"
@@ -110,6 +110,11 @@ void MSTEncodeur::encodeTokenSeparator(std::string& outputBuffer)
 {
     nbTokens++;
     outputBuffer.append(",");
+}
+
+void MSTEncodeur::encodeNull(MSTENull* o, std::string& outputBuffer)
+{
+	outputBuffer.append(std::to_string(MSTE_TYPE_NULL));
 }
 
 void MSTEncodeur::encodeBool(MSTEBool* o, std::string& outputBuffer)

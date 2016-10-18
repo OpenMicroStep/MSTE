@@ -160,3 +160,8 @@ void MSTEString::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer
         e->encodeWString(this, outputBuffer);
     }
 }
+
+std::string MSTEString::getClassName()
+{
+	return "MSTEString";
+}

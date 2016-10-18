@@ -12,7 +12,7 @@
 #include <string>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 constexpr static char hexChars[] = "0123456789ABCDEF";
 
@@ -40,6 +40,8 @@ public:
     
     // Methods
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+	std::string getClassName();
 
 private :
     std::string chaine;

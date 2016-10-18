@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 class MSTENaturalArray : public MSTEObject
 {
@@ -33,6 +33,8 @@ public:
     // Methods
     void addItem(int item);
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+	std::string getClassName();
 
 private :
     std::vector<int> aVector;

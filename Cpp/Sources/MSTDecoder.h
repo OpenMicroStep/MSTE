@@ -1,13 +1,13 @@
 //
-//  MSTDecodeur.h
+//  MSTDecoder.h
 //  MSTEncodDecodCpp
 //
 //  Created by Melodie on 24/10/12.
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#ifndef _MSTE_DECODEUR_H
-#define _MSTE_DECODEUR_H
+#ifndef _MSTE_DECODER_H
+#define _MSTE_DECODER_H
 
 #include <string>
 #include <vector>
@@ -61,14 +61,14 @@ class MSTECouple;
 // User classes
 class MSTEUserClass;
 
-class MSTDecodeur : public MSTE
+class MSTDecoder : public MSTE
 {
 public:
     // Constructor
-	MSTDecodeur();
+	MSTDecoder();
     
     // Destructor
-	virtual ~MSTDecodeur();
+	virtual ~MSTDecoder();
     
     // Main method
     std::shared_ptr<MSTEObject> decodeString(const std::string& inputBuffer);

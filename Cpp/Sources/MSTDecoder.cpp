@@ -1,13 +1,14 @@
 //
-//  MSTDecodeur.cpp
+//  MSTDecoder.cpp
 //  MSTEncodDecodCpp
 //
 //  Created by Melodie on 24/10/12.
 //  Copyright (c) 2012 Melodie. All rights reserved.
 //
 
-#include "MSTDecodeur.h"
+#include "MSTDecoder.h"
 
+#include "MSTENull.h"
 #include "MSTEBool.h"
 #include "MSTEBasicType.h"
 #include "MSTENumber.h"
@@ -25,15 +26,15 @@
 
 #include <iostream>
 
-MSTDecodeur::MSTDecodeur()
+MSTDecoder::MSTDecoder()
 {
 }
 
-MSTDecodeur::~MSTDecodeur()
+MSTDecoder::~MSTDecoder()
 {
 }
 
-std::shared_ptr<MSTEObject> MSTDecodeur::decodeString(const std::string& inputBuffer)
+std::shared_ptr<MSTEObject> MSTDecoder::decodeString(const std::string& inputBuffer)
 {
     if(inputBuffer.length()==0)
         throw "Empty buffer";
@@ -59,28 +60,42 @@ std::shared_ptr<MSTEObject> MSTDecodeur::decodeString(const std::string& inputBu
         // We parse the number of tokens
         nbTokens = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
         
+		// We save the position of the beginning of the CRC
+		unsigned int crcBeginPosition = currentPosition;
+
         // We parse the CRC
         std::string crc = decodeStringToken(inputBuffer, currentPosition);
         
-        // TODO: check the CRC
-        
-        // We parse the classes
-        int nbClasses = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
-        for(int i = 0; i < nbClasses; i++)
-            classes.push_back(decodeStringToken(inputBuffer, currentPosition));
-        
-        // We parse the keys
-        int nbKeys = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
-        for(int i = 0; i < nbKeys; i++)
-            keys.push_back(decodeStringToken(inputBuffer, currentPosition));
-        
-        // We decode the root object
-        return decodeObject(inputBuffer, currentPosition);
+        // We replace the CRC by the blank one
+		std::string blankChar = "0";
+		std::string cleanedBuffer = inputBuffer;
+		cleanedBuffer = cleanedBuffer.replace(cleanedBuffer.begin() + crcBeginPosition, cleanedBuffer.begin() + currentPosition - 1, "\"CRC00000000\"");
+
+		// We calculate the CRC
+		std::string crcCalc = Crc32Calculator::calculateCRC32(cleanedBuffer);
+		crcCalc = std::string("CRC") + crcCalc;
+
+		// We check the CRC
+		if (crc == crcCalc)
+		{
+			// We parse the classes
+			int nbClasses = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+			for (int i = 0; i < nbClasses; i++)
+				classes.push_back(decodeStringToken(inputBuffer, currentPosition));
+
+			// We parse the keys
+			int nbKeys = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
+			for (int i = 0; i < nbKeys; i++)
+				keys.push_back(decodeStringToken(inputBuffer, currentPosition));
+
+			// We decode the root object
+			return decodeObject(inputBuffer, currentPosition);
+		}
     }
     return NULL;
 }
 
-std::shared_ptr<MSTEObject> MSTDecodeur::decodeObject(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEObject> MSTDecoder::decodeObject(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     int typeId = std::stoi(decodeNumberToken(inputBuffer, currentPosition));
     std::shared_ptr<MSTEObject> result;
@@ -88,7 +103,7 @@ std::shared_ptr<MSTEObject> MSTDecodeur::decodeObject(const std::string& inputBu
     switch (typeId)
     {
         case MSTE_TYPE_NULL:
-            result = NULL;
+            result = MSTENull::getSingleton();
             break;
             
         case MSTE_TYPE_TRUE:
@@ -219,83 +234,83 @@ std::shared_ptr<MSTEObject> MSTDecodeur::decodeObject(const std::string& inputBu
     return result;
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeChar(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeChar(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((char)decodeStringToken(inputBuffer, currentPosition)[0]);
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedChar(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeUnsignedChar(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((unsigned char)decodeStringToken(inputBuffer, currentPosition)[0]);
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeShort(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeShort(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((short)std::stol(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedShort(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeUnsignedShort(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((unsigned short)std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeInt32(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeInt32(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((long)std::stol(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedInt32(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeUnsignedInt32(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((unsigned long)std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeInt64(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeInt64(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((long long)std::stoll(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeUnsignedInt64(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeUnsignedInt64(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((unsigned long long)std::stoull(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeFloat(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeFloat(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((float)std::stof(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEBasicType> MSTDecodeur::decodeDouble(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEBasicType> MSTDecoder::decodeDouble(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEBasicType>((double)std::stod(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
 // Complex types
-std::shared_ptr<MSTENumber> MSTDecodeur::decodeNumber(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTENumber> MSTDecoder::decodeNumber(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTENumber>(decodeNumberToken(inputBuffer, currentPosition));
 }
 
-std::shared_ptr<MSTEString> MSTDecodeur::decodeString(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEString> MSTDecoder::decodeString(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEString>(decodeStringToken(inputBuffer, currentPosition));
 }
 
-std::shared_ptr<MSTEDate> MSTDecodeur::decodeLocalDate(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEDate> MSTDecoder::decodeLocalDate(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEDate>(std::stol(decodeNumberToken(inputBuffer, currentPosition)), Local);
 }
 
-std::shared_ptr<MSTEDate> MSTDecodeur::decodeUtcDate(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEDate> MSTDecoder::decodeUtcDate(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEDate>(std::stol(decodeNumberToken(inputBuffer, currentPosition)), Utc);
 }
 
-std::shared_ptr<MSTEColor> MSTDecodeur::decodeColor(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEColor> MSTDecoder::decodeColor(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     return std::make_shared<MSTEColor>(std::stoul(decodeNumberToken(inputBuffer, currentPosition)));
 }
 
-std::shared_ptr<MSTEData> MSTDecodeur::decodeData(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTEData> MSTDecoder::decodeData(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     std::pair<char*,char*> delimiters = delimitatesStringToken(inputBuffer, currentPosition);
     std::shared_ptr<MSTEData> ret(new MSTEData());
@@ -303,7 +318,7 @@ std::shared_ptr<MSTEData> MSTDecodeur::decodeData(const std::string& inputBuffer
     return ret;
 }
 
-std::shared_ptr<MSTENaturalArray> MSTDecodeur::decodeNaturalArray(const std::string& inputBuffer, unsigned int& currentPosition)
+std::shared_ptr<MSTENaturalArray> MSTDecoder::decodeNaturalArray(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     std::shared_ptr<MSTENaturalArray> result(new MSTENaturalArray());
     
@@ -318,7 +333,7 @@ std::shared_ptr<MSTENaturalArray> MSTDecodeur::decodeNaturalArray(const std::str
 }
 
 // Generic structures
-std::shared_ptr<MSTEDictionary> MSTDecodeur::decodeDictionary(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEDictionary> item)
+std::shared_ptr<MSTEDictionary> MSTDecoder::decodeDictionary(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEDictionary> item)
 {
     unsigned long nbElements = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
     
@@ -332,7 +347,7 @@ std::shared_ptr<MSTEDictionary> MSTDecodeur::decodeDictionary(const std::string&
     return item;
 }
 
-std::shared_ptr<MSTEArray> MSTDecodeur::decodeArray(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEArray> item)
+std::shared_ptr<MSTEArray> MSTDecoder::decodeArray(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEArray> item)
 {
     unsigned long nbElements = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
     
@@ -345,7 +360,7 @@ std::shared_ptr<MSTEArray> MSTDecodeur::decodeArray(const std::string& inputBuff
     return item;
 }
 
-std::shared_ptr<MSTECouple> MSTDecodeur::decodeCouple(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTECouple> item)
+std::shared_ptr<MSTECouple> MSTDecoder::decodeCouple(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTECouple> item)
 {
     item->setFirstMember(decodeObject(inputBuffer, currentPosition));
     item->setSecondMember(decodeObject(inputBuffer, currentPosition));
@@ -353,7 +368,7 @@ std::shared_ptr<MSTECouple> MSTDecodeur::decodeCouple(const std::string& inputBu
 }
 
 // User classes
-std::shared_ptr<MSTEUserClass> MSTDecodeur::decodeUserClass(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEUserClass> item)
+std::shared_ptr<MSTEUserClass> MSTDecoder::decodeUserClass(const std::string& inputBuffer, unsigned int& currentPosition, std::shared_ptr<MSTEUserClass> item)
 {
     unsigned long nbAttributes = std::stoul(decodeNumberToken(inputBuffer, currentPosition));
     
@@ -367,7 +382,7 @@ std::shared_ptr<MSTEUserClass> MSTDecodeur::decodeUserClass(const std::string& i
     return item;
 }
 
-std::pair<char*, char*> MSTDecodeur::delimitatesStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
+std::pair<char*, char*> MSTDecoder::delimitatesStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     bool endOfStringReached = false;
     char *stringBegining, *stringEnd;
@@ -440,7 +455,7 @@ std::pair<char*, char*> MSTDecodeur::delimitatesStringToken(const std::string& i
 }
 
 // Get the string token and validates the token
-std::string MSTDecodeur::decodeStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
+std::string MSTDecoder::decodeStringToken(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     bool endOfStringReached = false;
     std::string result;
@@ -547,7 +562,7 @@ std::string MSTDecodeur::decodeStringToken(const std::string& inputBuffer, unsig
     return result;
 }
 
-std::string MSTDecodeur::decodeNumberToken(const std::string& inputBuffer, unsigned int& currentPosition)
+std::string MSTDecoder::decodeNumberToken(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     bool endOfNumberReached = false;
     std::string result;
@@ -606,13 +621,13 @@ std::string MSTDecodeur::decodeNumberToken(const std::string& inputBuffer, unsig
 }
 
 
-void MSTDecodeur::jumpToNextNonBlankCharacter(const std::string& inputBuffer, unsigned int& currentPosition)
+void MSTDecoder::jumpToNextNonBlankCharacter(const std::string& inputBuffer, unsigned int& currentPosition)
 {
     while ((inputBuffer[currentPosition]==' ') || (inputBuffer[currentPosition]=='\t') || (inputBuffer[currentPosition]=='\n') || (inputBuffer[currentPosition]=='\r'))
         currentPosition++;
 }
 
-bool MSTDecodeur::isSeparator(unsigned char c)
+bool MSTDecoder::isSeparator(unsigned char c)
 {
     return (c==',')||(c==']'); // End of array is also a valid separator
 }

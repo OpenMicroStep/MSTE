@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 #include "MSTEString.h"
 
 class MSTEDictionary  : public MSTEObject
@@ -38,6 +38,8 @@ public:
     // Methods
     void addItem(std::string key, std::shared_ptr<MSTEObject> item);
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+	std::string getClassName();
 
 private :
     std::vector<std::string> keys;

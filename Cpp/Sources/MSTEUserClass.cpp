@@ -57,6 +57,14 @@ std::shared_ptr<MSTEObject> MSTEUserClass::getAttributeValue(int idx)
     return attributeValues[idx];
 }
 
+std::shared_ptr<MSTEObject> MSTEUserClass::getAttributeValue(const std::string & name)
+{
+	for (int i = 0; i < attributeNames.size(); ++i)
+		if (attributeNames[i] == name)
+			return attributeValues[i];
+	return NULL;
+}
+
 void MSTEUserClass::setClassName(std::string className)
 {
     this->className = className;

@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 class MSTEUserClass : public MSTEObject
 {
@@ -32,6 +32,7 @@ public:
     std::string getAttributeName(int idx);
     std::vector<std::shared_ptr<MSTEObject>> getAttributeValues();
     std::shared_ptr<MSTEObject> getAttributeValue(int idx);
+	std::shared_ptr<MSTEObject> getAttributeValue(const std::string& name);
     
     // Setters
     void setClassName(std::string className);

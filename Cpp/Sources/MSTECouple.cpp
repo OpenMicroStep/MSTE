@@ -52,3 +52,8 @@ void MSTECouple::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer
 {
     e->encodeCouple(this, outputBuffer);
 }
+
+std::string MSTECouple::getClassName()
+{
+	return "MSTECouple";
+}

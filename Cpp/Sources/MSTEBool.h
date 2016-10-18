@@ -12,7 +12,7 @@
 #include <string>
 
 #include "MSTEObject.h"
-#include "MSTEncodeur.h"
+#include "MSTEncoder.h"
 
 class MSTEBool : public MSTEObject
 {
@@ -29,6 +29,8 @@ public:
     
     // Methods
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);
+
+	std::string getClassName();
     
 private:
     bool aBool;

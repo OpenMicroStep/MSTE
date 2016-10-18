@@ -52,3 +52,8 @@ void MSTEArray::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
     e->encodeArray(this, outputBuffer);
 }
+
+std::string MSTEArray::getClassName()
+{
+	return "MSTEArray";
+}

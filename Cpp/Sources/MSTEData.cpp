@@ -165,3 +165,8 @@ void MSTEData::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 {
     e->encodeData(this, outputBuffer);
 }
+
+std::string MSTEData::getClassName()
+{
+	return "MSTEData";
+}

@@ -165,3 +165,8 @@ void MSTEBasicType::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuf
             break;
     }
 }
+
+std::string MSTEBasicType::getClassName()
+{
+	return "MSTEBasicType";
+}
