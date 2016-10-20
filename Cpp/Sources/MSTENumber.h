@@ -21,12 +21,15 @@ public:
     // Constructors
 	MSTENumber();
     MSTENumber(std::string);
+	
+	template<typename T> MSTENumber(T val);
     
     // Destructor
 	virtual ~MSTENumber();
     
     // Getters
     std::string getString();
+	template<typename T> operator T();
     
     // Methods
     void encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer);

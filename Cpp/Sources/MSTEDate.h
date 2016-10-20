@@ -35,6 +35,11 @@ public:
 private :
     long date;
     DateTimeType dateType;
+
+	// UTC/Local conversion : you have to ADD diff to local timestamp to get UTC timestamp
+	static long _localDiff;
+	static bool _diffCalculated;
+	static long GetLocalDiff();
 };
 
 #endif // _MSTE_DATE_H

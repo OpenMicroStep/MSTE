@@ -7,6 +7,7 @@
 //
 
 #include "MSTEDate.h"
+#include <ctime>
 
 MSTEDate::MSTEDate()
 {
@@ -38,12 +39,18 @@ MSTEDate::~MSTEDate()
 
 long MSTEDate::getLocalDate()
 {
-    return date;
+	if (dateType == Utc)
+		return date - GetLocalDiff();
+	else
+		return date;
 }
 
 long MSTEDate::getUtcDate()
 {
-    return date;
+	if (dateType == Local)
+		return date + GetLocalDiff();
+	else
+		return date;
 }
 
 void MSTEDate::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
@@ -57,4 +64,25 @@ void MSTEDate::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
 std::string MSTEDate::getClassName()
 {
 	return "MSTEDate";
+}
+
+bool MSTEDate::_diffCalculated = false;
+
+long MSTEDate::_localDiff = 0;
+
+long MSTEDate::GetLocalDiff()
+{
+	if (!_diffCalculated)
+	{
+		// Calculates local and GMT timstamps
+		time_t localNowTimestamp = time(0);
+		tm *structGmtNow = gmtime(&localNowTimestamp);
+		time_t gmtNowTimestamp = mktime(structGmtNow);
+
+		// Calculates the diff
+		_localDiff = gmtNowTimestamp - localNowTimestamp;
+		if (structGmtNow->tm_isdst > 0) _localDiff -= 3600;
+		_diffCalculated = true;
+	}
+	return _localDiff;
 }

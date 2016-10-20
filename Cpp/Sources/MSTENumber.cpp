@@ -19,6 +19,12 @@ MSTENumber::MSTENumber(std::string aString)
     value = aString;
 }
 
+template <typename T>
+MSTENumber::MSTENumber(T val)
+{
+	value = std::to_string<T>(val);
+}
+
 MSTENumber::~MSTENumber()
 {
 	// TODO Auto-generated destructor stub
@@ -27,6 +33,12 @@ MSTENumber::~MSTENumber()
 std::string MSTENumber::getString()
 {
     return value;
+}
+
+template<typename T>
+MSTENumber::operator T()
+{
+	return std::from_string<T>(value);
 }
 
 void MSTENumber::encodeWithMSTEncodeur(MSTEncodeur* e, std::string& outputBuffer)
