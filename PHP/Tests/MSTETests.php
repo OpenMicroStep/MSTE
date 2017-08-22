@@ -60,7 +60,7 @@ class Person {
     }
 }
 
-class MSTETests extends PHPUnit_Framework_TestCase
+class MSTETests extends \PHPUnit\Framework\TestCase
 {
     public function assertMSTE($mste, $expect) {
         $decoded= MSTEDecoder::decodeEncodedString($mste, array("person" => "Person"));
