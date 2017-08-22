@@ -52,8 +52,7 @@ class MSArray extends SplFixedArray implements JsonSerializable {
     public function offsetExists ($offset) {
         return $offset >= 0 && $offset < $this->internalCount ? parent::offsetExists($offset) : false ;
     }
-    public function addObject($anObject) {
-        $count = $this->count() ;
+    public function addObject(&$anObject) {
         $this->resizeForCount($this->internalCount + 1) ;
         $this->offsetSet($this->internalCount, $anObject) ;
         $this->internalCount += 1 ;
@@ -209,7 +208,7 @@ class MSNaturalArray extends MSArray {
         parent::addObject($n);
     }
 
-    public function addObject($o) {
+    public function addObject(&$o) {
         if (method_exists($o, 'isNumeric') && is_callable(array($o, 'isNumeric')) && $o->isNumeric()) {
             parent::addObject($n);
         }

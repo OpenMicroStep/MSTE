@@ -464,7 +464,7 @@ class MSTEDecoder {
         $this->_parseDictionary($dico, $count) ;
         return $dico ;
     }
-    function parseItem() {
+    function &parseItem() {
         $token= $this->nextToken();
 
         //echo "parseItem " . $token . "(" . $this->engine->typeForToken($token) .")" .PHP_EOL;
@@ -478,7 +478,8 @@ class MSTEDecoder {
 
             if (isset($this->classes[$clsidx])) {
                 $cls = $this->classes[$clsidx];
-                $obj = $this->pushRef(new $cls());
+                $obj = new $cls();
+                $this->pushRef($obj);
                 if (method_exists($obj, 'initFromMSTE') && is_callable(array($obj, 'initFromMSTE'))) {
                     $obj->initFromMSTE($this) ;
                     return $obj;
@@ -493,66 +494,71 @@ class MSTEDecoder {
         }
         return $this->{'parse_' . $type}();
     }
-    function pushRef($o) {
+    function pushRef(&$o) {
         //echo "pushRef" . count($this->refs) . " " . ((getType($o) == 'object') ? get_class($o) : (getType($o) === 'array' ? 'array' : $o)) . PHP_EOL;
-        $this->refs[] = $o;
+        $this->refs[] = &$o;
         return $o;
     }
 
-    function parse_nil() {
-        return null;
+    function &parse_nil() {
+        $ret= null; return $ret;
     }
-    function parse_true() {
-        return true;
+    function &parse_true() {
+        $ret= true; return $ret;
     }
-    function parse_false() {
-        return false;
+    function &parse_false() {
+        $ret= false; return $ret;
     }
-    function parse_emptyString() {
-        return '';
+    function &parse_emptyString() {
+        $ret= ''; return $ret;
     }
-    function parse_emptyData() {
-        return new MSBuffer(0);
+    function &parse_emptyData() {
+        $ret= new MSBuffer(0); return $ret;
     }
-    function parse_ref() {
+    function &parse_ref() {
         $idx = $this->tokens[$this->idx++];
         $count = count($this->refs);
         if ($idx < $count)
             return $this->refs[$idx];
         throw new Exception("Unable to decode MSTE: referenced object index is too big ($idx < $count)");
     }
-    function parse_numeric() {
+    function &parse_numeric() {
         $ret= $this->nextToken();
         if (is_numeric($ret))
             return $ret;
         throw new Exception("Unable to decode MSTE: an integer was expected");
     }
-    function parse_i1() { return $this->parse_numeric(); }
-    function parse_u2() { return $this->parse_numeric(); }
-    function parse_i4() { return $this->parse_numeric(); }
-    function parse_u4() { return $this->parse_numeric(); }
-    function parse_i8() { return $this->parse_numeric(); }
-    function parse_u8() { return $this->parse_numeric(); }
-    function parse_real() { return $this->parse_numeric(); }
-    function parse_integer() { return $this->parse_numeric(); }
-    function parse_float() { return $this->parse_numeric(); }
-    function parse_double() { return $this->parse_numeric(); }
-    function parse_decimal() { return $this->pushRef($this->parse_numeric()); }
-    function parse_localDate() { return $this->pushRef(new MSLocalDate($this->nextToken())); }
-    function parse_gmtDate() { return $this->pushRef(new MSGMTDate($this->nextToken())); }
-    function parse_color() { return $this->pushRef(new MSColor($this->nextToken())); }
-    function parse_string() {
+    function &parse_i1()        { return $this->parse_numeric(); }
+    function &parse_u2()        { return $this->parse_numeric(); }
+    function &parse_i4()        { return $this->parse_numeric(); }
+    function &parse_u4()        { return $this->parse_numeric(); }
+    function &parse_i8()        { return $this->parse_numeric(); }
+    function &parse_u8()        { return $this->parse_numeric(); }
+    function &parse_real()      { return $this->parse_numeric(); }
+    function &parse_integer()   { return $this->parse_numeric(); }
+    function &parse_float()     { return $this->parse_numeric(); }
+    function &parse_double()    { return $this->parse_numeric(); }
+    function &parse_decimal()   { $ret = $this->parse_numeric();             $this->pushRef($ret); return $ret; }
+    function &parse_localDate() { $ret= new MSLocalDate($this->nextToken()); $this->pushRef($ret); return $ret; }
+    function &parse_gmtDate()   { $ret= new MSGMTDate($this->nextToken());   $this->pushRef($ret); return $ret; }
+    function &parse_color()     { $ret= new MSColor($this->nextToken());     $this->pushRef($ret); return $ret; }
+    function &parse_string() {
         $ret= $this->nextToken();
-        if (is_string($ret))
-            return $this->pushRef($ret);
+        if (is_string($ret)) {
+            $this->pushRef($ret);
+            return $ret;
+        }
         throw new Exception("Unable to decode MSTE: a string was expected");
     }
-    function parse_data() {
-        return $this->pushRef(new MSBuffer(base64_decode($this->nextToken())));
+    function &parse_data() {
+        $ret= new MSBuffer(base64_decode($this->nextToken()));
+        $this->pushRef($ret);
+        return $ret;
     }
-    function parse_naturals() {
+    function &parse_naturals() {
         $count= $this->parse_numeric();
-        $ret= $this->pushRef(new MSNaturalArray($count));
+        $ret= new MSNaturalArray($count);
+        $this->pushRef($ret);
         while ($count > 0) {
             $ret->addNatural($this->nextToken());
             $count--;
@@ -560,34 +566,38 @@ class MSTEDecoder {
         return $ret;
     }
 
-    function parseKey() {
+    function &parseKey() {
         return $this->keys[$this->parse_numeric()];
     }
 
     function _parseDictionary(&$into, $count) {
         while ($count > 0) {
-            $key= $this->parseKey() ;
-            $obj= $this->parseItem();
-            $into[$key]= $obj;
+            $key= &$this->parseKey() ;
+            $obj= &$this->parseItem();
+            $into[$key]= &$obj;
             $count--;
         }
     }
-    function parse_dictionary($ref= true) {
+    function &parse_dictionary($ref= true) {
         $count= $this->parse_numeric();
-        $ret= $this->pushRef($into= array());
+        $into= array();
+        $this->pushRef($into);
         $this->_parseDictionary($into, $count);
         return $into;
     }
-    function parse_array() {
+    function &parse_array() {
         $count= $this->parse_numeric();
-        $ret= $this->pushRef(new MSArray($count));
+        $ret= new MSArray($count);
+        $this->pushRef($ret);
         while ($count > 0) {
             $ret->addObject($this->parseItem());
             $count--;
         }
         return $ret;
     }
-    function parse_couple() {
-        return $this->pushRef(new MSCouple($this->parseItem(), $this->parseItem()));
+    function &parse_couple() {
+        $ret= new MSCouple($this->parseItem(), $this->parseItem());
+        $this->pushRef($ret);
+        return $ret;
     }
 }

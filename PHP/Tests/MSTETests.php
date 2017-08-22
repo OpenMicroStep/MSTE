@@ -127,4 +127,13 @@ class MSTETests extends \PHPUnit\Framework\TestCase
         $o = new MSArray(array($pers1, $pers2, $pers3));
         $this->assertJsonStringEqualsJsonString(json_encode($o), '[{"firstName":"Yves","name":"Durand","birthday":"1962-04-11T01:00:00+01:00","mother":null,"father":null,"mariedTo":null},{"firstName":"Claire","name":"Durand","birthday":"1963-06-07T01:00:00+01:00","mother":null,"father":null,"mariedTo":null},{"firstName":"Lou","name":"Durand","birthday":"1987-07-01T02:00:00+02:00","mother":null,"father":null,"mariedTo":null}]');
     }
+
+    public function testRef() {
+        $decoded= MSTEDecoder::decodeEncodedString("[\"MSTE0102\",21,\"CRC6A9303D2\",0,2,\"a\",\"b\",31,2,31,1,30,2,0,20,1,1,20,2,9,1]");
+        $a = array('a' => 1, 'b' => 2 );
+        $aa = new MSArray(array(&$a));
+        $b = new MSArray(array(&$aa, &$aa));
+        $this->assertEquals($b, $decoded);
+        $this->assertTrue($decoded[0] === $decoded[1]);
+    }
 }
