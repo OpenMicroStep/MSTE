@@ -596,8 +596,10 @@ class MSTEDecoder {
         return $ret;
     }
     function &parse_couple() {
-        $ret= new MSCouple($this->parseItem(), $this->parseItem());
+        $ret= new MSCouple(null, null);
         $this->pushRef($ret);
+        $ret->setFirstMember($this->parseItem());
+        $ret->setSecondMember($this->parseItem());
         return $ret;
     }
 }
