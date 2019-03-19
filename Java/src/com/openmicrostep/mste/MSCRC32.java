@@ -1,13 +1,9 @@
-package org.openmicrostep.mste;
-//
-//  LGTDCRC32.java
-//
-//  
-//
-public class MSCRC32{
+package com.openmicrostep.mste;
 
-// all private vars we want to declare here
-private static int[] __table={
+public class MSCRC32 {
+
+    // all private vars we want to declare here
+    private static int[] __table = {
             0x00000000, 0x77073096, 0xee0e612c, 0x990951ba, 0x076dc419, 0x706af48f, 0xe963a535, 0x9e6495a3,
             0x0edb8832, 0x79dcb8a4, 0xe0d5e91e, 0x97d2d988, 0x09b64c2b, 0x7eb17cbd, 0xe7b82d07, 0x90bf1d91,
             0x1db71064, 0x6ab020f2, 0xf3b97148, 0x84be41de, 0x1adad47d, 0x6ddde4eb, 0xf4d4b551, 0x83d385c7,
@@ -40,24 +36,27 @@ private static int[] __table={
             0xaed16a4a, 0xd9d65adc, 0x40df0b66, 0x37d83bf0, 0xa9bcae53, 0xdebb9ec5, 0x47b2cf7f, 0x30b5ffe9,
             0xbdbdf21c, 0xcabac28a, 0x53b39330, 0x24b4a3a6, 0xbad03605, 0xcdd70693, 0x54de5729, 0x23d967bf,
             0xb3667a2e, 0xc4614ab8, 0x5d681b02, 0x2a6f2b94, 0xb40bbe37, 0xc30c8ea1, 0x5a05df1b, 0x2d02ef8d,
-        };
-// ========= constructors and destructors =========
-public MSCRC32() {}
-public void finalize(){}
+    };
 
-// put your own methods, class methods or constructors here
-public static String getCRC(String theFile)
-{
+    // ========= constructors and destructors =========
+    public MSCRC32() {
+    }
 
-	byte[] bytes = theFile.getBytes();
-	int crc = 0xffffffff;
-	for (byte b : bytes) {
-		crc = (crc >>> 8) ^ __table[(crc ^ b) & 0xff];
-	}
-	crc = crc ^ 0xffffffff;
+    // put your own methods, class methods or constructors here
+    public static String getCRC(String theFile) {
 
-	return String.format("%08X", crc);
-	//return Integer.toHexString(crc);
-	
-}
+        byte[] bytes = theFile.getBytes();
+        int crc = 0xffffffff;
+        for (byte b : bytes) {
+            crc = (crc >>> 8) ^ __table[(crc ^ b) & 0xff];
+        }
+        crc = ~crc;
+
+        return String.format("%08X", crc);
+        //return Integer.toHexString(crc);
+
+    }
+
+    public void finalize() {
+    }
 }
