@@ -6,9 +6,10 @@ package com.openmicrostep.mste;
 //
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 
 public class MSTDecoder {
 
@@ -844,7 +845,7 @@ public class MSTDecoder {
                 Long seconds = Long.MIN_VALUE;
                 _MSTJumpToNextToken(data, pos, tokenCount);
                 seconds = _MSTDecodeLong(data, pos, "_MSTDecodeObject");
-                ret = new MSDate(seconds * 1000);
+                ret = LocalDateTime.ofEpochSecond(seconds, 0, ZoneOffset.UTC);
                 decodedObjects.add(ret);
                 break;
             }

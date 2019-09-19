@@ -7,6 +7,8 @@ package com.openmicrostep.mste;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Hashtable;
@@ -318,8 +320,8 @@ public class MSTEncoder {
         _content.append(String.format(Locale.US, "%.15f", t));
     }
 
-    private void encodeMSDate(MSDate d) {
-        long t = d.getTime() / 1000;
+    private void encodeLocalDateTime(LocalDateTime d) {
+        long t = d.toEpochSecond(ZoneOffset.UTC);
         _encodeTokenSeparator();
         _encodeTokenType(MSTE_TOKEN_TYPE_DATE);
         _encodeTokenSeparator();
@@ -615,7 +617,7 @@ public class MSTEncoder {
         if (anObject instanceof java.util.AbstractCollection) {
             return MSTE_TOKEN_TYPE_ARRAY;
         }
-        if (anObject instanceof MSDate) {
+        if (anObject instanceof LocalDateTime) {
             return MSTE_TOKEN_TYPE_DATE;
         }
         if (anObject instanceof java.util.Date) {
@@ -694,7 +696,7 @@ public class MSTEncoder {
                 encodeArray((ArrayList) anObject);
                 break;
             case MSTE_TOKEN_TYPE_DATE:
-                encodeMSDate((MSDate) anObject);
+                encodeLocalDateTime((LocalDateTime) anObject);
                 break;
             case MSTE_TOKEN_TYPE_TIMESTAMP:
                 encodeDate((java.util.Date) anObject);
